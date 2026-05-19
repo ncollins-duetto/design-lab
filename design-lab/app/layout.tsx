@@ -2,21 +2,22 @@
 
 import { StylesProvider, ThemeProvider, duettoTheme2026 } from '@duetto/duetto-components'
 import { createGenerateClassName } from '@material-ui/styles'
-import { Lato } from 'next/font/google'
+import MuiRegistry from './MuiRegistry'
 import './globals.css'
 
-const lato = Lato({ subsets: ['latin'], weight: ['400', '700'] })
 const generateClassName = createGenerateClassName({ seed: 'dl' })
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={lato.className} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <StylesProvider injectFirst generateClassName={generateClassName}>
-          <ThemeProvider theme={duettoTheme2026}>
-            {children}
-          </ThemeProvider>
-        </StylesProvider>
+        <MuiRegistry>
+          <StylesProvider injectFirst generateClassName={generateClassName}>
+            <ThemeProvider theme={duettoTheme2026}>
+              {children}
+            </ThemeProvider>
+          </StylesProvider>
+        </MuiRegistry>
       </body>
     </html>
   )
