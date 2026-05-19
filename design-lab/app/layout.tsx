@@ -1,7 +1,7 @@
 'use client'
 
 import { StylesProvider, ThemeProvider, duettoTheme2026 } from '@duetto/duetto-components'
-import { createGenerateClassName } from '@material-ui/core/styles'
+import { createGenerateClassName } from '@material-ui/styles'
 import { Lato } from 'next/font/google'
 import './globals.css'
 

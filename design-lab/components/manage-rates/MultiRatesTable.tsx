@@ -7,7 +7,9 @@ import type { GridReadyEvent } from 'ag-grid-community'
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
 
-ModuleRegistry.registerModules([AllCommunityModule])
+if (typeof window !== 'undefined') {
+  ModuleRegistry.registerModules([AllCommunityModule])
+}
 import { ColKey } from '@/lib/mock/rates'
 import { buildColumnDefs } from './columnDefs'
 
