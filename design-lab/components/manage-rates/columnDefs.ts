@@ -1,4 +1,5 @@
 import type { ColDef, ColGroupDef } from 'ag-grid-community'
+import { color2026 } from '@duetto/duetto-components'
 import {
   COL,
   COL_DEFS,
@@ -6,11 +7,8 @@ import {
   formatDateHeader,
   toColId,
 } from '@/lib/mock/rates'
+import { RateLockCell, RecommendedCheckboxCell, EditableRateInput } from './cellRenderers'
 
-// Alternating header background colors per date group, matching the real app
-const GROUP_COLORS = ['#e6f2fc', '#e8eaf5']
-
-// Rate columns that are always visible (not metrics — shown even when collapsed)
 const ALWAYS_ON_COLS: ColKey[] = [COL.CURRENT, COL.RECOMMENDED, COL.OVERRIDE]
 
 const colMetaByKey = Object.fromEntries(COL_DEFS.map((c) => [c.key, c]))
@@ -24,23 +22,33 @@ function hotelColumnDef(): ColDef {
     lockPinned: true,
     width: 180,
     suppressMovable: true,
-    cellStyle: { background: '#eef4fb', fontWeight: 500 },
+    cellStyle: { background: color2026.dataTable.headerBackground, fontWeight: 500 },
     headerClass: 'hotel-header',
   }
 }
 
-function buildChildCol(dateIso: string, key: ColKey, groupColor: string, isMetric: boolean): ColDef {
+function buildChildCol(dateIso: string, key: ColKey, isMetric: boolean, groupIndex: number): ColDef {
   const meta = colMetaByKey[key]
+  const colId = toColId(dateIso, key)
+  const subClass = groupIndex % 2 === 0 ? 'sub-header-even' : 'sub-header-odd'
+
+  let cellRenderer: unknown = undefined
+  if (key === COL.CURRENT) cellRenderer = RateLockCell
+  else if (key === COL.RECOMMENDED) cellRenderer = RecommendedCheckboxCell
+  else if (key === COL.OVERRIDE || key === COL.PROTECT) cellRenderer = EditableRateInput
+
+  const isGroupEdge = key === COL.CURRENT
+
   return {
-    colId: toColId(dateIso, key),
-    field: toColId(dateIso, key),
+    colId,
+    field: colId,
     headerName: meta?.label ?? key,
-    width: meta?.width ?? 110,
+    width: [COL.CURRENT, COL.RECOMMENDED, COL.OVERRIDE].includes(key) ? 155 : meta?.width ?? 130,
     columnGroupShow: isMetric ? 'open' : undefined,
-    headerClass: 'subcolumn-header',
-    cellStyle: { textAlign: 'right' },
-    headerStyle: { background: groupColor },
-    editable: key === COL.OVERRIDE,
+    headerClass: ['subcolumn-header', subClass, ...(isGroupEdge ? ['col-group-edge-header'] : [])],
+    cellClass: isGroupEdge ? 'col-group-edge' : undefined,
+    cellStyle: { textAlign: 'right', padding: '0 4px' },
+    cellRenderer,
     suppressMovable: true,
   }
 }
@@ -51,25 +59,23 @@ export function buildColumnDefs(
 ): (ColDef | ColGroupDef)[] {
   const cols: (ColDef | ColGroupDef)[] = [hotelColumnDef()]
 
-  dates.forEach((dateIso, i) => {
-    const groupColor = GROUP_COLORS[i % 2]
+  dates.forEach((dateIso, groupIndex) => {
     const headerName = formatDateHeader(dateIso)
+    const groupClass = groupIndex % 2 === 0 ? 'date-group-even' : 'date-group-odd'
 
-    // Always-on rate columns (Current, Recommended, Override) — filtered by visibility
     const alwaysOnChildren: ColDef[] = ALWAYS_ON_COLS
       .filter((key) => key === COL.CURRENT || visibleCols.has(key))
-      .map((key) => buildChildCol(dateIso, key, groupColor, false))
+      .map((key) => buildChildCol(dateIso, key, false, groupIndex))
 
-    // Metric columns (only visible when group is open, filtered by user settings)
     const metricChildren: ColDef[] = COL_DEFS
       .filter((c) => !ALWAYS_ON_COLS.includes(c.key as ColKey) && visibleCols.has(c.key))
-      .map((c) => buildChildCol(dateIso, c.key, groupColor, true))
+      .map((c) => buildChildCol(dateIso, c.key, true, groupIndex))
 
     const group: ColGroupDef = {
       groupId: `${dateIso}_group`,
       headerName,
       marryChildren: true,
-      headerClass: 'date-group-header',
+      headerClass: ['date-group-header', groupClass],
       children: [...alwaysOnChildren, ...metricChildren],
     }
 
