@@ -1,6 +1,6 @@
 # Duetto Design Lab — AI Instructions
 
-This is the shared environment for UX prototypes built by the Duetto Strategy design team.
+This is the shared environment for UX prototypes built by the Duetto UX Design team.
 Read this before generating any code.
 
 ## What this is
