@@ -2,9 +2,12 @@
 
 import React, { useCallback, useMemo, useRef } from 'react'
 import { AgGridReact } from 'ag-grid-react'
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import type { GridReadyEvent } from 'ag-grid-community'
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
+
+ModuleRegistry.registerModules([AllCommunityModule])
 import { ColKey } from '@/lib/mock/rates'
 import { buildColumnDefs } from './columnDefs'
 
@@ -69,6 +72,7 @@ export default function MultiRatesTable({ dates, rowData, visibleCols }: Props) 
       `}</style>
       <AgGridReact
         ref={gridRef}
+        theme="legacy"
         rowData={rowData}
         columnDefs={columnDefs}
         onGridReady={onGridReady}
