@@ -101,7 +101,7 @@ const useStyles = makeStyles((theme) => ({
 export default function ManageRatesMultiPage() {
   const classes = useStyles()
 
-  const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(() => loadVisibleCols())
+  const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(DEFAULT_VISIBLE_COLS)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [selectedHotelIds, setSelectedHotelIds] = useState<string[]>(
     MOCK_PROPERTIES.slice(0, 10).map((p) => p.id)
