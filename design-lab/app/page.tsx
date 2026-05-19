@@ -15,14 +15,14 @@ export default function Home() {
     >
       <Box p={4}>
         <Typography variant="h4" gutterBottom>
-          Duetto Prototype Template
+          Duetto Design Lab
         </Typography>
         <Typography variant="body1" color="textSecondary" gutterBottom>
-          Replace this page with your prototype. See <code>CLAUDE.md</code> for instructions.
+          Shared prototype environment. Add your prototype as a route and link to it here.
         </Typography>
-        <Box mt={2}>
-          <Button variant="contained" color="primary" href="/example">
-            View example page
+        <Box mt={2} display="flex" gridGap={12}>
+          <Button variant="contained" color="primary" href="/manage-rates/multi">
+            Multi-Property Manage Rates
           </Button>
         </Box>
       </Box>
