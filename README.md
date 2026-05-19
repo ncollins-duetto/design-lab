@@ -1,30 +1,33 @@
-# Duetto UX
+# Duetto Design Lab
 
-Shared workspace for the Duetto UX/design team.
+Shared environment for UX prototypes built by the Duetto design team.
 
-## Contents
+## How it works
 
-- **[`prototype-template/`](prototype-template/)** — shared Next.js starter for all code prototypes.
-  Clone and use this as the base for every new prototype. See [`prototype-template/CLAUDE.md`](prototype-template/CLAUDE.md) for full instructions.
+All prototypes live as routes within the same Next.js app in [`design-lab/`](design-lab/).
+Every branch gets its own Vercel preview URL automatically on push.
+`main` is the canonical approved state.
 
-## Setup
+## Getting started
 
-1. Clone this repo: `gh repo clone duettoresearch/UX`
-2. Copy the template into a new folder for your prototype:
-   ```bash
-   cp -r prototype-template my-prototype
-   cd my-prototype
-   npm install
-   npm run dev
-   ```
-3. Rename the project in `package.json` and start building.
+```bash
+gh repo clone duettoresearch/UX
+cd UX/design-lab
+npm install
+npm run dev   # http://localhost:3000
+```
+
+See [`design-lab/CLAUDE.md`](design-lab/CLAUDE.md) for full instructions — including how to add pages, use mock data, and deploy.
 
 ## Branch workflow
 
-- Branch naming: `designer/your-name/feature-name`
-- Open a PR to merge back to `main`
-- Protected files (layout, tokens, AppShell) require maintainer review
+1. Create a branch: `designer/your-name/feature-name`
+2. Push — Vercel auto-deploys a preview URL
+3. Share the URL for feedback
+4. Open a PR when ready to merge to `main`
+
+Protected files (layout, AppShell, tokens) require maintainer review before merge.
 
 ## Who to ask
 
-Template questions → @nylecollins
+Questions → @nylecollins

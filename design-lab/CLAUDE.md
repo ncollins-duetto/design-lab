@@ -1,6 +1,6 @@
-# Duetto Prototype Template — AI Instructions
+# Duetto Design Lab — AI Instructions
 
-This is the shared starting point for UX prototypes built by the Duetto Strategy design team.
+This is the shared environment for UX prototypes built by the Duetto Strategy design team.
 Read this before generating any code.
 
 ## What this is
@@ -33,7 +33,7 @@ Check it when you need to understand how a real component works or what a GQL ty
 ## Project structure
 
 ```
-prototype-template/
+design-lab/
 ├── app/
 │   ├── layout.tsx          ← DO NOT EDIT — theme and font providers live here
 │   ├── globals.css         ← DO NOT EDIT — minimal reset only
@@ -167,23 +167,15 @@ npm run dev       # http://localhost:3000
 
 Requires `artifactory_npm_auth_token` env var to be set (already in `.zshrc` on Duetto machines).
 
-## Deploying a preview
+## Branch and deploy workflow
 
-```bash
-env -u NODE_OPTIONS vercel --yes
-```
+Every branch gets its own Vercel preview URL automatically on push — no manual deploy needed.
 
-Share the printed URL with colleagues or customers for testing.
+1. Create a branch: `designer/your-name/feature-name` (e.g. `designer/nyle/metrics-management`)
+2. Push your work: `git push origin your-branch`
+3. Vercel posts a preview URL as a GitHub PR check — share that URL for feedback and testing
+4. When work is approved, open a PR and merge to `main`
+5. `main` auto-deploys to the canonical design-lab URL
 
-## Pushing to production URL
-
-Commit and push to `main`. Vercel auto-deploys on push.
-
----
-
-## Branch and PR workflow
-
-- **Never push directly to `main`** — branch protection is enabled
-- Branch naming: `designer/your-name/feature-name` (e.g. `designer/nyle/metrics-management`)
-- Open a PR when sharing work for team review
-- Changes to protected files require maintainer approval (see CODEOWNERS)
+**Never push directly to `main`** — branch protection is enabled.
+Changes to protected files require maintainer approval (see CODEOWNERS).

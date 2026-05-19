@@ -1,10 +1,10 @@
-# Core template files — changes require maintainer review before merge.
+# Core design-lab files — changes require maintainer review before merge.
 # Add your GitHub username as maintainer below.
 
-/prototype-template/app/layout.tsx                @nylecollins
-/prototype-template/app/globals.css               @nylecollins
-/prototype-template/components/AppShell.tsx       @nylecollins
-/prototype-template/lib/mock/types.ts             @nylecollins
-/prototype-template/package.json                  @nylecollins
-/prototype-template/next.config.ts                @nylecollins
+/design-lab/app/layout.tsx                @nylecollins
+/design-lab/app/globals.css               @nylecollins
+/design-lab/components/AppShell.tsx       @nylecollins
+/design-lab/lib/mock/types.ts             @nylecollins
+/design-lab/package.json                  @nylecollins
+/design-lab/next.config.ts                @nylecollins
 /.github/                                         @nylecollins
