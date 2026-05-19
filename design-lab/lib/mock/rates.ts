@@ -147,7 +147,8 @@ export function getWeekDates(startIso: string, count = 7): string[] {
 
 export function formatDateHeader(isoDate: string): string {
   const d = new Date(isoDate + 'T00:00:00')
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' })
+  const locale = typeof navigator !== 'undefined' ? undefined : 'en-GB'
+  return d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
 // ─── Mock data generation ─────────────────────────────────────────────────────
