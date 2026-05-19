@@ -8,7 +8,11 @@ Read this before generating any code.
 A Next.js 16 app that mirrors the real Duetto frontend stack as closely as possible, so
 prototypes are useful to developers, not just designers.
 
-**Real frontend reference:** `/Users/nylecollins/dev/duetto-frontend/src/`
+**Real frontend reference:** `~/dev/duetto-frontend/src/`
+Each designer should have the real frontend cloned at this path:
+```bash
+gh repo clone duettoresearch/duetto-frontend ~/dev/duetto-frontend
+```
 Check it when you need to understand how a real component works or what a GQL type looks like.
 
 ---
@@ -52,6 +56,12 @@ design-lab/
     └── duetto-logo.svg
 ```
 
+**Why layout.tsx and globals.css look empty:**
+`layout.tsx` only contains the `ThemeProvider` and font setup — that's intentional. The MUI
+theme (`duettoTheme2026`) handles all colors, spacing, and typography. There's nothing left
+for globals.css to do except a basic box-sizing reset. Do not add Tailwind, CSS variables,
+or custom styles to either file — use `makeStyles` or the `sx` prop instead.
+
 **Protected files** (require maintainer review to change):
 `app/layout.tsx`, `app/globals.css`, `components/AppShell.tsx`, `lib/mock/types.ts`
 
@@ -87,7 +97,7 @@ design-lab/
 ## Mock data rules
 
 - All mock data lives in `lib/mock/`
-- Types in `lib/mock/types.ts` must mirror real GQL types from `duetto-frontend/src/generated/`
+- Types in `lib/mock/types.ts` must mirror real GQL types from `~/dev/duetto-frontend/src/generated/`
   — copy only the fields you actually use
 - Property/group data comes from `lib/mock/properties.ts` — don't create new hotel lists elsewhere
 - Add feature-specific data in a new file (e.g. `lib/mock/rates.ts`) and export from `index.ts`
@@ -147,35 +157,40 @@ import { color2026 } from '@duetto/duetto-components'
 
 When you need to understand how a real page or component works:
 
-- **Real components:** `duetto-frontend/src/components/`
-- **Real page containers:** `duetto-frontend/src/containers/`
-- **GQL types:** `duetto-frontend/src/generated/`
-- **Real theme:** `duetto-frontend/src/core/styles/themes.ts`
-- **SmartTable (AG Grid wrapper):** `duetto-frontend/src/components/SmartTable/`
+- **Real components:** `~/dev/duetto-frontend/src/components/`
+- **Real page containers:** `~/dev/duetto-frontend/src/containers/`
+- **GQL types:** `~/dev/duetto-frontend/src/generated/`
+- **Real theme:** `~/dev/duetto-frontend/src/core/styles/themes.ts`
+- **SmartTable (AG Grid wrapper):** `~/dev/duetto-frontend/src/components/SmartTable/`
 
 Prototypes should match the *behaviour and data shape* of the real app, not copy its internal
 implementation. The goal is something a developer can look at and immediately map to their code.
 
 ---
 
-## Running locally
+## Running and deploying
 
+**For active development — run locally:**
 ```bash
 npm install
-npm run dev       # http://localhost:3000
+npm run dev   # http://localhost:3000
 ```
+Use this when iterating with Claude or Cursor. Hot reload means you see changes instantly
+without waiting for a deploy. Requires `artifactory_npm_auth_token` in your `.zshrc`
+(standard on all Duetto machines).
 
-Requires `artifactory_npm_auth_token` env var to be set (already in `.zshrc` on Duetto machines).
+**For sharing — use Vercel branch previews:**
+Every push to a branch automatically deploys a preview URL. No manual deploy command needed.
+Share that URL for stakeholder feedback, customer testing, or team review.
 
 ## Branch and deploy workflow
 
-Every branch gets its own Vercel preview URL automatically on push — no manual deploy needed.
-
 1. Create a branch: `designer/your-name/feature-name` (e.g. `designer/nyle/metrics-management`)
-2. Push your work: `git push origin your-branch`
-3. Vercel posts a preview URL as a GitHub PR check — share that URL for feedback and testing
-4. When work is approved, open a PR and merge to `main`
-5. `main` auto-deploys to the canonical design-lab URL
+2. Develop locally: `npm run dev`
+3. Push your work: `git push origin your-branch`
+4. Vercel posts a preview URL as a GitHub PR check — share it for feedback and testing
+5. When approved, open a PR and merge to `main`
+6. `main` auto-deploys to the canonical design-lab URL
 
 **Never push directly to `main`** — branch protection is enabled.
 Changes to protected files require maintainer approval (see CODEOWNERS).
