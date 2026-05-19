@@ -25,6 +25,7 @@ import {
   getWeekDates,
   MOCK_PROPERTIES,
   MOCK_PROPERTY_GROUPS,
+  DEFAULT_VISIBLE_COLS,
 } from '@/lib/mock/rates'
 
 const START_DATE = '2025-07-17'
