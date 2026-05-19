@@ -1,10 +1,9 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
-  Box,
   Button,
-  Chip,
   Checkbox,
   ListItemText,
   makeStyles,
@@ -12,11 +11,10 @@ import {
   Select,
   Typography,
 } from '@material-ui/core'
-import PublishIcon from '@material-ui/icons/Publish'
-import TuneIcon from '@material-ui/icons/Tune'
-import DateRangeIcon from '@material-ui/icons/DateRange'
+import CalendarTodayIcon from '@material-ui/icons/CalendarToday'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import AppShell from '@/components/AppShell'
+import TableSettingIcon from '@/components/TableSettingIcon'
 import MultiRatesTable from '@/components/manage-rates/MultiRatesTable'
 import TableSettingsModal, { loadVisibleCols } from '@/components/manage-rates/TableSettingsModal'
 import {
@@ -24,8 +22,9 @@ import {
   generateRowData,
   getWeekDates,
   MOCK_PROPERTIES,
-  MOCK_PROPERTY_GROUPS,
+  DEFAULT_VISIBLE_COLS,
 } from '@/lib/mock/rates'
+import { MOCK_PROPERTY_GROUPS } from '@/lib/mock/properties'
 
 const START_DATE = '2025-07-17'
 const DATES = getWeekDates(START_DATE, 7)
@@ -37,72 +36,84 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: theme.spacing(2, 3, 1.5),
-    borderBottom: `1px solid ${theme.palette.divider}`,
-    background: '#fff',
+    padding: theme.spacing(2, 3, 1),
+    background: theme.palette.background.default,
   },
   titleRow: {
     display: 'flex',
     alignItems: 'baseline',
     gap: theme.spacing(1),
   },
+  pageTitle: {
+    fontSize: '1.125rem',
+    fontWeight: 600,
+    lineHeight: 1.4,
+    color: (theme.palette as any).text?.secondary ?? '#4f5b60',
+  },
   actions: {
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1.5),
   },
-  publishBtn: {
-    background: '#006461',
-    color: '#fff',
-    fontWeight: 600,
-    '&:hover': { background: '#004d4a' },
-    paddingLeft: theme.spacing(2),
-    paddingRight: theme.spacing(2),
-  },
-  tableSettingsBtn: {
-    color: theme.palette.text.primary,
-    border: `1px solid ${theme.palette.divider}`,
-    fontWeight: 400,
-    fontSize: 13,
-  },
   dateBtn: {
-    color: theme.palette.text.primary,
-    border: `1px solid ${theme.palette.divider}`,
-    fontWeight: 400,
-    fontSize: 13,
+    height: '2.25rem',
+    border: `1px solid ${theme.palette.grey[300]}`,
+    boxShadow: 'none',
+    '&:hover': {
+      boxShadow: 'none',
+      border: `1px solid ${theme.palette.grey[400]}`,
+    },
   },
   subHeader: {
     padding: theme.spacing(1.5, 3),
-    background: '#fff',
+    background: theme.palette.background.default,
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
   propertySelect: {
-    minWidth: 200,
+    minWidth: 280,
     fontSize: 14,
+    background: theme.palette.background.paper,
+    borderRadius: 4,
     '& .MuiSelect-root': {
       paddingTop: 8,
       paddingBottom: 8,
+    },
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.grey[300],
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.grey[400],
     },
   },
   tableContainer: {
     flex: 1,
     overflowX: 'auto',
     overflowY: 'auto',
-    padding: theme.spacing(0),
-    background: '#fff',
+    background: theme.palette.background.paper,
   },
-  selectedCount: {
+  menuItem: {
+    '&.Mui-selected': {
+      backgroundColor: 'transparent',
+    },
+    '&.Mui-selected:hover': {
+      backgroundColor: theme.palette.action.hover,
+    },
+  },
+  menuItemCheckbox: {
+    padding: '0 8px 0 0',
+  },
+  menuItemText: {
     fontSize: 13,
-    color: theme.palette.text.secondary,
-    marginLeft: theme.spacing(1),
   },
 }))
 
 export default function ManageRatesMultiPage() {
   const classes = useStyles()
+  const router = useRouter()
 
   const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(DEFAULT_VISIBLE_COLS)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [selectedPropertyName, setSelectedPropertyName] = useState<string>('All Properties')
   const [selectedHotelIds, setSelectedHotelIds] = useState<string[]>(
     MOCK_PROPERTIES.slice(0, 10).map((p) => p.id)
   )
@@ -123,42 +134,41 @@ export default function ManageRatesMultiPage() {
     <AppShell
       activeNav="pricing-strategy"
       breadcrumbs={[
-        { label: 'Pricing & Strategy', href: '/' },
+        { label: 'Home', href: '/' },
+        { label: 'Pricing & Strategy', href: '/pricing-strategy' },
         { label: 'Manage Rates' },
       ]}
-      propertyLabel={
-        selectedCount === MOCK_PROPERTIES.length
-          ? 'All Properties'
-          : `${selectedCount} properties selected`
-      }
+      defaultPropertyId="all"
+      onPropertyChange={(id, name) => {
+        const group = MOCK_PROPERTY_GROUPS.find((g) => g.id === id)
+        if (group) {
+          setSelectedPropertyName(name)
+          setSelectedHotelIds(group.properties.map((p) => p.id))
+        } else if (id === 'all') {
+          setSelectedPropertyName(name)
+          setSelectedHotelIds(MOCK_PROPERTIES.map((p) => p.id))
+        } else {
+          router.push('/manage-rates')
+        }
+      }}
     >
       {/* Page header */}
       <div className={classes.pageHeader}>
         <div className={classes.titleRow}>
-          <Typography variant="h5" style={{ fontWeight: 600, fontSize: 20 }}>
-            Manage Rates
+          <Typography className={classes.pageTitle}>
+            Manage Rates — {selectedPropertyName}
           </Typography>
         </div>
         <div className={classes.actions}>
-          <Button
-            variant="contained"
-            startIcon={<PublishIcon />}
-            className={classes.publishBtn}
-            disableElevation
-          >
+          <Button variant="contained" color="primary">
             Review &amp; Publish
           </Button>
-          <Button
-            variant="outlined"
-            startIcon={<TuneIcon style={{ fontSize: 16 }} />}
-            className={classes.tableSettingsBtn}
-            onClick={() => setSettingsOpen(true)}
-          >
+          <Button variant="text" startIcon={<TableSettingIcon />} onClick={() => setSettingsOpen(true)}>
             Table settings
           </Button>
           <Button
             variant="outlined"
-            startIcon={<DateRangeIcon style={{ fontSize: 16 }} />}
+            endIcon={<CalendarTodayIcon fontSize="small" />}
             className={classes.dateBtn}
           >
             {DATE_LABEL}
@@ -176,33 +186,41 @@ export default function ManageRatesMultiPage() {
           IconComponent={ExpandMoreIcon}
           renderValue={(selected) => {
             const ids = selected as string[]
-            if (ids.length === MOCK_PROPERTIES.length) return 'All Properties'
-            return `${ids.length} properties selected`
+            return `${ids.length} ${ids.length === 1 ? 'property' : 'properties'} selected`
           }}
           onChange={(e) => {
             const value = e.target.value as string[]
             if (value.length <= MAX_PROPERTIES) setSelectedHotelIds(value)
           }}
-          MenuProps={{ PaperProps: { style: { maxHeight: 360 } } }}
+          MenuProps={{
+            PaperProps: {
+              style: {
+                maxHeight: 360,
+                background: '#fff',
+                border: '1px solid #e0e0e0',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+              },
+            },
+            getContentAnchorEl: null,
+            anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+            transformOrigin: { vertical: 'top', horizontal: 'left' },
+            marginThreshold: 0,
+          }}
         >
-          {MOCK_PROPERTY_GROUPS.map((group) => [
-            <MenuItem key={`group-${group.id}`} disabled style={{ opacity: 1 }}>
-              <Typography variant="caption" style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#888' }}>
-                {group.name}
-              </Typography>
-            </MenuItem>,
-            ...group.properties.map((prop) => (
-              <MenuItem key={prop.id} value={prop.id} dense>
-                <Checkbox
-                  checked={selectedHotelIds.includes(prop.id)}
-                  size="small"
-                  color="primary"
-                  style={{ padding: '0 8px 0 0' }}
-                />
-                <ListItemText primary={prop.name} primaryTypographyProps={{ style: { fontSize: 13 } }} />
-              </MenuItem>
-            )),
-          ])}
+          {MOCK_PROPERTIES.map((prop) => (
+            <MenuItem key={prop.id} value={prop.id} dense className={classes.menuItem}>
+              <Checkbox
+                checked={selectedHotelIds.includes(prop.id)}
+                size="small"
+                color="primary"
+                className={classes.menuItemCheckbox}
+              />
+              <ListItemText
+                primary={prop.name}
+                primaryTypographyProps={{ className: classes.menuItemText }}
+              />
+            </MenuItem>
+          ))}
           {selectedHotelIds.length >= MAX_PROPERTIES && (
             <MenuItem disabled dense>
               <Typography variant="caption" color="error">
