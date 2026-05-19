@@ -1,0 +1,10 @@
+# Core template files — changes require maintainer review before merge.
+# Add your GitHub username as maintainer below.
+
+/prototype-template/app/layout.tsx                @nylecollins
+/prototype-template/app/globals.css               @nylecollins
+/prototype-template/components/AppShell.tsx       @nylecollins
+/prototype-template/lib/mock/types.ts             @nylecollins
+/prototype-template/package.json                  @nylecollins
+/prototype-template/next.config.ts                @nylecollins
+/.github/                                         @nylecollins
