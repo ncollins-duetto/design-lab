@@ -61,7 +61,7 @@ export function RecommendedHeaderCell(params: IHeaderParams) {
         onClick={(e) => e.stopPropagation()}
         style={{ cursor: 'pointer', accentColor: color2026.main.blue[700], margin: 0, flexShrink: 0 }}
       />
-      <span style={{ flex: 1, textAlign: 'right', fontWeight: 700, color: color2026.text.secondary }}>Recommended</span>
+      <span style={{ flex: 1, textAlign: 'right', fontWeight: 400, color: color2026.text.secondary }}>Recommended</span>
     </span>
   )
 }

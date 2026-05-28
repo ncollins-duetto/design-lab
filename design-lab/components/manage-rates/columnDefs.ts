@@ -55,7 +55,6 @@ function buildLeafCol(dateIso: string, meta: ColMeta, colorClass: string, isFirs
     headerClass: [
       'leaf-header', colorClass,
       ...(isGroupEdge ? ['col-group-edge-header'] : []),
-      ...([COL.CURRENT, COL.RECOMMENDED, COL.OVERRIDE].includes(meta.key) ? ['leaf-header-bold'] : []),
     ],
     width: meta.width ?? 120,
     cellClass: isGroupEdge ? 'col-group-edge' : undefined,
@@ -86,10 +85,18 @@ export function buildColumnDefs(
   dates.forEach((dateIso, groupIndex) => {
     const colorClass = groupIndex % 2 === 0 ? 'date-even' : 'date-odd'
 
-    // ── Rate columns: always-on, direct children of date group ──────────────
-    const rateCols: ColDef[] = COL_DEFS
+    // ── Rate columns: wrapped in a "Rates" group for header symmetry ─────────
+    const rateLeafs: ColDef[] = COL_DEFS
       .filter((c) => c.category === 'rate' && (c.alwaysVisible || visibleCols.has(c.key)))
       .map((c) => buildLeafCol(dateIso, c, colorClass, groupIndex === 0))
+
+    const rateGroup: ColGroupDef = {
+      groupId:     `${dateIso}_rates`,
+      headerName:  'Rates',
+      headerClass: ['main-label-header', colorClass, ...(groupIndex !== 0 ? ['col-group-edge-header'] : [])],
+      openByDefault: true,
+      children: rateLeafs,
+    }
 
     // ── Metric groups: one ColGroupDef per category ──────────────────────────
     const metricChildren: (ColDef | ColGroupDef)[] = []
@@ -128,7 +135,7 @@ export function buildColumnDefs(
       headerName: formatDateHeader(dateIso),
       headerClass: ['date-group-header', colorClass],
       marryChildren: true,
-      children: [...rateCols, ...metricChildren],
+      children: [rateGroup, ...metricChildren],
     } as ColGroupDef)
   })
 
