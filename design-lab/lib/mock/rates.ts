@@ -1,133 +1,226 @@
 import { MOCK_PROPERTIES, MOCK_PROPERTY_GROUPS } from './properties'
 
-// ─── Column type keys ────────────────────────────────────────────────────────
-// Mirrors ColType enum in duetto-frontend/src/containers/Gamechanger/ManageRatesPage/utils/TableUtils.ts
-// Only the subset relevant to the multi-property view.
+// ─── Column keys ──────────────────────────────────────────────────────────────
 
 export const COL = {
-  // Rate columns (always visible or toggleable — not metrics)
-  CURRENT: 'current',
-  RECOMMENDED: 'recommended',
-  OVERRIDE: 'override',
-  PROTECT: 'protect',
+  // Rate columns (always-on or toggleable, no sub-label)
+  CURRENT:    'current',
+  RECOMMENDED:'recommended',
+  OVERRIDE:   'override',
+  PROTECT:    'protect',
 
-  // Occupancy metrics
-  COMMITTED_OCCUPANCY: 'committedOccupancy',
-  DEMAND_OCCUPANCY: 'demandOccupancy',
-  DEMAND_RATIO: 'demandRatio',
-  OCCUPANCY: 'occupancy',
-  OCCUPANCY_PERCENT: 'occupancyPercent',
-  OCCUPANCY_STLY: 'occupancyStly',
-  OCCUPANCY_FINAL_LY: 'occupancyFinalLy',
+  // Demand Occupancy
+  DEMAND_OCC_RN:           'demandOccRn',
+  DEMAND_OCC_ADJ_PCT:      'demandOccAdjPct',
+  DEMAND_OCC_PHYSICAL_PCT: 'demandOccPhysicalPct',
 
-  // Commitment metrics
-  COMMIT: 'commit',
-  COMMIT_ADR: 'commitAdr',
-  COMMIT_ADR_STLY: 'commitAdrStly',
-  FINAL_COMMIT_ADR_STLY: 'finalCommitAdrStly',
-  PICKUP: 'pickup',
+  // Duetto Forecast
+  DUETTO_FORECAST_RN:           'duettoForecastRn',
+  DUETTO_FORECAST_ADJ_PCT:      'duettoForecastAdjPct',
+  DUETTO_FORECAST_PHYSICAL_PCT: 'duettoForecastPhysicalPct',
+  DUETTO_FORECAST_REVPAR:       'duettoForecastRevpar',
 
-  // Competitor metrics
-  COMPETITOR_AVG: 'competitorAvg',
-  COMPETITOR_LOW: 'competitorLow',
+  // Committed Occupancy
+  COMMITTED_OCC_PCT:      'committedOccPct',
+  COMMITTED_OCC_STLY:     'committedOccStly',
+  COMMITTED_OCC_FINAL_LY: 'committedOccFinalLy',
+  COMMITTED_OCC_ADJ_PCT:  'committedOccAdjPct',
+  COMMITTED_OCC_ROOM_REV: 'committedOccRoomRev',
+
+  // Pickup (X-Y-Z Days)
+  PICKUP_ROOMS_OTB:    'pickupRoomsOtb',
+  PICKUP_ADR_COMMIT:   'pickupAdrCommit',
+  PICKUP_ROOMS_COMMIT: 'pickupRoomsCommit',
+  PICKUP_REV_COMMIT:   'pickupRevCommit',
+
+  // Rooms (Commit)
+  ROOMS_COMMIT_RN:       'roomsCommitRn',
+  ROOMS_COMMIT_STLY_TBB: 'roomsCommitStlyTbb',
+  ROOMS_COMMIT_STLY_DOW: 'roomsCommitStlyDow',
+
+  // OTB
+  OTB_ROOMS:       'otbRooms',
+  OTB_PHYSICAL_PCT:'otbPhysicalPct',
+
+  // ADR (Commit)
+  ADR_COMMIT_TOTAL:     'adrCommitTotal',
+  ADR_COMMIT_STLY:      'adrCommitStly',
+  ADR_COMMIT_FINAL_LY:  'adrCommitFinalLy',
+  ADR_COMMIT_NON_GROUP: 'adrCommitNonGroup',
+  ADR_COMMIT_GROUP:     'adrCommitGroup',
+
+  // Inventory
+  INVENTORY_OOO:                  'inventoryOoo',
+  INVENTORY_REMAINING:            'inventoryRemaining',
+  INVENTORY_COMPOSITE_CAP:        'inventoryCompositeCap',
+  INVENTORY_COMPOSITE_REMAINING:  'inventoryCompositeRemaining',
+
+  // Expedia
+  EXPEDIA_SHOPPED: 'expediaShopped',
+
+  // Competitors
+  COMPETITOR_LOW:  'competitorLow',
+  COMPETITOR_AVG:  'competitorAvg',
   COMPETITOR_HIGH: 'competitorHigh',
-  SHOPPED_RATE: 'shoppedRate',
 
-  // Forecast metrics
-  DUETTO_FORECAST: 'duettoForecastRooms',
-  DUETTO_FORECAST_PERCENT: 'duettoForecastPercent',
+  // Cancellations
+  CANCELLATIONS_ROOMS:   'cancellationsRooms',
+  CANCELLATIONS_REVENUE: 'cancellationsRevenue',
 
-  // Inventory metrics
-  REMAINING: 'remaining',
-  REMAINING_ROOMS: 'remainingRooms',
-  OUT_OF_ORDER: 'outOfOrderRooms',
+  // Pushed Rate
+  PUSHED_RATE: 'pushedRate',
 
-  // Revenue metrics
-  NON_GROUP_ADR: 'nonGroupAdr',
-  GROUP_ADR: 'groupAdr',
-  DIFFERENTIAL: 'differential',
+  // Group Business
+  GROUP_BUSINESS_ROOMS:   'groupBusinessRooms',
+  GROUP_BUSINESS_REVENUE: 'groupBusinessRevenue',
+
+  // Number of Events
+  EVENTS_COUNT: 'eventsCount',
+
+  // Number of Restrictions
+  RESTRICTIONS_COUNT: 'restrictionsCount',
 } as const
 
 export type ColKey = (typeof COL)[keyof typeof COL]
 
 export const toColId = (dateIso: string, colKey: ColKey) => `${dateIso}_${colKey}`
 
-// ─── Column metadata ─────────────────────────────────────────────────────────
+// ─── Categories ───────────────────────────────────────────────────────────────
 
-export type ColCategory = 'rate' | 'occupancy' | 'commitment' | 'competitor' | 'forecast' | 'inventory' | 'revenue'
+export type ColCategory =
+  | 'rate'
+  | 'demand_occupancy'
+  | 'duetto_forecast'
+  | 'committed_occ'
+  | 'pickup'
+  | 'otb'
+  | 'adr_commit'
+  | 'inventory'
+  | 'expedia'
+  | 'competitors'
+  | 'cancellations'
+  | 'group_business'
+  | 'events_restrictions'
+
+export const CATEGORY_LABELS: Record<ColCategory, string> = {
+  rate:                'Rate',
+  demand_occupancy:    'Demand Occupancy',
+  duetto_forecast:     'Duetto Forecast',
+  committed_occ:       'Committed Occupancy',
+  pickup:              'Pickup (1 - 3 - 5)',
+  otb:                 'OTB',
+  adr_commit:          'ADR (Commit)',
+  inventory:           'Inventory',
+  expedia:             'Expedia',
+  competitors:         'Competitors',
+  cancellations:       'Cancellations',
+  group_business:      'Group Business',
+  events_restrictions: 'Events & Restrictions',
+}
+
+// ─── Column metadata ──────────────────────────────────────────────────────────
 
 export interface ColMeta {
-  key: ColKey
-  label: string
-  category: ColCategory
-  defaultVisible: boolean   // shown on expand without any user settings
-  alwaysVisible?: boolean   // cannot be hidden (only Current)
-  format: 'currency' | 'percent' | 'integer' | 'decimal'
-  width?: number
+  key:            ColKey
+  label:          string        // main label — used as group header in modal + top line in table header
+  subLabel?:      string        // sub label — used as item text in modal + bottom line in table header
+  category:       ColCategory
+  defaultVisible: boolean
+  alwaysVisible?: boolean       // Current rate only
+  format:         'currency' | 'percent' | 'integer' | 'decimal'
+  width?:         number
 }
 
 export const COL_DEFS: ColMeta[] = [
-  // Rate columns
-  { key: COL.CURRENT,              label: 'Current',             category: 'rate',        defaultVisible: true,  alwaysVisible: true,  format: 'currency', width: 110 },
-  { key: COL.RECOMMENDED,          label: 'Recommended',         category: 'rate',        defaultVisible: true,  format: 'currency', width: 130 },
-  { key: COL.OVERRIDE,             label: 'Override',            category: 'rate',        defaultVisible: true,  format: 'currency', width: 100 },
+  // ── Rate (no sub-label) ────────────────────────────────────────────────────
+  { key: COL.CURRENT,     label: 'Current',      category: 'rate', defaultVisible: true,  alwaysVisible: true, format: 'currency', width: 110 },
+  { key: COL.PUSHED_RATE, label: 'Pushed Rate',  category: 'rate', defaultVisible: false, format: 'currency', width: 120 },
+  { key: COL.RECOMMENDED, label: 'Recommended',  category: 'rate', defaultVisible: true,  format: 'currency', width: 130 },
+  { key: COL.OVERRIDE,    label: 'Override',     category: 'rate', defaultVisible: true,  format: 'currency', width: 100 },
+  { key: COL.PROTECT,     label: 'Protect (Min)',category: 'rate', defaultVisible: false, format: 'currency', width: 110 },
 
-  // Metric columns — 5 defaults
-  { key: COL.PROTECT,              label: 'Protect (Min)',       category: 'rate',        defaultVisible: true,  format: 'currency', width: 110 },
-  { key: COL.COMMITTED_OCCUPANCY,  label: 'Committed Occ.',      category: 'occupancy',   defaultVisible: true,  format: 'integer',  width: 130 },
-  { key: COL.PICKUP,               label: 'Pickup',              category: 'commitment',  defaultVisible: true,  format: 'integer',  width: 90 },
-  { key: COL.COMMIT_ADR_STLY,      label: 'Commit ADR STLY',     category: 'commitment',  defaultVisible: true,  format: 'currency', width: 130 },
-  { key: COL.OCCUPANCY_STLY,       label: 'Occupancy STLY',      category: 'occupancy',   defaultVisible: true,  format: 'percent',  width: 120 },
+  // ── Demand Occupancy ───────────────────────────────────────────────────────
+  { key: COL.DEMAND_OCC_RN,           label: 'Demand Occupancy', subLabel: 'RN',          category: 'demand_occupancy', defaultVisible: false, format: 'integer', width: 170 },
+  { key: COL.DEMAND_OCC_ADJ_PCT,      label: 'Demand Occupancy', subLabel: 'Adjusted %',  category: 'demand_occupancy', defaultVisible: true,  format: 'percent', width: 160 },
+  { key: COL.DEMAND_OCC_PHYSICAL_PCT, label: 'Demand Occupancy', subLabel: 'Physical %',  category: 'demand_occupancy', defaultVisible: false, format: 'percent', width: 120 },
 
-  // Remaining occupancy metrics
-  { key: COL.DEMAND_OCCUPANCY,     label: 'Demand Occupancy',    category: 'occupancy',   defaultVisible: false, format: 'percent',  width: 130 },
-  { key: COL.DEMAND_RATIO,         label: 'Demand Ratio',        category: 'occupancy',   defaultVisible: false, format: 'percent',  width: 115 },
-  { key: COL.OCCUPANCY,            label: 'Occupancy',           category: 'occupancy',   defaultVisible: false, format: 'integer',  width: 100 },
-  { key: COL.OCCUPANCY_PERCENT,    label: 'Occupancy %',         category: 'occupancy',   defaultVisible: false, format: 'percent',  width: 110 },
-  { key: COL.OCCUPANCY_FINAL_LY,   label: 'Occupancy Final LY',  category: 'occupancy',   defaultVisible: false, format: 'percent',  width: 140 },
+  // ── Duetto Forecast ────────────────────────────────────────────────────────
+  { key: COL.DUETTO_FORECAST_RN,           label: 'Duetto Forecast', subLabel: 'RN',           category: 'duetto_forecast', defaultVisible: false, format: 'integer',  width: 120 },
+  { key: COL.DUETTO_FORECAST_ADJ_PCT,      label: 'Duetto Forecast', subLabel: 'Adjusted %',   category: 'duetto_forecast', defaultVisible: false, format: 'percent',  width: 120 },
+  { key: COL.DUETTO_FORECAST_PHYSICAL_PCT, label: 'Duetto Forecast', subLabel: 'Physical %',   category: 'duetto_forecast', defaultVisible: false, format: 'percent',  width: 120 },
+  { key: COL.DUETTO_FORECAST_REVPAR,       label: 'Duetto Forecast', subLabel: 'Room RevPAR',  category: 'duetto_forecast', defaultVisible: false, format: 'currency', width: 130 },
 
-  // Remaining commitment metrics
-  { key: COL.COMMIT,               label: 'Commit Rooms',        category: 'commitment',  defaultVisible: false, format: 'integer',  width: 115 },
-  { key: COL.COMMIT_ADR,           label: 'Commit ADR',          category: 'commitment',  defaultVisible: false, format: 'currency', width: 110 },
-  { key: COL.FINAL_COMMIT_ADR_STLY,label: 'Final Commit ADR STLY', category: 'commitment', defaultVisible: false, format: 'currency', width: 160 },
+  // ── Committed Occupancy (merged with Rooms Commit) ────────────────────────
+  { key: COL.ROOMS_COMMIT_RN,        label: 'Committed Occupancy', subLabel: 'Rooms',         category: 'committed_occ', defaultVisible: true,  format: 'integer',  width: 110 },
+  { key: COL.ROOMS_COMMIT_STLY_DOW,  label: 'Committed Occupancy', subLabel: 'STLY (DOW)',    category: 'committed_occ', defaultVisible: true,  format: 'integer',  width: 120 },
+  { key: COL.ROOMS_COMMIT_STLY_TBB,  label: 'Committed Occupancy', subLabel: 'STLY (DOW) TBB',category: 'committed_occ', defaultVisible: false, format: 'integer',  width: 155 },
+  { key: COL.COMMITTED_OCC_PCT,      label: 'Committed Occupancy', subLabel: 'Physical %',    category: 'committed_occ', defaultVisible: false, format: 'percent',  width: 110 },
+  { key: COL.COMMITTED_OCC_ADJ_PCT,  label: 'Committed Occupancy', subLabel: 'Adjusted %',   category: 'committed_occ', defaultVisible: false, format: 'percent',  width: 120 },
+  { key: COL.COMMITTED_OCC_STLY,     label: 'Committed Occupancy', subLabel: 'STLY (DOW) %', category: 'committed_occ', defaultVisible: false, format: 'percent',  width: 130 },
+  { key: COL.COMMITTED_OCC_FINAL_LY, label: 'Committed Occupancy', subLabel: 'Final LY %',   category: 'committed_occ', defaultVisible: false, format: 'percent',  width: 120 },
+  { key: COL.COMMITTED_OCC_ROOM_REV, label: 'Committed Occupancy', subLabel: 'Room Revenue',  category: 'committed_occ', defaultVisible: false, format: 'currency', width: 130 },
 
-  // Competitor metrics
-  { key: COL.COMPETITOR_AVG,       label: 'Competitor Avg',      category: 'competitor',  defaultVisible: false, format: 'currency', width: 125 },
-  { key: COL.COMPETITOR_LOW,       label: 'Competitor Low',      category: 'competitor',  defaultVisible: false, format: 'currency', width: 120 },
-  { key: COL.COMPETITOR_HIGH,      label: 'Competitor High',     category: 'competitor',  defaultVisible: false, format: 'currency', width: 125 },
-  { key: COL.SHOPPED_RATE,         label: 'Shopped Rate',        category: 'competitor',  defaultVisible: false, format: 'currency', width: 115 },
+  // ── Pickup (X-Y-Z Days) ────────────────────────────────────────────────────
+  { key: COL.PICKUP_ROOMS_OTB,    label: 'Pickup (1 - 3 - 5)', subLabel: 'Rooms (OTB)',      category: 'pickup', defaultVisible: true,  format: 'integer',  width: 140 },
+  { key: COL.PICKUP_ROOMS_COMMIT, label: 'Pickup (1 - 3 - 5)', subLabel: 'Rooms (Commit)',   category: 'pickup', defaultVisible: false, format: 'integer',  width: 140 },
+  { key: COL.PICKUP_ADR_COMMIT,   label: 'Pickup (1 - 3 - 5)', subLabel: 'ADR (Commit)',     category: 'pickup', defaultVisible: false, format: 'currency', width: 200 },
+  { key: COL.PICKUP_REV_COMMIT,   label: 'Pickup (1 - 3 - 5)', subLabel: 'Revenue (Commit)', category: 'pickup', defaultVisible: false, format: 'currency', width: 220 },
 
-  // Forecast metrics
-  { key: COL.DUETTO_FORECAST,      label: 'Duetto Forecast',     category: 'forecast',    defaultVisible: false, format: 'integer',  width: 130 },
-  { key: COL.DUETTO_FORECAST_PERCENT, label: 'Duetto Forecast %', category: 'forecast',  defaultVisible: false, format: 'percent',  width: 140 },
+  // ── OTB ────────────────────────────────────────────────────────────────────
+  { key: COL.OTB_ROOMS,        label: 'OTB', subLabel: 'Rooms',       category: 'otb', defaultVisible: false, format: 'integer', width: 100 },
+  { key: COL.OTB_PHYSICAL_PCT, label: 'OTB', subLabel: 'Physical %',  category: 'otb', defaultVisible: false, format: 'percent', width: 110 },
 
-  // Inventory metrics
-  { key: COL.REMAINING,            label: 'Remaining',           category: 'inventory',   defaultVisible: false, format: 'integer',  width: 100 },
-  { key: COL.REMAINING_ROOMS,      label: 'Remaining Rooms',     category: 'inventory',   defaultVisible: false, format: 'integer',  width: 130 },
-  { key: COL.OUT_OF_ORDER,         label: 'Out of Order',        category: 'inventory',   defaultVisible: false, format: 'integer',  width: 110 },
+  // ── ADR (Commit) ───────────────────────────────────────────────────────────
+  { key: COL.ADR_COMMIT_TOTAL,     label: 'ADR (Commit)', subLabel: 'Total ADR',          category: 'adr_commit', defaultVisible: false, format: 'currency', width: 120 },
+  { key: COL.ADR_COMMIT_STLY,      label: 'ADR (Commit)', subLabel: 'STLY (DOW) ADR',    category: 'adr_commit', defaultVisible: false, format: 'currency', width: 155 },
+  { key: COL.ADR_COMMIT_FINAL_LY,  label: 'ADR (Commit)', subLabel: 'Final LY (DOW) ADR',category: 'adr_commit', defaultVisible: false, format: 'currency', width: 150 },
+  { key: COL.ADR_COMMIT_NON_GROUP, label: 'ADR (Commit)', subLabel: 'Non-Group ADR',      category: 'adr_commit', defaultVisible: false, format: 'currency', width: 130 },
+  { key: COL.ADR_COMMIT_GROUP,     label: 'ADR (Commit)', subLabel: 'Group ADR',          category: 'adr_commit', defaultVisible: false, format: 'currency', width: 120 },
 
-  // Revenue metrics
-  { key: COL.NON_GROUP_ADR,        label: 'Non-Group ADR',       category: 'revenue',     defaultVisible: false, format: 'currency', width: 120 },
-  { key: COL.GROUP_ADR,            label: 'Group ADR',           category: 'revenue',     defaultVisible: false, format: 'currency', width: 100 },
-  { key: COL.DIFFERENTIAL,         label: 'Differential',        category: 'revenue',     defaultVisible: false, format: 'currency', width: 110 },
+  // ── Inventory ──────────────────────────────────────────────────────────────
+  { key: COL.INVENTORY_OOO,                 label: 'Inventory', subLabel: 'Out of Order Rooms',       category: 'inventory', defaultVisible: false, format: 'integer', width: 140 },
+  { key: COL.INVENTORY_REMAINING,           label: 'Inventory', subLabel: 'Remaining Rooms',          category: 'inventory', defaultVisible: true,  format: 'integer', width: 140 },
+  { key: COL.INVENTORY_COMPOSITE_CAP,       label: 'Inventory', subLabel: 'Composite Capacity',       category: 'inventory', defaultVisible: false, format: 'integer', width: 150 },
+  { key: COL.INVENTORY_COMPOSITE_REMAINING, label: 'Inventory', subLabel: 'Composite Remaining Rooms',category: 'inventory', defaultVisible: false, format: 'integer', width: 180 },
+
+  // ── Expedia ────────────────────────────────────────────────────────────────
+  { key: COL.EXPEDIA_SHOPPED, label: 'Expedia', subLabel: 'My Shopped Rate', category: 'expedia', defaultVisible: false, format: 'currency', width: 140 },
+
+  // ── Competitors ────────────────────────────────────────────────────────────
+  { key: COL.COMPETITOR_LOW,  label: 'Competitors', subLabel: 'Low',  category: 'competitors', defaultVisible: false, format: 'currency', width: 120 },
+  { key: COL.COMPETITOR_AVG,  label: 'Competitors', subLabel: 'Avg',  category: 'competitors', defaultVisible: false, format: 'currency', width: 120 },
+  { key: COL.COMPETITOR_HIGH, label: 'Competitors', subLabel: 'High', category: 'competitors', defaultVisible: false, format: 'currency', width: 120 },
+
+  // ── Cancellations ──────────────────────────────────────────────────────────
+  { key: COL.CANCELLATIONS_ROOMS,   label: 'Cancellations', subLabel: 'Rooms',   category: 'cancellations', defaultVisible: false, format: 'integer',  width: 120 },
+  { key: COL.CANCELLATIONS_REVENUE, label: 'Cancellations', subLabel: 'Revenue', category: 'cancellations', defaultVisible: false, format: 'currency', width: 120 },
+
+  // ── Group Business ─────────────────────────────────────────────────────────
+  { key: COL.GROUP_BUSINESS_ROOMS,   label: 'Group Business', subLabel: 'Rooms',   category: 'group_business', defaultVisible: false, format: 'integer',  width: 130 },
+  { key: COL.GROUP_BUSINESS_REVENUE, label: 'Group Business', subLabel: 'Revenue', category: 'group_business', defaultVisible: false, format: 'currency', width: 130 },
+
+  // ── Events & Restrictions (merged group) ──────────────────────────────────
+  { key: COL.EVENTS_COUNT,       label: 'Events & Restrictions', subLabel: 'Events',       category: 'events_restrictions', defaultVisible: false, format: 'integer', width: 110 },
+  { key: COL.RESTRICTIONS_COUNT, label: 'Events & Restrictions', subLabel: 'Restrictions', category: 'events_restrictions', defaultVisible: false, format: 'integer', width: 120 },
 ]
 
-export const CATEGORY_LABELS: Record<ColCategory, string> = {
-  rate:        'Rate',
-  occupancy:   'Occupancy',
-  commitment:  'Commitment',
-  competitor:  'Competitor',
-  forecast:    'Forecast',
-  inventory:   'Inventory',
-  revenue:     'Revenue',
-}
+// Category order for the modal tree (matches nyle version tab order, rate first)
+export const ALL_CATEGORIES: ColCategory[] = [
+  'rate',
+  'demand_occupancy',
+  'duetto_forecast',
+  'pickup',
+  'committed_occ',
+  'otb',
+  'adr_commit',
+  'inventory',
+  'expedia',
+  'competitors',
+  'cancellations',
+  'group_business',
+  'events_restrictions',
+]
 
-// The metric-only columns (not rate columns — these only appear on expand)
-export const METRIC_COLS = COL_DEFS.filter(
-  (c) => c.key !== COL.CURRENT && c.key !== COL.RECOMMENDED && c.key !== COL.OVERRIDE
-)
-
-// Default visible column keys (what the user sees before changing anything)
 export const DEFAULT_VISIBLE_COLS = new Set<ColKey>(
   COL_DEFS.filter((c) => c.defaultVisible || c.alwaysVisible).map((c) => c.key)
 )
@@ -151,7 +244,7 @@ export function formatDateHeader(isoDate: string): string {
   return d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
-// ─── Mock data generation ─────────────────────────────────────────────────────
+// ─── Mock data ────────────────────────────────────────────────────────────────
 
 const BASE_RATES: Record<string, number> = {
   'prop-1': 190, 'prop-2': 175, 'prop-3': 210,
@@ -166,63 +259,130 @@ const seed = (hotelId: string, dateIso: string, salt: number) => {
 
 const fmt = (val: number, format: ColMeta['format'], currency = '€') => {
   if (format === 'currency') return `${currency}${val.toFixed(2)}`
-  if (format === 'percent') return `${val.toFixed(1)}%`
+  if (format === 'percent')  return `${val.toFixed(1)}%`
   return String(Math.round(val))
 }
 
 export function generateRowData(dates: string[]) {
   return MOCK_PROPERTIES.map((hotel) => {
     const base = BASE_RATES[hotel.id] ?? 200
-    const currency = hotel.countryCode === 'NL' ? '€' : hotel.countryCode === 'DE' ? '€' : '€'
+    const cur  = '€'
 
     const row: Record<string, string | number> = {
-      hotelId: hotel.id,
+      hotelId:   hotel.id,
       hotelName: hotel.name,
     }
 
-    dates.forEach((date, di) => {
+    dates.forEach((date) => {
       const s = (salt: number) => seed(hotel.id, date, salt)
 
-      // Rate values
-      const isFriday = new Date(date + 'T00:00:00').getDay() === 5
-      const isSaturday = new Date(date + 'T00:00:00').getDay() === 6
-      const weekendMult = isFriday ? 1.2 : isSaturday ? 1.15 : 1.0
-      const current = Math.round(base * weekendMult * (0.9 + s(1) * 0.2))
-      const recommended = Math.round(current * (0.95 + s(2) * 0.15))
-      const protect = Math.round(current * 0.85)
-      const occ = Math.round(40 + s(3) * 45)
-      const occStly = Math.round(38 + s(10) * 48)
-      const commitRooms = Math.round(occ * 0.6)
-      const pickup = Math.round(s(11) * 8)
+      const isFri = new Date(date + 'T00:00:00').getDay() === 5
+      const isSat = new Date(date + 'T00:00:00').getDay() === 6
+      const wkMult = isFri ? 1.2 : isSat ? 1.15 : 1.0
 
-      row[toColId(date, COL.CURRENT)]             = fmt(current, 'currency', currency)
-      row[toColId(date, COL.RECOMMENDED)]         = fmt(recommended, 'currency', currency)
-      row[toColId(date, COL.OVERRIDE)]            = ''   // editable, starts empty
-      row[toColId(date, COL.PROTECT)]             = fmt(protect, 'currency', currency)
-      row[toColId(date, COL.COMMITTED_OCCUPANCY)] = fmt(commitRooms, 'integer')
-      row[toColId(date, COL.PICKUP)]              = fmt(pickup, 'integer')
-      row[toColId(date, COL.COMMIT_ADR_STLY)]     = fmt(current * (0.88 + s(12) * 0.1), 'currency', currency)
-      row[toColId(date, COL.OCCUPANCY_STLY)]      = fmt(occStly, 'percent')
-      row[toColId(date, COL.DEMAND_OCCUPANCY)]    = fmt(occ * (1 + s(4) * 0.3), 'percent')
-      row[toColId(date, COL.DEMAND_RATIO)]        = fmt(0.6 + s(5) * 0.35, 'percent')
-      row[toColId(date, COL.OCCUPANCY)]           = fmt(occ, 'integer')
-      row[toColId(date, COL.OCCUPANCY_PERCENT)]   = fmt(occ, 'percent')
-      row[toColId(date, COL.OCCUPANCY_FINAL_LY)]  = fmt(occStly * (0.95 + s(13) * 0.1), 'percent')
-      row[toColId(date, COL.COMMIT)]              = fmt(commitRooms, 'integer')
-      row[toColId(date, COL.COMMIT_ADR)]          = fmt(current * (0.9 + s(6) * 0.1), 'currency', currency)
-      row[toColId(date, COL.FINAL_COMMIT_ADR_STLY)] = fmt(current * (0.85 + s(14) * 0.12), 'currency', currency)
-      row[toColId(date, COL.COMPETITOR_AVG)]      = fmt(current * (0.95 + s(7) * 0.15), 'currency', currency)
-      row[toColId(date, COL.COMPETITOR_LOW)]      = fmt(current * (0.8 + s(15) * 0.1), 'currency', currency)
-      row[toColId(date, COL.COMPETITOR_HIGH)]     = fmt(current * (1.1 + s(16) * 0.15), 'currency', currency)
-      row[toColId(date, COL.SHOPPED_RATE)]        = fmt(current * (0.92 + s(17) * 0.12), 'currency', currency)
-      row[toColId(date, COL.DUETTO_FORECAST)]     = fmt(Math.round(occ * (1.05 + s(8) * 0.15)), 'integer')
-      row[toColId(date, COL.DUETTO_FORECAST_PERCENT)] = fmt(0.55 + s(18) * 0.3, 'percent')
-      row[toColId(date, COL.REMAINING)]           = fmt(Math.round(100 - occ), 'integer')
-      row[toColId(date, COL.REMAINING_ROOMS)]     = fmt(Math.round((100 - occ) * 0.85), 'integer')
-      row[toColId(date, COL.OUT_OF_ORDER)]        = fmt(Math.round(s(9) * 5), 'integer')
-      row[toColId(date, COL.NON_GROUP_ADR)]       = fmt(current * (0.95 + s(19) * 0.08), 'currency', currency)
-      row[toColId(date, COL.GROUP_ADR)]           = fmt(current * (0.85 + s(20) * 0.1), 'currency', currency)
-      row[toColId(date, COL.DIFFERENTIAL)]        = fmt((recommended - current) * (0.8 + s(21) * 0.4), 'currency', currency)
+      // Core rate / occ values used across multiple columns
+      const current     = Math.round(base * wkMult * (0.9  + s(1)  * 0.2))
+      const recommended = Math.round(current * (0.95 + s(2)  * 0.15))
+      const occ         = Math.round(40 + s(3) * 45)   // rooms
+      const occPct      = occ                            // reuse as %
+      const occStly     = Math.round(38 + s(10) * 48)
+      const commitRooms = Math.round(occ * 0.6)
+      const pickup      = Math.round(s(11) * 8)
+      const adr         = current * (0.9 + s(6) * 0.1)
+
+      const id = (k: ColKey) => toColId(date, k)
+
+      // Rate
+      row[id(COL.CURRENT)]     = fmt(current, 'currency', cur)
+      row[id(COL.RECOMMENDED)] = fmt(recommended, 'currency', cur)
+      row[id(COL.OVERRIDE)]    = ''
+      row[id(COL.PROTECT)]     = fmt(Math.round(current * 0.85), 'currency', cur)
+
+      // Demand Occupancy
+      row[id(COL.DEMAND_OCC_RN)]           = fmt(Math.round(occ * (1.05 + s(4) * 0.2)), 'integer')
+      row[id(COL.DEMAND_OCC_ADJ_PCT)]      = fmt(occ * (1 + s(4) * 0.3), 'percent')
+      row[id(COL.DEMAND_OCC_PHYSICAL_PCT)] = fmt(occ * (0.9 + s(30) * 0.15), 'percent')
+
+      // Duetto Forecast
+      row[id(COL.DUETTO_FORECAST_RN)]           = fmt(Math.round(occ * (1.05 + s(8) * 0.15)), 'integer')
+      row[id(COL.DUETTO_FORECAST_ADJ_PCT)]      = fmt(0.55 + s(18) * 0.3, 'percent')
+      row[id(COL.DUETTO_FORECAST_PHYSICAL_PCT)] = fmt(0.50 + s(31) * 0.28, 'percent')
+      row[id(COL.DUETTO_FORECAST_REVPAR)]       = fmt(current * (0.8 + s(32) * 0.15), 'currency', cur)
+
+      // Committed Occupancy
+      row[id(COL.COMMITTED_OCC_PCT)]      = fmt(occPct, 'percent')
+      row[id(COL.COMMITTED_OCC_STLY)]     = fmt(occStly, 'percent')
+      row[id(COL.COMMITTED_OCC_FINAL_LY)] = fmt(occStly * (0.95 + s(13) * 0.1), 'percent')
+      row[id(COL.COMMITTED_OCC_ADJ_PCT)]  = fmt(occPct * (0.95 + s(33) * 0.1), 'percent')
+      row[id(COL.COMMITTED_OCC_ROOM_REV)] = fmt(commitRooms * adr, 'currency', cur)
+
+      // Pickup — all stored as "d1|d3|d5" so PickupCell can render three values
+      const p1 = Math.max(0, Math.round(s(11) * 4))
+      const p3 = p1 + Math.max(0, Math.round(s(47) * 4))
+      const p5 = p3 + Math.max(0, Math.round(s(48) * 6))
+      row[id(COL.PICKUP_ROOMS_OTB)] = `${p1}|${p3}|${p5}`
+
+      const a1 = fmt(adr * (0.93 + s(34) * 0.05), 'currency', cur)
+      const a3 = fmt(adr * (0.95 + s(34) * 0.07), 'currency', cur)
+      const a5 = fmt(adr * (0.97 + s(34) * 0.09), 'currency', cur)
+      row[id(COL.PICKUP_ADR_COMMIT)] = `${a1}|${a3}|${a5}`
+
+      const rc1 = Math.max(0, Math.round(s(49) * 3))
+      const rc3 = rc1 + Math.max(0, Math.round(s(50) * 4))
+      const rc5 = rc3 + Math.max(0, Math.round(s(51) * 5))
+      row[id(COL.PICKUP_ROOMS_COMMIT)] = `${rc1}|${rc3}|${rc5}`
+
+      const rv1 = fmt(rc1 * adr * (0.85 + s(35) * 0.1), 'currency', cur)
+      const rv3 = fmt(rc3 * adr * (0.85 + s(35) * 0.1), 'currency', cur)
+      const rv5 = fmt(rc5 * adr * (0.85 + s(35) * 0.1), 'currency', cur)
+      row[id(COL.PICKUP_REV_COMMIT)] = `${rv1}|${rv3}|${rv5}`
+
+      // Rooms (Commit)
+      row[id(COL.ROOMS_COMMIT_RN)]       = fmt(commitRooms, 'integer')
+      row[id(COL.ROOMS_COMMIT_STLY_TBB)] = fmt(Math.round(commitRooms * (0.9 + s(36) * 0.2)), 'integer')
+      row[id(COL.ROOMS_COMMIT_STLY_DOW)] = fmt(Math.round(commitRooms * (0.85 + s(37) * 0.2)), 'integer')
+
+      // OTB
+      row[id(COL.OTB_ROOMS)]        = fmt(occ + pickup, 'integer')
+      row[id(COL.OTB_PHYSICAL_PCT)] = fmt((occ + pickup) / 100, 'percent')
+
+      // ADR (Commit)
+      row[id(COL.ADR_COMMIT_TOTAL)]     = fmt(adr, 'currency', cur)
+      row[id(COL.ADR_COMMIT_STLY)]      = fmt(current * (0.88 + s(12) * 0.1), 'currency', cur)
+      row[id(COL.ADR_COMMIT_FINAL_LY)]  = fmt(current * (0.85 + s(14) * 0.12), 'currency', cur)
+      row[id(COL.ADR_COMMIT_NON_GROUP)] = fmt(current * (0.95 + s(19) * 0.08), 'currency', cur)
+      row[id(COL.ADR_COMMIT_GROUP)]     = fmt(current * (0.85 + s(20) * 0.1), 'currency', cur)
+
+      // Inventory
+      row[id(COL.INVENTORY_OOO)]                 = fmt(Math.round(s(9) * 5), 'integer')
+      row[id(COL.INVENTORY_REMAINING)]            = fmt(Math.round(100 - occ), 'integer')
+      row[id(COL.INVENTORY_COMPOSITE_CAP)]        = fmt(Math.round(100 + s(38) * 20), 'integer')
+      row[id(COL.INVENTORY_COMPOSITE_REMAINING)]  = fmt(Math.round((100 - occ) * (0.9 + s(39) * 0.1)), 'integer')
+
+      // Expedia
+      row[id(COL.EXPEDIA_SHOPPED)] = fmt(current * (0.92 + s(17) * 0.12), 'currency', cur)
+
+      // Competitors
+      row[id(COL.COMPETITOR_LOW)]  = fmt(current * (0.80 + s(15) * 0.10), 'currency', cur)
+      row[id(COL.COMPETITOR_AVG)]  = fmt(current * (0.95 + s(7)  * 0.15), 'currency', cur)
+      row[id(COL.COMPETITOR_HIGH)] = fmt(current * (1.10 + s(16) * 0.15), 'currency', cur)
+
+      // Cancellations
+      row[id(COL.CANCELLATIONS_ROOMS)]   = fmt(Math.round(s(40) * 8), 'integer')
+      row[id(COL.CANCELLATIONS_REVENUE)] = fmt(Math.round(s(40) * 8) * adr * (0.8 + s(41) * 0.2), 'currency', cur)
+
+      // Pushed Rate
+      row[id(COL.PUSHED_RATE)] = fmt(current * (0.98 + s(42) * 0.04), 'currency', cur)
+
+      // Group Business
+      row[id(COL.GROUP_BUSINESS_ROOMS)]   = fmt(Math.round(commitRooms * (0.2 + s(43) * 0.15)), 'integer')
+      row[id(COL.GROUP_BUSINESS_REVENUE)] = fmt(Math.round(commitRooms * (0.2 + s(43) * 0.15)) * adr * (0.85 + s(44) * 0.1), 'currency', cur)
+
+      // Events
+      row[id(COL.EVENTS_COUNT)] = fmt(Math.round(s(45) * 3), 'integer')
+
+      // Restrictions
+      row[id(COL.RESTRICTIONS_COUNT)] = fmt(Math.round(s(46) * 5), 'integer')
     })
 
     return row
