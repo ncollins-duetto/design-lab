@@ -91,10 +91,6 @@ const useStyles = makeStyles((theme) => ({
     fontSize: 14,
     background: theme.palette.background.paper,
     borderRadius: 4,
-    '& .MuiSelect-root': {
-      paddingTop: 8,
-      paddingBottom: 8,
-    },
     '& .MuiOutlinedInput-notchedOutline': {
       borderColor: theme.palette.grey[300],
     },
@@ -233,6 +229,7 @@ export default function ManageRatesMultiPage() {
           className={classes.propertySelect}
           variant="outlined"
           IconComponent={ExpandMoreIcon}
+          SelectDisplayProps={{ style: { paddingTop: 8, paddingBottom: 8, fontSize: 14 } }}
           renderValue={(selected) => {
             const ids = selected as string[]
             return `${ids.length} ${ids.length === 1 ? 'property' : 'properties'} selected`
