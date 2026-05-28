@@ -81,7 +81,10 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: 'column' as const,
   },
   searchWrapper: {
-    padding: theme.spacing(1, 1.5),
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.25),
+    padding: theme.spacing(0.5, 0.75, 0.5, 0.25),
     borderBottom: `1px solid ${theme.palette.divider}`,
     flexShrink: 0,
   },
@@ -195,6 +198,26 @@ export default function TableSettingsModal({ open, onClose, visibleCols, onConfi
     })
   }, [])
 
+  const allToggleableCols = useMemo(() => COL_DEFS.filter((c) => !c.alwaysVisible), [])
+  const allExpanded = expanded.size === ALL_CATEGORIES.length
+
+  const toggleAllExpanded = useCallback(() => {
+    setExpanded(allExpanded ? new Set() : new Set(ALL_CATEGORIES))
+  }, [allExpanded])
+
+  const toggleAllCols = useCallback(() => {
+    setStaged((prev) => {
+      const state = categoryState(allToggleableCols, prev)
+      const next = new Set(prev)
+      if (state === 'all') {
+        allToggleableCols.forEach((m) => next.delete(m.key))
+      } else {
+        allToggleableCols.forEach((m) => next.add(m.key))
+      }
+      return next
+    })
+  }, [allToggleableCols])
+
   // ── Toggles ───────────────────────────────────────────────────────────────
 
   const toggle = useCallback((key: ColKey) => {
@@ -254,6 +277,9 @@ export default function TableSettingsModal({ open, onClose, visibleCols, onConfi
   )
 
   const hasResults = filteredRateCols.length > 0 || filteredMetricCats.length > 0
+  const masterState = categoryState(allToggleableCols, staged)
+  const rateGroupState = categoryState(RATE_COLS.filter((m) => !m.alwaysVisible), staged)
+  const rateExpanded = q ? true : expanded.has('rate' as ColCategory)
 
   // ── Row display text ──────────────────────────────────────────────────────
 
@@ -274,30 +300,45 @@ export default function TableSettingsModal({ open, onClose, visibleCols, onConfi
 
       <DialogContent className={classes.content}>
         <Paper className={classes.columnsTreePaper}>
-          {/* Search */}
+          {/* Search + master controls */}
           <div className={classes.searchWrapper}>
-            <TextField
-              variant="outlined"
+            <IconButton size="small" className={classes.chevronBtn} onClick={toggleAllExpanded} disabled={!!q}>
+              <ExpandMoreIcon
+                style={{ fontSize: 18, transition: 'transform 0.15s', transform: allExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+              />
+            </IconButton>
+            <Checkbox
+              className={classes.checkbox}
+              checked={masterState === 'all'}
+              indeterminate={masterState === 'some'}
+              onChange={toggleAllCols}
               size="small"
-              fullWidth
-              placeholder="Search columns..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-                endAdornment: searchQuery ? (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearchQuery('')}>
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ) : undefined,
-              }}
+              color="primary"
             />
+            <div style={{ flex: 1 }}>
+              <TextField
+                variant="outlined"
+                size="small"
+                fullWidth
+                placeholder="Search columns..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchQuery ? (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => setSearchQuery('')}>
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : undefined,
+                }}
+              />
+            </div>
           </div>
 
           <div className={classes.columnList}>
@@ -310,8 +351,24 @@ export default function TableSettingsModal({ open, onClose, visibleCols, onConfi
             {/* ── RATE section ─────────────────────────────────────────── */}
             {filteredRateCols.length > 0 && (
               <>
-                {filteredRateCols.map((meta) => (
-                  <div key={meta.key} className={classes.row}>
+                <div className={classes.row}>
+                  <IconButton size="small" className={classes.chevronBtn} onClick={() => toggleExpand('rate' as ColCategory)} disabled={!!q}>
+                    <ExpandMoreIcon
+                      style={{ fontSize: 18, transition: 'transform 0.15s', transform: rateExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+                    />
+                  </IconButton>
+                  <Checkbox
+                    className={classes.checkbox}
+                    checked={rateGroupState === 'all'}
+                    indeterminate={rateGroupState === 'some'}
+                    onChange={() => toggleGroup(RATE_COLS)}
+                    size="small"
+                    color="primary"
+                  />
+                  <Typography className={classes.groupLabel}>Rates</Typography>
+                </div>
+                {rateExpanded && filteredRateCols.map((meta) => (
+                  <div key={meta.key} className={`${classes.row} ${classes.childRow}`}>
                     <Checkbox
                       className={classes.checkbox}
                       checked={meta.alwaysVisible || staged.has(meta.key)}
