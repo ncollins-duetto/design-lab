@@ -11,7 +11,6 @@ export default function Home() {
         { label: 'Pricing & Strategy', href: '/' },
         { label: 'Your Prototype' },
       ]}
-      propertyLabel="All Properties"
     >
       <Box p={4}>
         <Typography variant="h4" gutterBottom>
