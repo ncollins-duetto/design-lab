@@ -3,15 +3,17 @@ import { color2026 } from '@duetto/duetto-components'
 import {
   COL,
   COL_DEFS,
+  ColMeta,
   ColKey,
+  ColCategory,
+  CATEGORY_LABELS,
+  ALL_CATEGORIES,
   formatDateHeader,
   toColId,
 } from '@/lib/mock/rates'
-import { RateLockCell, RecommendedCheckboxCell, EditableRateInput } from './cellRenderers'
+import { RateLockCell, RecommendedCheckboxCell, RecommendedHeaderCell, EditableRateInput, PickupCell } from './cellRenderers'
 
-const ALWAYS_ON_COLS: ColKey[] = [COL.CURRENT, COL.RECOMMENDED, COL.OVERRIDE]
-
-const colMetaByKey = Object.fromEntries(COL_DEFS.map((c) => [c.key, c]))
+// ─── Hotel pinned column ──────────────────────────────────────────────────────
 
 function hotelColumnDef(): ColDef {
   return {
@@ -27,25 +29,30 @@ function hotelColumnDef(): ColDef {
   }
 }
 
-function buildChildCol(dateIso: string, key: ColKey, isMetric: boolean, groupIndex: number): ColDef {
-  const meta = colMetaByKey[key]
-  const colId = toColId(dateIso, key)
-  const subClass = groupIndex % 2 === 0 ? 'sub-header-even' : 'sub-header-odd'
+// ─── Leaf column builder ──────────────────────────────────────────────────────
+// Builds the bottom-level column (sub label row). The main label and date rows
+// are handled by the ColGroupDef nesting above this.
+
+function buildLeafCol(dateIso: string, meta: ColMeta, colorClass: string): ColDef {
+  const colId = toColId(dateIso, meta.key)
+  const isGroupEdge = meta.key === COL.CURRENT
 
   let cellRenderer: unknown = undefined
-  if (key === COL.CURRENT) cellRenderer = RateLockCell
-  else if (key === COL.RECOMMENDED) cellRenderer = RecommendedCheckboxCell
-  else if (key === COL.OVERRIDE || key === COL.PROTECT) cellRenderer = EditableRateInput
+  if (meta.key === COL.CURRENT)               cellRenderer = RateLockCell
+  else if (meta.key === COL.RECOMMENDED)      cellRenderer = RecommendedCheckboxCell
+  else if (meta.key === COL.OVERRIDE || meta.key === COL.PROTECT) cellRenderer = EditableRateInput
+  else if (meta.category === 'pickup') cellRenderer = PickupCell
 
-  const isGroupEdge = key === COL.CURRENT
+  const headerComponent = meta.key === COL.RECOMMENDED ? RecommendedHeaderCell : undefined
 
   return {
     colId,
     field: colId,
-    headerName: meta?.label ?? key,
-    width: [COL.CURRENT, COL.RECOMMENDED, COL.OVERRIDE].includes(key) ? 155 : meta?.width ?? 130,
-    columnGroupShow: isMetric ? 'open' : undefined,
-    headerClass: ['subcolumn-header', subClass, ...(isGroupEdge ? ['col-group-edge-header'] : [])],
+    // Show sub label in the leaf header; fall back to main label for cols without one
+    headerName: meta.subLabel ?? meta.label,
+    headerComponent,
+    headerClass: ['leaf-header', colorClass, ...(isGroupEdge ? ['col-group-edge-header'] : [])],
+    width: meta.width ?? 120,
     cellClass: isGroupEdge ? 'col-group-edge' : undefined,
     cellStyle: { textAlign: 'right', padding: '0 4px' },
     cellRenderer,
@@ -53,33 +60,71 @@ function buildChildCol(dateIso: string, key: ColKey, isMetric: boolean, groupInd
   }
 }
 
+// ─── Public builder ───────────────────────────────────────────────────────────
+// Three-level hierarchy: Date group → Main label group → Sub label leaf
+//
+// Rate columns (no subLabel, always-on) are direct children of the date group —
+// AG Grid automatically spans them across the main-label header row.
+//
+// Metric columns are wrapped in a main-label ColGroupDef per category so the
+// main label ("Demand Occupancy", "ADR (Commit)", etc.) appears as its own row.
+//
+// Categories whose every visible column has no subLabel (Events, Restrictions,
+// Pushed Rate) are also direct children — no intermediate group needed.
+
 export function buildColumnDefs(
   dates: string[],
-  visibleCols: Set<ColKey>
+  visibleCols: Set<ColKey>,
 ): (ColDef | ColGroupDef)[] {
   const cols: (ColDef | ColGroupDef)[] = [hotelColumnDef()]
 
   dates.forEach((dateIso, groupIndex) => {
-    const headerName = formatDateHeader(dateIso)
-    const groupClass = groupIndex % 2 === 0 ? 'date-group-even' : 'date-group-odd'
+    const colorClass = groupIndex % 2 === 0 ? 'date-even' : 'date-odd'
 
-    const alwaysOnChildren: ColDef[] = ALWAYS_ON_COLS
-      .filter((key) => key === COL.CURRENT || visibleCols.has(key))
-      .map((key) => buildChildCol(dateIso, key, false, groupIndex))
+    // ── Rate columns: always-on, direct children of date group ──────────────
+    const rateCols: ColDef[] = COL_DEFS
+      .filter((c) => c.category === 'rate' && (c.alwaysVisible || visibleCols.has(c.key)))
+      .map((c) => buildLeafCol(dateIso, c, colorClass))
 
-    const metricChildren: ColDef[] = COL_DEFS
-      .filter((c) => !ALWAYS_ON_COLS.includes(c.key as ColKey) && visibleCols.has(c.key))
-      .map((c) => buildChildCol(dateIso, c.key, true, groupIndex))
+    // ── Metric groups: one ColGroupDef per category ──────────────────────────
+    const metricChildren: (ColDef | ColGroupDef)[] = []
 
-    const group: ColGroupDef = {
-      groupId: `${dateIso}_group`,
-      headerName,
+    ALL_CATEGORIES
+      .filter((cat): cat is ColCategory => cat !== 'rate')
+      .forEach((cat) => {
+        const catMetas = COL_DEFS.filter((c) => c.category === cat && visibleCols.has(c.key))
+        if (!catMetas.length) return
+
+        const hasSubLabels = catMetas.some((m) => m.subLabel)
+
+        if (!hasSubLabels) {
+          // No sub labels — direct leaf children (span the main-label row)
+          catMetas.forEach((m) => {
+            metricChildren.push({
+              ...buildLeafCol(dateIso, m, colorClass),
+              columnGroupShow: 'open' as const,
+            })
+          })
+        } else {
+          // Has sub labels — wrap in a main-label group
+          metricChildren.push({
+            groupId:    `${dateIso}_${cat}`,
+            headerName: CATEGORY_LABELS[cat],
+            headerClass: ['main-label-header', colorClass],
+            columnGroupShow: 'open' as const,
+            openByDefault: true,
+            children: catMetas.map((m) => buildLeafCol(dateIso, m, colorClass)),
+          } as ColGroupDef)
+        }
+      })
+
+    cols.push({
+      groupId:    `${dateIso}_date`,
+      headerName: formatDateHeader(dateIso),
+      headerClass: ['date-group-header', colorClass],
       marryChildren: true,
-      headerClass: ['date-group-header', groupClass],
-      children: [...alwaysOnChildren, ...metricChildren],
-    }
-
-    cols.push(group)
+      children: [...rateCols, ...metricChildren],
+    } as ColGroupDef)
   })
 
   return cols
