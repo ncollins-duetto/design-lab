@@ -19,6 +19,7 @@ import {
 } from '@material-ui/core'
 import CloseIcon from '@material-ui/icons/Close'
 import SearchIcon from '@material-ui/icons/Search'
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import { color2026 } from '@duetto/duetto-components'
 import {
   COL,
@@ -110,7 +111,10 @@ const useStyles = makeStyles((theme) => ({
   },
   // indented child rows under a metric group
   childRow: {
-    paddingLeft: theme.spacing(4.5),
+    paddingLeft: theme.spacing(7.5),
+  },
+  chevronBtn: {
+    padding: 4,
   },
   checkbox: {
     padding: '4px 6px',
@@ -173,13 +177,23 @@ export default function TableSettingsModal({ open, onClose, visibleCols, onConfi
   const classes = useStyles()
   const [staged, setStaged] = useState<Set<ColKey>>(new Set(visibleCols))
   const [searchQuery, setSearchQuery] = useState('')
+  const [expanded, setExpanded] = useState<Set<ColCategory>>(new Set(ALL_CATEGORIES))
 
   React.useEffect(() => {
     if (open) {
       setStaged(new Set(visibleCols))
       setSearchQuery('')
+      setExpanded(new Set(ALL_CATEGORIES))
     }
   }, [open, visibleCols])
+
+  const toggleExpand = useCallback((cat: ColCategory) => {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      next.has(cat) ? next.delete(cat) : next.add(cat)
+      return next
+    })
+  }, [])
 
   // ── Toggles ───────────────────────────────────────────────────────────────
 
@@ -296,7 +310,6 @@ export default function TableSettingsModal({ open, onClose, visibleCols, onConfi
             {/* ── RATE section ─────────────────────────────────────────── */}
             {filteredRateCols.length > 0 && (
               <>
-                <Typography className={classes.sectionLabel}>Rate</Typography>
                 {filteredRateCols.map((meta) => (
                   <div key={meta.key} className={classes.row}>
                     <Checkbox
@@ -321,15 +334,28 @@ export default function TableSettingsModal({ open, onClose, visibleCols, onConfi
             {/* ── METRICS section ──────────────────────────────────────── */}
             {filteredMetricCats.length > 0 && (
               <>
-                <Typography className={classes.sectionLabel}>Metrics</Typography>
                 {filteredMetricCats.map(({ cat, metas }) => {
-                  // Use ALL cols in category (not just filtered) for group toggle state
                   const allCatMetas = COL_DEFS.filter((c) => c.category === cat)
                   const state = categoryState(metas, staged)
+                  const isExpanded = q ? true : expanded.has(cat)
                   return (
                     <div key={cat}>
                       {/* Group header row */}
                       <div className={classes.row}>
+                        <IconButton
+                          size="small"
+                          className={classes.chevronBtn}
+                          onClick={() => toggleExpand(cat)}
+                          disabled={!!q}
+                        >
+                          <ExpandMoreIcon
+                            style={{
+                              fontSize: 18,
+                              transition: 'transform 0.15s',
+                              transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)',
+                            }}
+                          />
+                        </IconButton>
                         <Checkbox
                           className={classes.checkbox}
                           checked={state === 'all'}
@@ -343,7 +369,7 @@ export default function TableSettingsModal({ open, onClose, visibleCols, onConfi
                         </Typography>
                       </div>
                       {/* Child rows — indented */}
-                      {metas.map((meta) => (
+                      {isExpanded && metas.map((meta) => (
                         <div key={meta.key} className={`${classes.row} ${classes.childRow}`}>
                           <Checkbox
                             className={classes.checkbox}
