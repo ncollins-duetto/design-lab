@@ -86,9 +86,14 @@ export default function MultiRatesTable({ dates, rowData, visibleCols, collapsed
         .ag-theme-alpine .date-odd  { background-color: #e8eaf5 !important; }
 
         /* ── Hide resize-handle visual bars (keep drag zone functional) ────── */
+        /* Override alpine defaults to match production: lighter borders,
+           8px cell padding (production uses 8px; alpine default is 18px)  */
         .ag-theme-alpine {
           --ag-header-column-resize-handle-display: none;
+          --ag-border-color: #e0e0e0;
+          --ag-cell-horizontal-padding: 8px;
         }
+        .ag-theme-alpine .ag-root-wrapper { border: none; }
 
         /* ── Hide expand/collapse chevrons — groups are always open ────────── */
         .ag-theme-alpine .ag-column-group-icons { display: none !important; }
@@ -107,28 +112,28 @@ export default function MultiRatesTable({ dates, rowData, visibleCols, collapsed
         .ag-theme-alpine .ag-header-group-cell-label { justify-content: center; flex: 1; }
         .ag-theme-alpine .ag-header-group-text       { text-align: center; }
 
-        /* ── Date row — bold 12px, 2px left border on every group after the first.
+        /* ── Date row — bold 14px, 2px left border on every group after the first.
            Uses border-left (same side as col-group-edge below) so the vertical
            separator aligns perfectly through all header rows and body cells.
            The ~ sibling selector skips the first date group to avoid doubling
            up with the hotel column's right border. ────────────────────────── */
-        .ag-theme-alpine .date-group-header { font-size: 12px; }
+        .ag-theme-alpine .date-group-header { font-size: 13px; }
         .ag-theme-alpine .date-group-header ~ .date-group-header { border-left: 2px solid #e0e0e0 !important; }
         .ag-theme-alpine .date-group-header .ag-header-group-text {
           font-weight: 700;
-          color: ${color2026.text.primary};
+          color: ${color2026.text.secondary};
         }
 
-        /* ── Main-label (metric group) row — bold 12px ──────────────────────── */
-        .ag-theme-alpine .main-label-header { font-size: 12px; }
+        /* ── Main-label (metric group) row — bold 13px ──────────────────────── */
+        .ag-theme-alpine .main-label-header { font-size: 13px; }
         .ag-theme-alpine .main-label-header .ag-header-group-text {
           font-weight: 700;
-          color: ${color2026.text.primary};
+          color: ${color2026.text.secondary};
         }
 
         /* ── Sub-label (leaf column) row — regular weight, tighter padding,
            right-aligned to match right-aligned cell data ───────────────── */
-        .ag-theme-alpine .leaf-header { font-size: 12px; }
+        .ag-theme-alpine .leaf-header { font-size: 13px; }
         .ag-theme-alpine .leaf-header .ag-header-cell-label { justify-content: flex-end; }
         .ag-theme-alpine .leaf-header.ag-header-cell {
           padding-left: 6px !important;
@@ -136,8 +141,9 @@ export default function MultiRatesTable({ dates, rowData, visibleCols, collapsed
         }
         .ag-theme-alpine .leaf-header .ag-header-cell-text {
           font-weight: 400;
-          color: ${color2026.text.primary};
+          color: ${color2026.text.secondary};
         }
+        .ag-theme-alpine .leaf-header-bold .ag-header-cell-text { font-weight: 700; }
 
         /* ── Hotel pinned column ─────────────────────────────────────────────── */
         .ag-theme-alpine .hotel-header {
@@ -147,9 +153,9 @@ export default function MultiRatesTable({ dates, rowData, visibleCols, collapsed
         }
         .ag-theme-alpine .ag-pinned-left-header {
           background: ${color2026.dataTable.headerBackground};
-          border-right: 2px solid #e0e0e0 !important;
+          border-right: 1px solid #e0e0e0 !important;
         }
-        .ag-theme-alpine .ag-pinned-left-cols-container { border-right: 2px solid #e0e0e0; }
+        .ag-theme-alpine .ag-pinned-left-cols-container { border-right: 1px solid #e0e0e0; }
         .ag-theme-alpine .ag-cell.ag-cell-last-left-pinned { border-right: none; }
 
         /* ── Data cells ──────────────────────────────────────────────────────── */
