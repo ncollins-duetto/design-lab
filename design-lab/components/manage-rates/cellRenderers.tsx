@@ -1,10 +1,9 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import LockIcon from '@material-ui/icons/Lock'
-import LockOpenIcon from '@material-ui/icons/LockOpen'
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
+import DragHandleIcon from '@material-ui/icons/DragHandle'
 import type { ICellRendererParams, IHeaderParams } from 'ag-grid-community'
 import { color2026 } from '@duetto/duetto-components'
 import { COL } from '@/lib/mock/rates'
@@ -34,24 +33,6 @@ const parseRate = (v: string | number | undefined): number | null => {
 // ISO date is always the first 10 chars of a colId ("2025-07-17_colkey")
 const dateIsoFromField = (field: string) => field.slice(0, 10)
 
-// ─── Current rate: value + lock toggle ───────────────────────────────────────
-
-export function RateLockCell(params: ICellRendererParams) {
-  const [locked, setLocked] = useState(false)
-  const value = params.value ?? ''
-  return (
-    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: 4 }}>
-      <span style={{ flex: 1, textAlign: 'right' }}>{value}</span>
-      <span
-        onClick={(e) => { e.stopPropagation(); setLocked((l) => !l) }}
-        style={{ cursor: 'pointer', color: locked ? color2026.main.blue[700] : '#ccc', display: 'flex', flexShrink: 0 }}
-      >
-        {locked ? <LockIcon style={{ fontSize: 13 }} /> : <LockOpenIcon style={{ fontSize: 13 }} />}
-      </span>
-    </span>
-  )
-}
-
 // ─── Recommended: header with select-all checkbox ────────────────────────────
 // Checkbox on the left (aligns with body cell checkboxes).
 // "Recommended" label fills the rest, right-aligned (matches body cell values).
@@ -80,7 +61,7 @@ export function RecommendedHeaderCell(params: IHeaderParams) {
         onClick={(e) => e.stopPropagation()}
         style={{ cursor: 'pointer', accentColor: color2026.main.blue[700], margin: 0, flexShrink: 0 }}
       />
-      <span style={{ flex: 1, textAlign: 'right', fontSize: 12, fontWeight: 400 }}>Recommended</span>
+      <span style={{ flex: 1, textAlign: 'right', fontWeight: 700, color: color2026.text.secondary }}>Recommended</span>
     </span>
   )
 }
@@ -99,12 +80,13 @@ export function RecommendedCheckboxCell(params: ICellRendererParams) {
   const rowId   = String(params.data?.hotelId ?? '')
   const cellId  = `${rowId}_${field}`
 
-  // Up/down arrow vs current rate
-  const currentField = field.replace(`_${COL.RECOMMENDED}`, `_${COL.CURRENT}`)
-  const current = parseRate(params.data?.[currentField])
-  const rec     = parseRate(value)
-  const isUp    = current != null && rec != null && rec > current
-  const isDown  = current != null && rec != null && rec < current
+  // Up/down arrow vs current rate; equals icon when they match
+  const currentField    = field.replace(`_${COL.RECOMMENDED}`, `_${COL.CURRENT}`)
+  const current         = parseRate(params.data?.[currentField])
+  const rec             = parseRate(value)
+  const isEqualToCurrent = current != null && rec != null && current === rec
+  const isUp    = !isEqualToCurrent && current != null && rec != null && rec > current
+  const isDown  = !isEqualToCurrent && current != null && rec != null && rec < current
 
   const dispatchActive = useCallback((active: boolean) => {
     window.dispatchEvent(new CustomEvent(MRX_CELL_ACTIVE, { detail: { cellId, active } }))
@@ -160,16 +142,20 @@ export function RecommendedCheckboxCell(params: ICellRendererParams) {
       margin: '0 -4px',
       padding: '0 4px',
       gap: 2,
-      backgroundColor: accepted ? color2026.semantic.success[50] : 'transparent',
+      backgroundColor: accepted && !isEqualToCurrent ? color2026.semantic.success[50] : 'transparent',
       boxSizing: 'border-box' as const,
     }}>
-      <input
-        type="checkbox"
-        checked={accepted}
-        onChange={handleChange}
-        onClick={(e) => e.stopPropagation()}
-        style={{ cursor: 'pointer', flexShrink: 0, accentColor: color2026.main.blue[700], margin: 0 }}
-      />
+      {isEqualToCurrent ? (
+        <DragHandleIcon style={{ fontSize: 14, color: '#bdbdbd', flexShrink: 0 }} />
+      ) : (
+        <input
+          type="checkbox"
+          checked={accepted}
+          onChange={handleChange}
+          onClick={(e) => e.stopPropagation()}
+          style={{ cursor: 'pointer', flexShrink: 0, accentColor: color2026.main.blue[700], margin: 0 }}
+        />
+      )}
       <span style={{
         flex: 1,
         textAlign: 'right',
@@ -178,8 +164,8 @@ export function RecommendedCheckboxCell(params: ICellRendererParams) {
       }}>
         {value}
       </span>
-      {isUp   && !overrideActive && <ArrowDropUpIcon   style={{ fontSize: 16, color: color2026.semantic.success[500], flexShrink: 0 }} />}
-      {isDown && !overrideActive && <ArrowDropDownIcon style={{ fontSize: 16, color: color2026.semantic.error[600],   flexShrink: 0 }} />}
+      {isUp   && !overrideActive && <ArrowDropUpIcon   style={{ fontSize: 20, color: color2026.semantic.success[500], flexShrink: 0 }} />}
+      {isDown && !overrideActive && <ArrowDropDownIcon style={{ fontSize: 20, color: color2026.semantic.error[600],   flexShrink: 0 }} />}
     </span>
   )
 }

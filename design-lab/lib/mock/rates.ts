@@ -292,9 +292,10 @@ export function generateRowData(dates: string[]) {
 
       const id = (k: ColKey) => toColId(date, k)
 
-      // Rate
+      // Rate — ~12% of cells get recommended === current (shows equals icon)
+      const equalToCurrent = seed(hotel.id, date, 99) < 0.12
       row[id(COL.CURRENT)]     = fmt(current, 'currency', cur)
-      row[id(COL.RECOMMENDED)] = fmt(recommended, 'currency', cur)
+      row[id(COL.RECOMMENDED)] = equalToCurrent ? row[id(COL.CURRENT)] : fmt(recommended, 'currency', cur)
       row[id(COL.OVERRIDE)]    = ''
       row[id(COL.PROTECT)]     = fmt(Math.round(current * 0.85), 'currency', cur)
 
