@@ -1,34 +1,19 @@
 'use client'
 
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useRef } from 'react'
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Checkbox,
-  Typography,
-  Divider,
-  IconButton,
-  Paper,
-  Grid,
-  TextField,
-  InputAdornment,
-  makeStyles,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Button, Checkbox, Typography, Divider, IconButton,
+  Paper, Grid, TextField, InputAdornment, Chip, makeStyles,
 } from '@material-ui/core'
-import CloseIcon from '@material-ui/icons/Close'
-import SearchIcon from '@material-ui/icons/Search'
+import CloseIcon        from '@material-ui/icons/Close'
+import SearchIcon       from '@material-ui/icons/Search'
+import ExpandMoreIcon   from '@material-ui/icons/ExpandMore'
+import DragIndicatorIcon from '@material-ui/icons/DragIndicator'
 import { color2026 } from '@duetto/duetto-components'
 import {
-  COL,
-  COL_DEFS,
-  ColMeta,
-  ColKey,
-  ColCategory,
-  CATEGORY_LABELS,
-  ALL_CATEGORIES,
-  DEFAULT_VISIBLE_COLS,
+  COL, COL_DEFS, ColMeta, ColKey, ColCategory,
+  CATEGORY_LABELS, ALL_CATEGORIES, DEFAULT_VISIBLE_COLS,
 } from '@/lib/mock/rates'
 
 const SETTINGS_KEY = 'design-lab:manage-rates-columns'
@@ -53,126 +38,194 @@ interface Props {
   onConfirm: (cols: Set<ColKey>) => void
 }
 
-const RATE_COLS   = COL_DEFS.filter((c) => c.category === 'rate')
-const METRIC_CATS = ALL_CATEGORIES.filter((c): c is ColCategory => c !== 'rate')
+// ─── Group model ──────────────────────────────────────────────────────────────
 
-const useStyles = makeStyles((theme) => ({
-  titleRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+interface Group { id: ColCategory; label: string; metas: ColMeta[] }
+
+const ALL_GROUPS: Group[] = ALL_CATEGORIES
+  .map(cat => ({
+    id: cat,
+    label: cat === 'rate' ? 'Rates' : CATEGORY_LABELS[cat],
+    metas: COL_DEFS.filter(c => c.category === cat),
+  }))
+  .filter(g => g.metas.length > 0)
+
+const INITIAL_ORDER = ALL_GROUPS.map(g => g.id)
+const GROUP_BY_ID   = Object.fromEntries(ALL_GROUPS.map(g => [g.id, g])) as Record<ColCategory, Group>
+
+// ─── Metric set presets ───────────────────────────────────────────────────────
+
+interface MetricSet { id: string; label: string; cols: Set<ColKey> }
+
+function setsEqual(a: Set<ColKey>, b: Set<ColKey>): boolean {
+  if (a.size !== b.size) return false
+  for (const k of a) if (!b.has(k)) return false
+  return true
+}
+
+const METRIC_SETS: MetricSet[] = [
+  {
+    id: 'default',
+    label: 'Default',
+    cols: DEFAULT_VISIBLE_COLS,
   },
-  content: {
-    padding: theme.spacing(0, 3, 2),
+  {
+    id: 'revenue',
+    label: 'Revenue',
+    cols: new Set<ColKey>([
+      COL.CURRENT,
+      COL.ADR_COMMIT_TOTAL,
+      COL.COMMITTED_OCC_ROOM_REV,
+      COL.DUETTO_FORECAST_REVPAR,
+      COL.OTB_ROOMS,
+      COL.INVENTORY_REMAINING,
+    ]),
   },
-  columnsTreePaper: {
-    height: '26rem',
-    width: '100%',
-    marginTop: '1rem',
-    marginBottom: '1.5rem',
-    borderColor: color2026.main.blue[700],
-    borderStyle: 'solid',
-    borderWidth: '1px',
+  {
+    id: 'groups',
+    label: 'Groups',
+    cols: new Set<ColKey>([
+      COL.CURRENT,
+      COL.GROUP_BUSINESS_ROOMS,
+      COL.GROUP_BUSINESS_REVENUE,
+      COL.ADR_COMMIT_GROUP,
+      COL.COMMITTED_OCC_ROOM_REV,
+      COL.PICKUP_ROOMS_COMMIT,
+    ]),
+  },
+]
+
+// ─── Checkbox state helpers ───────────────────────────────────────────────────
+
+function groupCheckState(
+  group: Group, staged: Set<ColKey>
+): { checked: boolean; indeterminate: boolean } {
+  const toggleable = group.metas.filter(m => !m.alwaysVisible)
+  const n = toggleable.filter(m => staged.has(m.key)).length
+  if (n === toggleable.length) return { checked: true, indeterminate: false }
+  // Rates group always keeps Current — min state is indeterminate, never unchecked
+  if (n === 0) return { checked: false, indeterminate: group.id === 'rate' }
+  return { checked: false, indeterminate: true }
+}
+
+function toggleGroupCols(group: Group, staged: Set<ColKey>): Set<ColKey> {
+  const toggleable = group.metas.filter(m => !m.alwaysVisible)
+  const allOn = toggleable.every(m => staged.has(m.key))
+  const next  = new Set(staged)
+  allOn
+    ? toggleable.forEach(m => next.delete(m.key))
+    : toggleable.forEach(m => next.add(m.key))
+  return next
+}
+
+function masterCheckState(
+  groups: Group[], staged: Set<ColKey>
+): { checked: boolean; indeterminate: boolean } {
+  const all = groups.flatMap(g => g.metas.filter(m => !m.alwaysVisible))
+  const n   = all.filter(m => staged.has(m.key)).length
+  if (n === all.length) return { checked: true, indeterminate: false }
+  if (n === 0)          return { checked: false, indeterminate: false }
+  return { checked: false, indeterminate: true }
+}
+
+function toggleAllCols(groups: Group[], staged: Set<ColKey>): Set<ColKey> {
+  const all   = groups.flatMap(g => g.metas.filter(m => !m.alwaysVisible))
+  const allOn = all.every(m => staged.has(m.key))
+  const next  = new Set(staged)
+  allOn ? all.forEach(m => next.delete(m.key)) : all.forEach(m => next.add(m.key))
+  return next
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const useStyles = makeStyles(theme => ({
+  titleRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  content:  { padding: theme.spacing(0, 3, 2) },
+
+  paper: {
+    height: '26rem', width: '100%',
+    marginTop: '1rem', marginBottom: '1.5rem',
+    border: `1px solid ${color2026.main.blue[700]}`,
+    boxShadow: 'none', overflow: 'hidden',
+    display: 'flex', flexDirection: 'column' as const,
     boxSizing: 'border-box' as const,
-    boxShadow: 'none',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column' as const,
   },
-  searchWrapper: {
-    padding: theme.spacing(1, 1.5),
+
+  // ── Search / controls bar ──────────────────────────────────────────────────
+  searchBar: {
+    display: 'flex', alignItems: 'center', gap: theme.spacing(0.25),
+    padding: theme.spacing(0.5, 0.75, 0.5, 0.25),
     borderBottom: `1px solid ${theme.palette.divider}`,
     flexShrink: 0,
   },
-  columnList: {
-    flex: 1,
-    overflowY: 'auto' as const,
-    padding: theme.spacing(0.5, 0),
+  controlBtn: { padding: 6 },
+  checkbox:   { padding: '4px 6px' },
+
+  // ── Scrollable list ────────────────────────────────────────────────────────
+  list: { flex: 1, overflowY: 'auto' as const },
+
+  // ── Group row ──────────────────────────────────────────────────────────────
+  groupRow: {
+    display: 'flex', alignItems: 'center', minHeight: 36,
+    paddingLeft: theme.spacing(0.25), paddingRight: theme.spacing(0.5),
+    userSelect: 'none' as const,
+    '&:hover': { background: theme.palette.action.hover },
   },
-  // ── Section labels (RATE / METRICS) ──────────────────────────────────────
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: 700,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.08em',
+  groupRowDragOver: {
+    borderTop: `2px solid ${color2026.main.blue[700]}`,
+  },
+  groupLabel: { fontSize: 14, fontWeight: 600, flex: 1 },
+  dragHandle: {
+    cursor: 'grab',
+    color: theme.palette.text.disabled,
+    display: 'flex', alignItems: 'center',
+    padding: theme.spacing(0, 0.25),
+    '&:active': { cursor: 'grabbing' },
+    '&:hover': { color: theme.palette.text.secondary },
+  },
+
+  // ── Metric set pills ────────────────────────────────────────────────────────
+  metricSetsRow: {
+    display: 'flex', alignItems: 'center',
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(2),
+    marginTop: theme.spacing(0.5),
+  },
+  metricSetsLabel: {
+    fontSize: 12, fontWeight: 600,
     color: theme.palette.text.secondary,
-    marginTop: theme.spacing(1.5),
-    marginBottom: theme.spacing(0.25),
-    paddingLeft: theme.spacing(2.5),
-  },
-  // ── Rows ─────────────────────────────────────────────────────────────────
-  row: {
-    display: 'flex',
-    alignItems: 'center',
-    minHeight: 32,
-    paddingLeft: theme.spacing(1.5),
-    paddingRight: theme.spacing(1),
-  },
-  // indented child rows under a metric group
-  childRow: {
-    paddingLeft: theme.spacing(4.5),
-  },
-  checkbox: {
-    padding: '4px 6px',
-  },
-  rowLabel: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.75),
-  },
-  label: {
-    fontSize: 14,
-  },
-  groupLabel: {
-    fontSize: 14,
-    fontWeight: 600,
-  },
-  // ── Default chip — pill, light grey bg, capital D ────────────────────────
-  defaultBadge: {
-    fontSize: 10,
-    fontWeight: 500,
-    color: theme.palette.text.secondary,
-    backgroundColor: theme.palette.action.hover,
-    borderRadius: 999,
-    padding: '1px 7px',
-    lineHeight: 1.6,
     whiteSpace: 'nowrap' as const,
     flexShrink: 0,
   },
-  // ── Empty state ───────────────────────────────────────────────────────────
-  emptySearch: {
-    textAlign: 'center' as const,
-    color: theme.palette.text.secondary,
-    fontSize: 13,
-    padding: theme.spacing(4),
+
+  // ── Child rows ─────────────────────────────────────────────────────────────
+  childRow: {
+    display: 'flex', alignItems: 'center', minHeight: 32,
+    paddingLeft: theme.spacing(7.5), paddingRight: theme.spacing(0.5),
   },
-  actionsContainer: {
-    justifyContent: 'flex-end',
+  rowLabel: { display: 'flex', alignItems: 'center', gap: theme.spacing(0.75) },
+  label:    { fontSize: 14 },
+  badge: {
+    fontSize: 10, fontWeight: 500, color: theme.palette.text.secondary,
+    background: theme.palette.action.hover, borderRadius: 999,
+    padding: '1px 7px', lineHeight: 1.6, whiteSpace: 'nowrap' as const,
   },
+
+  empty:      { textAlign: 'center' as const, color: theme.palette.text.secondary, fontSize: 13, padding: theme.spacing(4) },
+  actionsRow: { justifyContent: 'flex-end' },
 }))
-
-// ─── Small helpers ────────────────────────────────────────────────────────────
-
-function DefaultBadge({ classes }: { classes: ReturnType<typeof useStyles> }) {
-  return <span className={classes.defaultBadge}>Default</span>
-}
-
-function categoryState(
-  metas: ColMeta[],
-  staged: Set<ColKey>
-): 'all' | 'some' | 'none' {
-  const n = metas.filter((m) => staged.has(m.key)).length
-  if (n === 0) return 'none'
-  if (n === metas.length) return 'all'
-  return 'some'
-}
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
 export default function TableSettingsModal({ open, onClose, visibleCols, onConfirm }: Props) {
   const classes = useStyles()
-  const [staged, setStaged] = useState<Set<ColKey>>(new Set(visibleCols))
+
+  const [staged,      setStaged]      = useState<Set<ColKey>>(new Set(visibleCols))
   const [searchQuery, setSearchQuery] = useState('')
+  const [groupOrder,  setGroupOrder]  = useState<ColCategory[]>(INITIAL_ORDER)
+  const [expanded,    setExpanded]    = useState<Set<ColCategory>>(new Set(INITIAL_ORDER))
+  const [dragOver,    setDragOver]    = useState<ColCategory | null>(null)
+  const dragFrom = useRef<ColCategory | null>(null)
 
   React.useEffect(() => {
     if (open) {
@@ -181,28 +234,102 @@ export default function TableSettingsModal({ open, onClose, visibleCols, onConfi
     }
   }, [open, visibleCols])
 
-  // ── Toggles ───────────────────────────────────────────────────────────────
+  // ── Derived data ──────────────────────────────────────────────────────────
+
+  const q = searchQuery.toLowerCase().trim()
+
+  const orderedGroups = useMemo(
+    () => groupOrder.map(id => GROUP_BY_ID[id]).filter(Boolean),
+    [groupOrder]
+  )
+
+  const visibleGroups = useMemo(() => {
+    if (!q) return orderedGroups
+    return orderedGroups.filter(g =>
+      g.label.toLowerCase().includes(q) ||
+      g.metas.some(m => (m.subLabel ?? m.label).toLowerCase().includes(q))
+    )
+  }, [orderedGroups, q])
+
+  const filteredMetas = useCallback((group: Group) => {
+    if (!q) return group.metas
+    return group.metas.filter(m =>
+      group.label.toLowerCase().includes(q) ||
+      (m.subLabel ?? m.label).toLowerCase().includes(q)
+    )
+  }, [q])
+
+  const allExpanded   = expanded.size === groupOrder.length
+  const master        = masterCheckState(orderedGroups, staged)
+  const activePreset  = METRIC_SETS.find(ms => setsEqual(ms.cols, staged))?.id ?? null
+
+  // ── Accordion ─────────────────────────────────────────────────────────────
+
+  const toggleExpand = useCallback((id: ColCategory) => {
+    setExpanded(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }, [])
+
+  const toggleAllExpanded = useCallback(() => {
+    setExpanded(allExpanded ? new Set() : new Set(INITIAL_ORDER))
+  }, [allExpanded])
+
+  // ── Column toggles ────────────────────────────────────────────────────────
 
   const toggle = useCallback((key: ColKey) => {
-    setStaged((prev) => {
+    setStaged(prev => {
       const next = new Set(prev)
       next.has(key) ? next.delete(key) : next.add(key)
       return next
     })
   }, [])
 
-  const toggleGroup = useCallback((metas: ColMeta[]) => {
-    setStaged((prev) => {
-      const state = categoryState(metas, prev)
-      const next  = new Set(prev)
-      if (state === 'all') {
-        metas.forEach((m) => { if (!m.alwaysVisible) next.delete(m.key) })
-      } else {
-        metas.forEach((m) => next.add(m.key))
-      }
+  // ── Drag and drop ─────────────────────────────────────────────────────────
+
+  const handleDragStart = useCallback((id: ColCategory) => (e: React.DragEvent) => {
+    dragFrom.current = id
+    e.dataTransfer.effectAllowed = 'move'
+  }, [])
+
+  const handleDragOver = useCallback((id: ColCategory) => (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (dragOver !== id) setDragOver(id)
+  }, [dragOver])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(null)
+  }, [])
+
+  const handleDrop = useCallback((id: ColCategory) => (e: React.DragEvent) => {
+    e.preventDefault()
+    const from = dragFrom.current
+    if (!from || from === id) { setDragOver(null); return }
+    setGroupOrder(prev => {
+      const next = [...prev]
+      const fi = next.indexOf(from)
+      const ti = next.indexOf(id)
+      if (fi === -1 || ti === -1) return prev
+      next.splice(fi, 1)
+      next.splice(ti, 0, from)
+      // Rate group is always pinned first
+      const ri = next.indexOf('rate')
+      if (ri > 0) { next.splice(ri, 1); next.unshift('rate') }
       return next
     })
+    dragFrom.current = null
+    setDragOver(null)
   }, [])
+
+  const handleDragEnd = useCallback(() => {
+    dragFrom.current = null
+    setDragOver(null)
+  }, [])
+
+  // ── Confirm / restore ─────────────────────────────────────────────────────
 
   const handleConfirm = () => {
     staged.add(COL.CURRENT)
@@ -211,41 +338,7 @@ export default function TableSettingsModal({ open, onClose, visibleCols, onConfi
     onClose()
   }
 
-  const handleRestore = () => setStaged(new Set(DEFAULT_VISIBLE_COLS))
-
-  // ── Filtered data (respects search) ──────────────────────────────────────
-
-  const q = searchQuery.toLowerCase().trim()
-
-  const filteredRateCols = useMemo(
-    () => (q ? RATE_COLS.filter((c) => c.label.toLowerCase().includes(q)) : RATE_COLS),
-    [q]
-  )
-
-  const filteredMetricCats = useMemo(
-    () =>
-      METRIC_CATS.reduce<Array<{ cat: ColCategory; metas: ColMeta[] }>>((acc, cat) => {
-        const metas = COL_DEFS.filter((c) => c.category === cat)
-        const visible = q
-          ? metas.filter(
-              (c) =>
-                (c.subLabel ?? c.label).toLowerCase().includes(q) ||
-                c.label.toLowerCase().includes(q)
-            )
-          : metas
-        if (visible.length) acc.push({ cat, metas: visible })
-        return acc
-      }, []),
-    [q]
-  )
-
-  const hasResults = filteredRateCols.length > 0 || filteredMetricCats.length > 0
-
-  // ── Row display text ──────────────────────────────────────────────────────
-
-  const rowText = (meta: ColMeta) => meta.subLabel ?? meta.label
-
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -259,127 +352,153 @@ export default function TableSettingsModal({ open, onClose, visibleCols, onConfi
       </DialogTitle>
 
       <DialogContent className={classes.content}>
-        <Paper className={classes.columnsTreePaper}>
-          {/* Search */}
-          <div className={classes.searchWrapper}>
-            <TextField
-              variant="outlined"
+        <Paper className={classes.paper}>
+
+          {/* ── Controls / search bar ──────────────────────────────────── */}
+          <div className={classes.searchBar}>
+            <IconButton size="small" className={classes.controlBtn} onClick={toggleAllExpanded}>
+              <ExpandMoreIcon
+                style={{ fontSize: 18, transition: 'transform 0.15s', transform: allExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+              />
+            </IconButton>
+            <Checkbox
+              className={classes.checkbox}
+              checked={master.checked}
+              indeterminate={master.indeterminate}
+              onChange={() => setStaged(toggleAllCols(orderedGroups, staged))}
               size="small"
-              fullWidth
-              placeholder="Search columns..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-                endAdornment: searchQuery ? (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearchQuery('')}>
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ) : undefined,
-              }}
+              color="primary"
             />
+            <div style={{ flex: 1 }}>
+              <TextField
+                variant="outlined"
+                size="small"
+                fullWidth
+                placeholder="Search columns..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchQuery ? (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => setSearchQuery('')}>
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : undefined,
+                }}
+              />
+            </div>
           </div>
 
-          <div className={classes.columnList}>
-            {!hasResults && (
-              <Typography className={classes.emptySearch}>
+          {/* ── Column list ───────────────────────────────────────────── */}
+          <div className={classes.list}>
+            {visibleGroups.length === 0 && (
+              <Typography className={classes.empty}>
                 No columns match &ldquo;{searchQuery}&rdquo;
               </Typography>
             )}
 
-            {/* ── RATE section ─────────────────────────────────────────── */}
-            {filteredRateCols.length > 0 && (
-              <>
-                <Typography className={classes.sectionLabel}>Rate</Typography>
-                {filteredRateCols.map((meta) => (
-                  <div key={meta.key} className={classes.row}>
+            {visibleGroups.map(group => {
+              const isExpanded = q ? true : expanded.has(group.id)
+              const { checked, indeterminate } = groupCheckState(group, staged)
+              const metas = filteredMetas(group)
+
+              return (
+                <div
+                  key={group.id}
+                  onDragOver={handleDragOver(group.id)}
+                  onDrop={handleDrop(group.id)}
+                  onDragLeave={handleDragLeave}
+                  className={dragOver === group.id ? classes.groupRowDragOver : ''}
+                >
+                  {/* Group header */}
+                  <div className={classes.groupRow}>
+                    <IconButton
+                      size="small"
+                      className={classes.controlBtn}
+                      onClick={() => toggleExpand(group.id)}
+                      disabled={!!q}
+                    >
+                      <ExpandMoreIcon
+                        style={{ fontSize: 18, transition: 'transform 0.15s', transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+                      />
+                    </IconButton>
                     <Checkbox
                       className={classes.checkbox}
-                      checked={meta.alwaysVisible || staged.has(meta.key)}
-                      disabled={!!meta.alwaysVisible}
-                      onChange={() => toggle(meta.key)}
+                      checked={checked}
+                      indeterminate={indeterminate}
+                      onChange={() => setStaged(toggleGroupCols(group, staged))}
                       size="small"
                       color="primary"
                     />
-                    <span className={classes.rowLabel}>
-                      <Typography className={classes.label}>{meta.label}</Typography>
-                      {(meta.defaultVisible || meta.alwaysVisible) && (
-                        <DefaultBadge classes={classes} />
-                      )}
-                    </span>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {/* ── METRICS section ──────────────────────────────────────── */}
-            {filteredMetricCats.length > 0 && (
-              <>
-                <Typography className={classes.sectionLabel}>Metrics</Typography>
-                {filteredMetricCats.map(({ cat, metas }) => {
-                  // Use ALL cols in category (not just filtered) for group toggle state
-                  const allCatMetas = COL_DEFS.filter((c) => c.category === cat)
-                  const state = categoryState(metas, staged)
-                  return (
-                    <div key={cat}>
-                      {/* Group header row */}
-                      <div className={classes.row}>
-                        <Checkbox
-                          className={classes.checkbox}
-                          checked={state === 'all'}
-                          indeterminate={state === 'some'}
-                          onChange={() => toggleGroup(allCatMetas)}
-                          size="small"
-                          color="primary"
-                        />
-                        <Typography className={classes.groupLabel}>
-                          {CATEGORY_LABELS[cat]}
-                        </Typography>
+                    <Typography className={classes.groupLabel}>{group.label}</Typography>
+                    {group.id !== 'rate' && (
+                      <div
+                        className={classes.dragHandle}
+                        draggable
+                        onDragStart={handleDragStart(group.id)}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <DragIndicatorIcon style={{ fontSize: 18 }} />
                       </div>
-                      {/* Child rows — indented */}
-                      {metas.map((meta) => (
-                        <div key={meta.key} className={`${classes.row} ${classes.childRow}`}>
-                          <Checkbox
-                            className={classes.checkbox}
-                            checked={staged.has(meta.key)}
-                            onChange={() => toggle(meta.key)}
-                            size="small"
-                            color="primary"
-                          />
-                          <span className={classes.rowLabel}>
-                            <Typography className={classes.label}>{rowText(meta)}</Typography>
-                            {meta.defaultVisible && <DefaultBadge classes={classes} />}
-                          </span>
-                        </div>
-                      ))}
+                    )}
+                  </div>
+
+                  {/* Child columns */}
+                  {isExpanded && metas.map(meta => (
+                    <div key={meta.key} className={classes.childRow}>
+                      <Checkbox
+                        className={classes.checkbox}
+                        checked={!!meta.alwaysVisible || staged.has(meta.key)}
+                        disabled={!!meta.alwaysVisible}
+                        onChange={() => toggle(meta.key)}
+                        size="small"
+                        color="primary"
+                      />
+                      <span className={classes.rowLabel}>
+                        <Typography className={classes.label}>
+                          {meta.subLabel ?? meta.label}
+                        </Typography>
+                        {(meta.defaultVisible || meta.alwaysVisible) && (
+                          <span className={classes.badge}>Default</span>
+                        )}
+                      </span>
                     </div>
-                  )
-                })}
-              </>
-            )}
+                  ))}
+                </div>
+              )
+            })}
           </div>
         </Paper>
+
+        {/* ── Metric set pills ──────────────────────────────────────── */}
+        <div className={classes.metricSetsRow}>
+          <Typography className={classes.metricSetsLabel}>Metric Sets</Typography>
+          {METRIC_SETS.map(ms => (
+            <Chip
+              key={ms.id}
+              label={ms.label}
+              size="small"
+              clickable
+              color={activePreset === ms.id ? 'primary' : 'default'}
+              variant={activePreset === ms.id ? 'default' : 'outlined'}
+              onClick={() => setStaged(new Set(ms.cols))}
+            />
+          ))}
+        </div>
       </DialogContent>
 
       <Divider />
-      <Grid container className={classes.actionsContainer}>
+      <Grid container className={classes.actionsRow}>
         <Grid item>
           <DialogActions>
-            <Button onClick={onClose} color="primary" size="medium">
-              Cancel
-            </Button>
-            <Button variant="outlined" color="primary" size="medium" onClick={handleRestore}>
-              Restore Default
-            </Button>
-            <Button variant="contained" color="primary" size="medium" onClick={handleConfirm}>
-              Confirm
-            </Button>
+            <Button onClick={onClose} color="primary" size="medium">Cancel</Button>
+            <Button variant="contained" color="primary" size="medium" onClick={handleConfirm}>Apply</Button>
           </DialogActions>
         </Grid>
       </Grid>
