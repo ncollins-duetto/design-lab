@@ -3,6 +3,18 @@
 This is the shared environment for UX prototypes built by the Duetto UX Design team.
 Read this before generating any code.
 
+## Before doing anything else
+
+Run `git branch --show-current` and check the result.
+
+- If the current branch is `main`: **stop immediately**. Do not write or edit any code. Tell the designer:
+  > "You're on the main branch. Please create your own branch before we start — run this in your terminal:
+  > `git checkout -b designer/your-name/feature-name`
+  > Then let me know when you're ready."
+  Wait for them to confirm they've switched branches before proceeding.
+
+- If the current branch is a designer branch (e.g. `designer/nyle/feature-name`): confirm it to the designer and continue normally.
+
 ## What this is
 
 A Next.js 16 app that mirrors the real Duetto frontend stack as closely as possible, so
