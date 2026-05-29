@@ -17,6 +17,21 @@ import VisibilityOffIcon from '@material-ui/icons/VisibilityOff'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import AppShell from '@/components/AppShell'
 
+// ArrowStepper types
+enum StepState {
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+  INACTIVE = 'inactive',
+  DISABLED = 'disabled',
+}
+
+interface StepConfig {
+  id: string
+  label: string
+  description?: string
+  state?: StepState
+}
+
 const useStyles = makeStyles((theme) => ({
   authContainer: {
     minHeight: '100vh',
@@ -123,6 +138,48 @@ const useStyles = makeStyles((theme) => ({
   stepper: {
     background: 'transparent',
     padding: theme.spacing(2, 0),
+  },
+  arrowStepperContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    padding: theme.spacing(2, 3),
+    background: theme.palette.background.paper,
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    gap: theme.spacing(2),
+  },
+  stepItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    minWidth: 120,
+  },
+  stepNumber: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 32,
+    height: 32,
+    borderRadius: '50%',
+    background: theme.palette.primary.main,
+    color: 'white',
+    fontWeight: 700,
+    fontSize: '0.875rem',
+  },
+  stepNumberInactive: {
+    background: theme.palette.action.disabled,
+    color: theme.palette.text.disabled,
+  },
+  stepNumberCompleted: {
+    background: theme.palette.success.main,
+  },
+  stepLabel: {
+    fontSize: '0.875rem',
+    fontWeight: 600,
+  },
+  stepArrow: {
+    color: theme.palette.divider,
+    fontSize: '1.5rem',
   },
 }))
 
@@ -668,6 +725,39 @@ function PhaseBar({ userName, nextStep, onNextStep }: { userName?: string, nextS
 // Document Store
 // ───────────────────────────────────────────────────────────────────────────────
 
+// ───────────────────────────────────────────────────────────────────────────────
+// Arrow Stepper (from Storybook)
+// ───────────────────────────────────────────────────────────────────────────────
+
+function ArrowStepperComponent({ steps, currentStepId, onStepClick }: { steps: StepConfig[], currentStepId: string, onStepClick?: (id: string) => void }) {
+  const classes = useStyles()
+  const theme = useTheme()
+
+  return (
+    <Box className={classes.arrowStepperContainer}>
+      {steps.map((step, index) => {
+        const isActive = step.id === currentStepId
+        const isCompleted = steps.findIndex(s => s.id === currentStepId) > index
+        const isLast = index === steps.length - 1
+
+        return (
+          <Box key={step.id} style={{display: 'flex', alignItems: 'center', gap: theme.spacing(2)}}>
+            <Box className={classes.stepItem} onClick={() => onStepClick?.(step.id)} style={{cursor: 'pointer'}}>
+              <Box className={`${classes.stepNumber} ${!isActive && !isCompleted ? classes.stepNumberInactive : isCompleted ? classes.stepNumberCompleted : ''}`}>
+                {isCompleted ? '✓' : index + 1}
+              </Box>
+              <Typography className={classes.stepLabel} style={{color: isActive ? theme.palette.primary.main : theme.palette.text.primary}}>
+                {step.label}
+              </Typography>
+            </Box>
+            {!isLast && <Typography className={classes.stepArrow}>→</Typography>}
+          </Box>
+        )
+      })}
+    </Box>
+  )
+}
+
 function DocumentStore() {
   return (
     <div className="p-6 max-w-7xl">
@@ -778,6 +868,13 @@ function DigitalSalesRoomApp() {
     ? { section:'account',  label:'Complete Account Details' }
     : { section:'proposal', label:'Review Proposal' }
 
+  const phaseSteps: StepConfig[] = [
+    { id: 'docs', label: 'Documents' },
+    { id: 'account', label: 'Account Details' },
+    { id: 'hotels', label: 'Hotel Details' },
+    { id: 'proposal', label: 'Sales Proposal' },
+  ]
+
   return (
     <AppShell
       activeNav="digital-sales-room"
@@ -786,6 +883,9 @@ function DigitalSalesRoomApp() {
         { label: 'Digital Sales Room' },
       ]}
     >
+      {/* Arrow Stepper Progress Indicator */}
+      <ArrowStepperComponent steps={phaseSteps} currentStepId={activeSection} onStepClick={setActiveSection} />
+
       <div className={classes.mainContent}>
         {/* Sidebar */}
         <Box className={classes.sidebar}>
