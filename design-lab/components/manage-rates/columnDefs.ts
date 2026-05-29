@@ -43,7 +43,7 @@ function buildChildCol(dateIso: string, key: ColKey, isMetric: boolean, groupInd
     colId,
     field: colId,
     headerName: meta?.label ?? key,
-    width: [COL.CURRENT, COL.RECOMMENDED, COL.OVERRIDE].includes(key) ? 155 : meta?.width ?? 130,
+    width: [COL.CURRENT, COL.RECOMMENDED, COL.OVERRIDE, COL.PROTECT].includes(key as any) ? 155 : meta?.width ?? 130,
     columnGroupShow: isMetric ? 'open' : undefined,
     headerClass: ['subcolumn-header', subClass, ...(isGroupEdge ? ['col-group-edge-header'] : [])],
     cellClass: isGroupEdge ? 'col-group-edge' : undefined,
