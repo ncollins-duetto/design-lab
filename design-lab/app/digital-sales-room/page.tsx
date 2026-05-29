@@ -15,7 +15,8 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircle'
 import VisibilityIcon from '@material-ui/icons/Visibility'
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
-import AppShell from '@/components/AppShell'
+// AppShell removed — Digital Sales Room uses a stripped-down ExternalHeader
+// for customer-facing experience (no internal Duetto nav, property picker, etc.)
 
 // ArrowStepper types
 enum StepState {
@@ -1336,13 +1337,9 @@ function DigitalSalesRoomApp() {
   ]
 
   return (
-    <AppShell
-      activeNav="digital-sales-room"
-      breadcrumbs={[
-        { label: 'Home', href: '/' },
-        { label: 'Digital Sales Room' },
-      ]}
-    >
+    <Box style={{display:'flex',flexDirection:'column',minHeight:'100vh',background:'#f5f5f5'}}>
+      <ExternalHeader userName={user?.name} userEmail={user?.email} />
+
       {/* Arrow Stepper Progress Indicator */}
       <ArrowStepperComponent steps={phaseSteps} currentStepId={activePhase} onStepClick={setActivePhase} />
 
@@ -1548,22 +1545,73 @@ function DigitalSalesRoomApp() {
       </div>
       )}
 
-      {/* Floating Back Button */}
-      {user && (
-        <Tooltip title="Back to Design Lab">
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<ArrowBackIcon />}
-            className={classes.floatingButton}
-            href="/"
-            style={{ textTransform: 'none', fontWeight: 600, minWidth: 'auto' }}
-          >
-            Back
-          </Button>
-        </Tooltip>
-      )}
-    </AppShell>
+    </Box>
+  )
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// External Header — stripped-down chrome for customer-facing experience
+// ───────────────────────────────────────────────────────────────────────────────
+
+function ExternalHeader({ userName, userEmail }: { userName?: string, userEmail?: string }) {
+  const { logout } = useContext(AuthCtx)
+  return (
+    <Box style={{
+      display:'flex',
+      alignItems:'center',
+      justifyContent:'space-between',
+      padding:'12px 24px',
+      background:'#0e2124',
+      color:'#fff',
+      borderBottom:'1px solid rgba(255,255,255,0.08)',
+      flexShrink:0,
+    }}>
+      <Box style={{display:'flex',alignItems:'center',gap:16}}>
+        <Typography style={{color:'#fff',fontWeight:700,letterSpacing:3,fontSize:'0.95rem'}}>DUETTO</Typography>
+        <Box style={{width:1,height:20,background:'rgba(255,255,255,0.15)'}}/>
+        <Typography style={{color:'rgba(255,255,255,0.85)',fontSize:'0.85rem',fontWeight:500}}>
+          Digital Sales Room
+        </Typography>
+      </Box>
+      <Box style={{display:'flex',alignItems:'center',gap:20}}>
+        <a
+          href="mailto:support@duettoresearch.com"
+          style={{color:'rgba(255,255,255,0.6)',fontSize:'0.8rem',textDecoration:'none',cursor:'pointer'}}
+        >
+          Need help?
+        </a>
+        {userName && (
+          <Box style={{display:'flex',alignItems:'center',gap:10}}>
+            <Box style={{
+              width:28,height:28,borderRadius:'50%',background:'#006461',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              fontSize:'0.75rem',fontWeight:700,color:'#fff',
+            }}>
+              {userName.charAt(0).toUpperCase()}
+            </Box>
+            <Box style={{display:'flex',flexDirection:'column',lineHeight:1.2}}>
+              <Typography style={{color:'#fff',fontSize:'0.8rem',fontWeight:600}}>{userName}</Typography>
+              {userEmail && (
+                <Typography style={{color:'rgba(255,255,255,0.45)',fontSize:'0.7rem'}}>{userEmail}</Typography>
+              )}
+            </Box>
+            <Button
+              size="small"
+              onClick={logout}
+              style={{
+                color:'rgba(255,255,255,0.7)',
+                textTransform:'none',
+                fontSize:'0.78rem',
+                fontWeight:500,
+                marginLeft:4,
+              }}
+            >
+              Sign out
+            </Button>
+          </Box>
+        )}
+      </Box>
+    </Box>
   )
 }
 
