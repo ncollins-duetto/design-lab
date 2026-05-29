@@ -838,7 +838,7 @@ function ArrowStepperComponent({ steps, currentStepId, onStepClick }: { steps: A
   return (
     <Box style={{
       display: 'flex',
-      gap: 8,
+      gap: 0,
       padding: theme.spacing(2, 3),
       background: '#ffffff',
       borderBottom: '1px solid #e0e0e0',
@@ -869,6 +869,8 @@ function ArrowStepperComponent({ steps, currentStepId, onStepClick }: { steps: A
               height: 56,
               position: 'relative',
               cursor: 'pointer',
+              marginLeft: index > 0 ? -10 : 0,
+              zIndex: isActive ? 10 : index,
             }}
           >
             {/* SVG arrow shape */}
@@ -1317,6 +1319,9 @@ function DigitalSalesRoomApp() {
   const [accountSaved, setAccountSaved] = useState(false)
   const [proposalAccepted, setProposalAccepted] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  // Hotels: prefilled from Duetto + customer-added ones
+  const [hotels, setHotels] = useState<typeof MOCK_HOTELS>([...MOCK_HOTELS])
+  const [hotelSearch, setHotelSearch] = useState('')
 
   if (!user) {
     if (view === 'signin') return <SignInPage onBack={()=>setView('landing')} onCreateAccount={()=>setView('create')}/>
@@ -1440,12 +1445,74 @@ function DigitalSalesRoomApp() {
           )}
 
           {activeSection === 'hotels' && accountSaved && (
-            <div className="p-6">
-              <h2 className="text-2xl font-bold mb-2">Hotel Details</h2>
-              <p className="text-gray-600 text-sm mb-4">Search for your properties or add them manually.</p>
-              <hr className="mb-6" />
-              <p className="text-gray-500">Hotel management coming soon...</p>
-            </div>
+            <Box style={{padding:24,maxWidth:1000}}>
+              <Typography variant="h5" style={{fontWeight:700,marginBottom:4}}>Hotel Details</Typography>
+              <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>Search for your properties or add them manually. Select products and integrations for each hotel.</Typography>
+              <Divider style={{marginBottom:24}}/>
+
+              {/* Search & Add Section */}
+              <Box style={{display:'grid',gridTemplateColumns:'1fr auto auto',gap:12,marginBottom:24}}>
+                <TextField
+                  placeholder="Search hotel name"
+                  variant="outlined"
+                  size="small"
+                  value={hotelSearch}
+                  onChange={e => setHotelSearch(e.target.value)}
+                  fullWidth
+                />
+                <Button variant="outlined" color="primary" style={{textTransform:'none'}}>+ Add Manually</Button>
+                <Button variant="outlined" color="primary" style={{textTransform:'none'}}>⬆ Upload from Excel</Button>
+              </Box>
+
+              {/* Default Products & Integrations */}
+              <Box style={{marginBottom:24,padding:'12px 16px',background:'#FAFAFA',borderRadius:8}}>
+                <Typography style={{fontSize:'0.8rem',fontWeight:600,textTransform:'uppercase',color:'#4F5B60',marginBottom:8}}>Apply to All New Hotels</Typography>
+                <Box style={{marginBottom:8}}>
+                  <Typography style={{fontSize:'0.75rem',fontWeight:600,color:'#4F5B60',marginBottom:8}}>Default products</Typography>
+                  <Box style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                    {['GameChanger','ScoreBoard','BlockBuster','Advance','GameTime','HotStats'].map(p => (
+                      <Chip key={p} label={p} size="small" style={{height:28}}/>
+                    ))}
+                  </Box>
+                </Box>
+                <Box>
+                  <Typography style={{fontSize:'0.75rem',fontWeight:600,color:'#4F5B60',marginBottom:8}}>Default integrations (PMS & other systems)</Typography>
+                  <TextField placeholder="Search integrations..." variant="outlined" size="small" fullWidth style={{maxWidth:300}}/>
+                </Box>
+              </Box>
+
+              {/* Contact Details */}
+              <Box style={{marginBottom:24,padding:'12px 16px',background:'#FAFAFA',borderRadius:8}}>
+                <Typography style={{fontSize:'0.75rem',fontWeight:600,textTransform:'uppercase',color:'#4F5B60',marginBottom:12}}>PROPERTY IMPLEMENTATION CONTACT DETAILS</Typography>
+                <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+                  <TextField label="Contact Name" variant="outlined" size="small" fullWidth />
+                  <TextField label="Contact Email" variant="outlined" size="small" fullWidth />
+                  <TextField label="Contact Phone" variant="outlined" size="small" fullWidth />
+                </Box>
+              </Box>
+
+              {/* Hotels List */}
+              <Box style={{border:'1px solid #DDE1E2',borderRadius:8,overflow:'hidden'}}>
+                {hotels.length === 0 ? (
+                  <div style={{padding:'20px',textAlign:'center',color:'#AEB4BA'}}>
+                    No hotels added yet. Search above, add manually, or upload from Excel.
+                  </div>
+                ) : (
+                  hotels.map((h, i) => (
+                    <div key={h.id}>
+                      {i > 0 && <Divider/>}
+                      <div style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:i%2===0?'white':'#FAFAFA'}}>
+                        <div style={{flex:1}}>
+                          <Typography style={{fontWeight:600,fontSize:'0.875rem'}}>{h.name}</Typography>
+                          <Typography style={{fontSize:'0.72rem',color:'#AEB4BA',marginTop:2}}>{h.address} · {h.rooms} rooms</Typography>
+                        </div>
+                        <Button size="small" style={{color:'#004948',textTransform:'none',fontWeight:600,fontSize:'0.8rem'}}>Edit</Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </Box>
+            </Box>
           )}
 
           {activeSection === 'proposal' && accountSaved && (
