@@ -914,35 +914,260 @@ function ArrowStepperComponent({ steps, currentStepId, onStepClick }: { steps: A
   )
 }
 
+// ───────────────────────────────────────────────────────────────────────────────
+// Upload Storage — IndexedDB wrapper (handles large files like videos)
+// ───────────────────────────────────────────────────────────────────────────────
+
+interface UploadedFile {
+  id: string
+  name: string
+  type: string         // short extension label e.g. 'pdf', 'mp4'
+  mime: string         // full MIME type
+  size: number         // bytes
+  section: string
+  uploadedAt: string
+}
+
+const DB_NAME = 'dsr_uploads_db'
+const STORE = 'files'
+
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1)
+    req.onupgradeneeded = () => {
+      const db = req.result
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' })
+    }
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
+}
+
+async function dbPut(record: UploadedFile & { blob: Blob }): Promise<void> {
+  const db = await openDB()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite')
+    tx.objectStore(STORE).put(record)
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+  })
+}
+
+async function dbDelete(id: string): Promise<void> {
+  const db = await openDB()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite')
+    tx.objectStore(STORE).delete(id)
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+  })
+}
+
+async function dbAll(): Promise<(UploadedFile & { blob: Blob })[]> {
+  const db = await openDB()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly')
+    const req = tx.objectStore(STORE).getAll()
+    req.onsuccess = () => resolve(req.result || [])
+    req.onerror = () => reject(req.error)
+  })
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
+}
+
+function extFromName(name: string): string {
+  const m = name.toLowerCase().match(/\.([a-z0-9]+)$/)
+  return m ? m[1] : 'file'
+}
+
+function iconColors(ext: string): { bg: string, fg: string } {
+  if (ext === 'pdf') return { bg: '#FDECEA', fg: '#D32F2F' }
+  if (['ppt','pptx','key'].includes(ext)) return { bg: '#FEF3EE', fg: '#D04A02' }
+  if (['doc','docx'].includes(ext)) return { bg: '#E3F2FD', fg: '#1565C0' }
+  if (['xls','xlsx','csv'].includes(ext)) return { bg: '#E8F5E9', fg: '#2E7D32' }
+  if (['mp4','mov','webm','avi','mkv'].includes(ext)) return { bg: '#EDE7F6', fg: '#6A1B9A' }
+  if (['jpg','jpeg','png','gif','webp','svg'].includes(ext)) return { bg: '#FFF8E1', fg: '#774700' }
+  return { bg: '#ECEFF1', fg: '#455A64' }
+}
+
 function DocumentStore() {
+  const [uploads, setUploads] = useState<(UploadedFile & { blob: Blob })[]>([])
+  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState<string | null>(null) // sectionId being uploaded to
+  const [snack, setSnack] = useState<{open: boolean, msg: string, severity: 'success' | 'error'}>({open: false, msg: '', severity: 'success'})
+  const [preview, setPreview] = useState<(UploadedFile & { blob: Blob }) | null>(null)
+  const [dragOverSection, setDragOverSection] = useState<string | null>(null)
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+
+  // Load uploads on mount
+  useEffect(() => {
+    dbAll()
+      .then(rows => { setUploads(rows); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const handleFiles = async (sectionId: string, files: FileList | File[]) => {
+    setUploading(sectionId)
+    const list = Array.from(files)
+    try {
+      const newRecords: (UploadedFile & { blob: Blob })[] = []
+      for (const file of list) {
+        const ext = extFromName(file.name)
+        const record: UploadedFile & { blob: Blob } = {
+          id: `upload-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name: file.name,
+          type: ext,
+          mime: file.type || 'application/octet-stream',
+          size: file.size,
+          section: sectionId,
+          uploadedAt: new Date().toISOString(),
+          blob: file,
+        }
+        await dbPut(record)
+        newRecords.push(record)
+      }
+      setUploads(prev => [...prev, ...newRecords])
+      setSnack({open: true, msg: `Uploaded ${list.length} file${list.length === 1 ? '' : 's'}`, severity: 'success'})
+    } catch (err: any) {
+      setSnack({open: true, msg: `Upload failed: ${err?.message || 'unknown error'}`, severity: 'error'})
+    } finally {
+      setUploading(null)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await dbDelete(id)
+      setUploads(prev => prev.filter(u => u.id !== id))
+      setSnack({open: true, msg: 'File deleted', severity: 'success'})
+    } catch (err: any) {
+      setSnack({open: true, msg: `Delete failed: ${err?.message || 'unknown error'}`, severity: 'error'})
+    }
+  }
+
+  const handleDownload = (file: UploadedFile & { blob: Blob }) => {
+    const url = URL.createObjectURL(file.blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = file.name
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
+  const onDragOver = (e: React.DragEvent, sectionId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOverSection(sectionId)
+  }
+
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOverSection(null)
+  }
+
+  const onDrop = (e: React.DragEvent, sectionId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOverSection(null)
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) handleFiles(sectionId, files)
+  }
+
   return (
-    <div className="p-6 max-w-7xl">
-      <div className="mb-4">
+    <div style={{padding: 24, maxWidth: 1280}}>
+      <div style={{marginBottom: 16}}>
         <Typography variant="h5" style={{fontWeight:700}}>Documents</Typography>
         <Typography variant="body2" style={{color:'#4F5B60',marginTop:4}}>
-          All presentations and documents shared during your sales process.
+          All presentations and documents shared during your sales process. Upload files or videos to share with the team.
         </Typography>
       </div>
       <Divider style={{marginBottom:28}}/>
 
       {DOC_SECTIONS.map(section => {
-        const docs = MOCK_DOCS.filter(d => d.section === section.id)
+        const mockDocs = MOCK_DOCS.filter(d => d.section === section.id)
+        const sectionUploads = uploads.filter(u => u.section === section.id)
+        const isDragOver = dragOverSection === section.id
+        const isUploading = uploading === section.id
+
         return (
           <div key={section.id} style={{marginBottom:32}}>
-            <Typography style={{fontWeight:700,fontSize:'1rem',marginBottom:2}}>{section.label}</Typography>
-            <Typography style={{fontSize:'0.8rem',color:'#4F5B60',marginBottom:10}}>{section.description}</Typography>
+            <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:10, gap:16}}>
+              <div>
+                <Typography style={{fontWeight:700,fontSize:'1rem',marginBottom:2}}>{section.label}</Typography>
+                <Typography style={{fontSize:'0.8rem',color:'#4F5B60'}}>{section.description}</Typography>
+              </div>
+              <div>
+                <input
+                  ref={el => { fileInputRefs.current[section.id] = el }}
+                  type="file"
+                  multiple
+                  accept="*/*"
+                  style={{display:'none'}}
+                  onChange={e => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      handleFiles(section.id, e.target.files)
+                      e.target.value = ''
+                    }
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  disabled={isUploading}
+                  startIcon={<AddIcon/>}
+                  onClick={() => fileInputRefs.current[section.id]?.click()}
+                  style={{textTransform:'none', fontWeight:600, whiteSpace:'nowrap'}}
+                >
+                  {isUploading ? 'Uploading...' : 'Upload files'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Drop zone */}
+            <div
+              onDragOver={e => onDragOver(e, section.id)}
+              onDragEnter={e => onDragOver(e, section.id)}
+              onDragLeave={onDragLeave}
+              onDrop={e => onDrop(e, section.id)}
+              onClick={() => fileInputRefs.current[section.id]?.click()}
+              style={{
+                border: `2px dashed ${isDragOver ? '#006461' : '#AEB4BA'}`,
+                background: isDragOver ? '#d7f7ed' : '#FAFAFA',
+                borderRadius: 8,
+                padding: '14px 18px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+                marginBottom: 10,
+                fontSize: '0.85rem',
+                color: '#4F5B60',
+              }}
+            >
+              {isDragOver ? 'Drop files here' : 'Drag and drop files or videos here, or click to browse'}
+            </div>
+
             <Paper elevation={0} style={{border:'1px solid #DDE1E2',borderRadius:8,overflow:'hidden'}}>
-              {docs.map((doc, i) => {
-                const isPdf = doc.type === 'pdf'
+              {/* Mock docs */}
+              {mockDocs.map((doc, i) => {
+                const colors = iconColors(doc.type)
                 return (
                   <div key={doc.id}>
                     {i > 0 && <Divider/>}
-                    <div style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',borderRadius:6,transition:'background 0.12s',cursor:'pointer'}}
+                    <div style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',transition:'background 0.12s'}}
                       onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background='#F5F5F5'}
                       onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background='transparent'}>
                       <div style={{width:36,height:36,borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
-                        background: isPdf ? '#FDECEA' : '#FEF3EE'}}>
-                        <span style={{fontSize:'0.6rem',fontWeight:800,letterSpacing:0.3,color: isPdf?'#D32F2F':'#D04A02'}}>
+                        background: colors.bg}}>
+                        <span style={{fontSize:'0.6rem',fontWeight:800,letterSpacing:0.3,color: colors.fg}}>
                           {doc.type.toUpperCase()}
                         </span>
                       </div>
@@ -955,10 +1180,88 @@ function DocumentStore() {
                   </div>
                 )
               })}
+
+              {/* Uploaded files */}
+              {sectionUploads.map((file, i) => {
+                const colors = iconColors(file.type)
+                const isVideo = file.mime.startsWith('video/')
+                const isImage = file.mime.startsWith('image/')
+                const dateStr = new Date(file.uploadedAt).toLocaleDateString()
+                return (
+                  <div key={file.id}>
+                    {(mockDocs.length > 0 || i > 0) && <Divider/>}
+                    <div style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',transition:'background 0.12s'}}
+                      onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background='#F5F5F5'}
+                      onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background='transparent'}>
+                      <div style={{width:36,height:36,borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+                        background: colors.bg}}>
+                        <span style={{fontSize:'0.6rem',fontWeight:800,letterSpacing:0.3,color: colors.fg}}>
+                          {file.type.toUpperCase().slice(0, 4)}
+                        </span>
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <Typography style={{fontWeight:600,fontSize:'0.875rem',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{file.name}</Typography>
+                        <Typography style={{fontSize:'0.72rem',color:'#AEB4BA',marginTop:1}}>
+                          Uploaded {dateStr} · {formatBytes(file.size)}
+                          {isVideo && ' · Video'}
+                          {isImage && ' · Image'}
+                        </Typography>
+                      </div>
+                      {(isVideo || isImage) && (
+                        <Button size="small" onClick={() => setPreview(file)} style={{color:'#004948',textTransform:'none',fontWeight:600,flexShrink:0,fontSize:'0.8rem'}}>Preview</Button>
+                      )}
+                      <Button size="small" onClick={() => handleDownload(file)} style={{color:'#004948',textTransform:'none',fontWeight:600,flexShrink:0,fontSize:'0.8rem'}}>Download</Button>
+                      <IconButton size="small" onClick={() => handleDelete(file.id)} style={{color: '#D32F2F'}}>
+                        <DeleteIcon fontSize="small"/>
+                      </IconButton>
+                    </div>
+                  </div>
+                )
+              })}
+
+              {mockDocs.length === 0 && sectionUploads.length === 0 && !loading && (
+                <div style={{padding:'20px 14px',textAlign:'center',color:'#AEB4BA',fontSize:'0.85rem'}}>
+                  No files yet. Upload to get started.
+                </div>
+              )}
             </Paper>
           </div>
         )
       })}
+
+      {/* Preview Dialog */}
+      <Dialog open={!!preview} onClose={() => setPreview(null)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          {preview?.name}
+        </DialogTitle>
+        <DialogContent>
+          {preview && preview.mime.startsWith('video/') && (
+            <video controls style={{width:'100%',maxHeight:'70vh',background:'#000',borderRadius:6}}>
+              <source src={URL.createObjectURL(preview.blob)} type={preview.mime}/>
+              Your browser does not support this video format.
+            </video>
+          )}
+          {preview && preview.mime.startsWith('image/') && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={URL.createObjectURL(preview.blob)} alt={preview.name} style={{maxWidth:'100%',maxHeight:'70vh',display:'block',margin:'0 auto'}}/>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {preview && (
+            <Button onClick={() => handleDownload(preview)} style={{textTransform:'none'}}>Download</Button>
+          )}
+          <Button onClick={() => setPreview(null)} variant="contained" color="primary" style={{textTransform:'none'}}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={3500}
+        onClose={() => setSnack(s => ({...s, open: false}))}
+        anchorOrigin={{vertical:'bottom', horizontal:'center'}}
+        message={snack.msg}
+      />
     </div>
   )
 }
