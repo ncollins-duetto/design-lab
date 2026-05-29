@@ -2,6 +2,14 @@
 
 import { useState, useContext, createContext, ReactNode, useEffect, useRef, useMemo } from 'react'
 import { Box, Typography, Button, Card, CardContent, CardActions, Divider, Grid, List, ListItem, ListItemIcon, ListItemText, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, IconButton, Tooltip, makeStyles, useTheme, InputAdornment, Stepper, Step, StepLabel } from '@material-ui/core'
+import { AgGridReact } from 'ag-grid-react'
+import { ModuleRegistry, AllCommunityModule, ColDef } from 'ag-grid-community'
+import 'ag-grid-community/styles/ag-grid.css'
+import 'ag-grid-community/styles/ag-theme-alpine.css'
+
+if (typeof window !== 'undefined') {
+  ModuleRegistry.registerModules([AllCommunityModule])
+}
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import DeleteIcon from '@material-ui/icons/Delete'
 import AddIcon from '@material-ui/icons/Add'
@@ -1306,6 +1314,170 @@ function ProductSelector({ value, onChange, label }: { value: string[], onChange
 }
 
 // ───────────────────────────────────────────────────────────────────────────────
+// Sales Proposal Table — AG-Grid
+// ───────────────────────────────────────────────────────────────────────────────
+
+interface ProposalLine {
+  id: string
+  hotel: string
+  rooms: number
+  products: string[]
+  annual: number
+  impl: number
+}
+
+interface Proposal {
+  id: string
+  date: string
+  lines: ProposalLine[]
+}
+
+function ProductsRenderer({ value }: { value: string[] }) {
+  return (
+    <Box style={{display:'flex',flexWrap:'wrap',gap:4,padding:'8px 0'}}>
+      {value.map(p=>(
+        <Box key={p} style={{padding:'2px 8px',borderRadius:4,fontSize:'0.7rem',fontWeight:700,background:(PRODUCT_COLORS[p]||{bg:'#E0F0EF'}).bg,color:(PRODUCT_COLORS[p]||{text:'#004948'}).text}}>{p}</Box>
+      ))}
+    </Box>
+  )
+}
+
+function HotelRenderer({ data }: { data: ProposalLine }) {
+  return (
+    <Box>
+      <Typography style={{fontWeight:600,fontSize:'0.875rem'}}>{data.hotel}</Typography>
+      <Typography style={{fontSize:'0.75rem',color:'#4F5B60'}}>{data.rooms} rooms</Typography>
+    </Box>
+  )
+}
+
+function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, productColors: Record<string, {bg: string, text: string}> }) {
+  const fmt = (n: number) => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n)
+
+  const rowData = proposal.lines.map(line => ({
+    ...line,
+    costPerRoom: line.products.reduce((s,p)=>s+({GameChanger:8.5,ScoreBoard:3,BlockBuster:4,Advance:2.5,GameTime:2,HotStats:1.5}[p as keyof typeof productColors]||0),0),
+  }))
+
+  const columnDefs: ColDef[] = [
+    {
+      field: 'hotel',
+      headerName: 'Hotel',
+      flex: 1.5,
+      cellRenderer: (params: any) => <HotelRenderer data={params.data} />,
+      minWidth: 200,
+    },
+    {
+      field: 'products',
+      headerName: 'Products',
+      flex: 1.8,
+      cellRenderer: (params: any) => <ProductsRenderer value={params.value} />,
+      minWidth: 240,
+      autoHeight: true,
+    },
+    {
+      field: 'costPerRoom',
+      headerName: 'Cost / Room / Month',
+      flex: 1,
+      cellRenderer: (params: any) => <Typography style={{fontWeight:600,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(params.value)}</Typography>,
+      minWidth: 150,
+      headerClass: 'ag-right-aligned-header',
+      cellClass: 'ag-right-aligned-cell',
+    },
+    {
+      field: 'annual',
+      headerName: 'Annual Subscription',
+      flex: 1,
+      cellRenderer: (params: any) => <Typography style={{fontWeight:600,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(params.value)}</Typography>,
+      minWidth: 150,
+      headerClass: 'ag-right-aligned-header',
+      cellClass: 'ag-right-aligned-cell',
+    },
+    {
+      field: 'impl',
+      headerName: 'Implementation Fee',
+      flex: 1,
+      cellRenderer: (params: any) => <Typography style={{fontWeight:600,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(params.value)}</Typography>,
+      minWidth: 150,
+      headerClass: 'ag-right-aligned-header',
+      cellClass: 'ag-right-aligned-cell',
+    },
+  ]
+
+  const totalAnnual = proposal.lines.reduce((s,l)=>s+l.annual,0)
+  const totalImpl = proposal.lines.reduce((s,l)=>s+l.impl,0)
+
+  return (
+    <Box>
+      <Box style={{border:'1px solid #DDE1E2',borderRadius:8,marginBottom:16}}>
+        <style>{`
+          .ag-theme-alpine {
+            --ag-header-background-color: #F8F9FD;
+            --ag-header-foreground-color: #4F5B60;
+            --ag-header-cell-text-transform: uppercase;
+            --ag-header-cell-padding: 12px 16px;
+            --ag-cell-horizontal-padding: 16px;
+            --ag-cell-vertical-padding: 14px;
+            --ag-row-hover-color: #f5f5f5;
+            --ag-borders-side-color: #DDE1E2;
+            --ag-border-color: #DDE1E2;
+            --ag-header-border-color: #DDE1E2;
+          }
+          .ag-theme-alpine .ag-header-cell-text {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+          }
+          .ag-theme-alpine .ag-cell {
+            font-size: 0.875rem;
+          }
+          .ag-right-aligned-header {
+            text-align: right !important;
+          }
+          .ag-right-aligned-cell {
+            text-align: right !important;
+          }
+          .ag-theme-alpine .ag-row:nth-child(odd) {
+            background-color: #FAFAFA;
+          }
+          .ag-theme-alpine .ag-row:nth-child(even) {
+            background-color: white;
+          }
+        `}</style>
+        <div className="ag-theme-alpine" style={{width:'100%',height:'auto'}}>
+          <AgGridReact
+            rowData={rowData}
+            columnDefs={columnDefs}
+            defaultColDef={{
+              sortable:false,
+              filter:false,
+              resizable:true,
+            }}
+            domLayout="autoHeight"
+            rowHeight={undefined}
+            suppressHorizontalScroll={false}
+            suppressMovableColumns={true}
+          />
+        </div>
+      </Box>
+
+      {/* Footer totals */}
+      <Box style={{display:'flex',gap:40,background:'#FAFAFA',borderRadius:8,padding:'12px 16px',marginBottom:16,borderTop:'2px solid #DDE1E2'}}>
+        <Box style={{flex:1}}>
+          <Typography style={{fontSize:'0.72rem',fontWeight:700,textTransform:'uppercase',letterSpacing:0.5,color:'#4F5B60',marginBottom:4}}>Total</Typography>
+        </Box>
+        <Box style={{textAlign:'right'}}>
+          <Typography style={{fontWeight:700,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(totalAnnual)}</Typography>
+        </Box>
+        <Box style={{textAlign:'right',minWidth:150}}>
+          <Typography style={{fontWeight:700,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(totalImpl)}</Typography>
+        </Box>
+      </Box>
+    </Box>
+  )
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
 // Main App
 // ───────────────────────────────────────────────────────────────────────────────
 
@@ -1536,58 +1708,8 @@ function DigitalSalesRoomApp() {
                 ))}
               </Box>
 
-              {/* Table */}
-              <Box style={{overflowX:'auto',border:'1px solid #DDE1E2',borderRadius:8}}>
-                <table style={{width:'100%',borderCollapse:'collapse',minWidth:700}}>
-                  <thead>
-                    <tr style={{background:'#F8F9FD'}}>
-                      {['Hotel','Products','Cost / Room / Month','Annual Subscription','Implementation Fee'].map(h=>(
-                        <th key={h} style={{padding:'12px 16px',textAlign:h.includes('Cost')||h.includes('Annual')||h.includes('Impl')?'right':'left',
-                          fontSize:'0.72rem',fontWeight:700,textTransform:'uppercase',letterSpacing:0.5,color:'#4F5B60',
-                          borderBottom:'2px solid #DDE1E2',whiteSpace:'nowrap'}}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {MOCK_PROPOSAL.lines.map((line,i)=>{
-                      const fmt = (n: number) => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n)
-                      return (
-                        <tr key={line.id} style={{borderBottom:'1px solid #DDE1E2',background:i%2===0?'white':'#FAFAFA'}}>
-                          <td style={{padding:'14px 16px'}}>
-                            <Typography style={{fontWeight:600,fontSize:'0.875rem'}}>{line.hotel}</Typography>
-                            <Typography style={{fontSize:'0.75rem',color:'#4F5B60'}}>{line.rooms} rooms</Typography>
-                          </td>
-                          <td style={{padding:'14px 16px'}}>
-                            <Box style={{display:'flex',flexWrap:'wrap',gap:4}}>
-                              {line.products.map(p=>(
-                                <Box key={p} style={{padding:'2px 8px',borderRadius:4,fontSize:'0.7rem',fontWeight:700,background:(PRODUCT_COLORS[p]||{bg:'#E0F0EF'}).bg,color:(PRODUCT_COLORS[p]||{text:'#004948'}).text}}>{p}</Box>
-                              ))}
-                            </Box>
-                          </td>
-                          <td style={{padding:'14px 16px',textAlign:'right'}}>
-                            <Typography style={{fontWeight:600,fontSize:'0.875rem',whiteSpace:'nowrap'}}>
-                              {fmt(line.products.reduce((s,p)=>s+({GameChanger:8.5,ScoreBoard:3,BlockBuster:4,Advance:2.5,GameTime:2,HotStats:1.5}[p as keyof typeof PRODUCT_COLORS]||0),0))}
-                            </Typography>
-                          </td>
-                          <td style={{padding:'14px 16px',textAlign:'right',fontWeight:600,fontSize:'0.875rem'}}>{fmt(line.annual)}</td>
-                          <td style={{padding:'14px 16px',textAlign:'right',fontWeight:600,fontSize:'0.875rem'}}>{fmt(line.impl)}</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                  <tfoot>
-                    <tr style={{background:'#FAFAFA',borderTop:'2px solid #DDE1E2'}}>
-                      <td colSpan={3} style={{padding:'12px 16px',fontWeight:700}}>Total</td>
-                      <td style={{padding:'12px 16px',textAlign:'right',fontWeight:700}}>
-                        {new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(MOCK_PROPOSAL.lines.reduce((s,l)=>s+l.annual,0))}
-                      </td>
-                      <td style={{padding:'12px 16px',textAlign:'right',fontWeight:700}}>
-                        {new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(MOCK_PROPOSAL.lines.reduce((s,l)=>s+l.impl,0))}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </Box>
+              {/* AG-Grid Table */}
+              <SalesProposalTable proposal={MOCK_PROPOSAL} productColors={PRODUCT_COLORS} />
 
               {/* Actions */}
               <Box style={{display:'flex',gap:12,marginTop:20,paddingTop:20,borderTop:'1px solid #DDE1E2'}}>
