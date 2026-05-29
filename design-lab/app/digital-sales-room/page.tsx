@@ -809,28 +809,73 @@ function PhaseBar({ userName, nextStep, onNextStep }: { userName?: string, nextS
 // Arrow Stepper (from Storybook)
 // ───────────────────────────────────────────────────────────────────────────────
 
-function ArrowStepperComponent({ steps, currentStepId, onStepClick }: { steps: StepConfig[], currentStepId: string, onStepClick?: (id: string) => void }) {
-  const classes = useStyles()
+interface ArrowStepConfig {
+  id: string
+  label: string
+  description?: string
+}
+
+function ArrowStepperComponent({ steps, currentStepId, onStepClick }: { steps: ArrowStepConfig[], currentStepId: string, onStepClick?: (id: string) => void }) {
   const theme = useTheme()
+  const currentIdx = steps.findIndex(s => s.id === currentStepId)
 
   return (
-    <Box className={classes.arrowStepperContainer}>
+    <Box style={{
+      display: 'flex',
+      gap: 0,
+      padding: theme.spacing(2, 3),
+      background: '#ffffff',
+      borderBottom: '1px solid #e0e0e0',
+      overflowX: 'auto',
+      alignItems: 'flex-start',
+    }}>
       {steps.map((step, index) => {
-        const isActive = step.id === currentStepId
-        const isCompleted = steps.findIndex(s => s.id === currentStepId) > index
+        const isActive = index === currentIdx
+        const isCompleted = index < currentIdx
         const isLast = index === steps.length - 1
 
         return (
-          <Box key={step.id} style={{display: 'flex', alignItems: 'center', gap: theme.spacing(2)}}>
-            <Box className={classes.stepItem} onClick={() => onStepClick?.(step.id)} style={{cursor: 'pointer'}}>
-              <Box className={`${classes.stepNumber} ${!isActive && !isCompleted ? classes.stepNumberInactive : isCompleted ? classes.stepNumberCompleted : ''}`}>
-                {isCompleted ? '✓' : index + 1}
-              </Box>
-              <Typography className={classes.stepLabel} style={{color: isActive ? theme.palette.primary.main : theme.palette.text.primary}}>
+          <Box key={step.id} style={{display: 'flex', alignItems: 'flex-start', flex: '1 0 auto', minWidth: isLast ? 'auto' : '180px', position: 'relative'}}>
+            {/* Arrow step box */}
+            <Box
+              onClick={() => onStepClick?.(step.id)}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isActive || isCompleted ? '#004948' : '#e8e8e8' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isActive || isCompleted ? '#006461' : '#f5f5f5' }}
+              style={{
+                flex: '1 0 auto',
+                minHeight: 56,
+                background: isActive || isCompleted ? '#006461' : '#f5f5f5',
+                color: isActive || isCompleted ? '#ffffff' : '#4f5b60',
+                padding: theme.spacing(1.5, 2),
+                position: 'relative',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease',
+                clipPath: !isLast ? 'polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%)' : 'polygon(0 0, 100% 0, 100% 100%, 0 100%)',
+              }}
+            >
+              <Typography style={{fontSize: '0.875rem', fontWeight: 700, lineHeight: 1.2}}>
                 {step.label}
               </Typography>
+              {step.description && (
+                <Typography style={{fontSize: '0.75rem', opacity: 0.8, marginTop: 2, lineHeight: 1.1}}>
+                  {step.description}
+                </Typography>
+              )}
             </Box>
-            {!isLast && <Typography className={classes.stepArrow}>→</Typography>}
+            {/* Arrow connector */}
+            {!isLast && (
+              <Box style={{
+                width: 14,
+                height: 56,
+                background: isActive || isCompleted ? '#006461' : '#f5f5f5',
+                position: 'relative',
+                zIndex: 0,
+                clipPath: 'polygon(0 0, 100% 50%, 0 100%)',
+              }} />
+            )}
           </Box>
         )
       })}
@@ -949,11 +994,11 @@ function DigitalSalesRoomApp() {
     ? { section:'account',  label:'Complete Account Details' }
     : { section:'proposal', label:'Review Proposal' }
 
-  const phaseSteps: StepConfig[] = [
-    { id: 'docs', label: 'Documents' },
-    { id: 'account', label: 'Account Details' },
-    { id: 'hotels', label: 'Hotel Details' },
-    { id: 'proposal', label: 'Sales Proposal' },
+  const phaseSteps: ArrowStepConfig[] = [
+    { id: 'docs', label: 'Documents', description: 'Review materials' },
+    { id: 'account', label: 'Account Details', description: 'Your info' },
+    { id: 'hotels', label: 'Hotel Details', description: 'Properties' },
+    { id: 'proposal', label: 'Sales Proposal', description: 'Final review' },
   ]
 
   return (
