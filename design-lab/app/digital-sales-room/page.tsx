@@ -621,6 +621,8 @@ function ProductSelector({ value, onChange, label }: { value: string[], onChange
 // ───────────────────────────────────────────────────────────────────────────────
 
 function DigitalSalesRoomApp() {
+  const classes = useStyles()
+  const theme = useTheme()
   const { user } = useContext(AuthCtx)
   const [view, setView] = useState('landing')
   const [activeSection, setActiveSection] = useState('docs')
@@ -661,7 +663,8 @@ function DigitalSalesRoomApp() {
               return (
                 <ListItem
                   key={id}
-                  button={!isLocked}
+                  button
+                  disabled={isLocked}
                   onClick={!isLocked ? () => setActiveSection(id) : undefined}
                   style={{
                     borderRadius: 6,
