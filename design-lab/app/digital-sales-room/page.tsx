@@ -85,6 +85,10 @@ const useStyles = makeStyles((theme) => ({
     overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',
+    transition: 'width 0.3s ease-in-out',
+    '&.collapsed': {
+      width: 64,
+    },
   },
   content: {
     flex: 1,
@@ -101,6 +105,25 @@ const useStyles = makeStyles((theme) => ({
     textTransform: 'uppercase',
     letterSpacing: 1,
     fontSize: '0.68rem',
+    transition: 'opacity 0.3s ease-in-out',
+    '&.hidden': {
+      opacity: 0,
+      height: 0,
+      overflow: 'hidden',
+      margin: 0,
+      padding: 0,
+    },
+  },
+  sidebarToggle: {
+    alignSelf: 'flex-end',
+    margin: theme.spacing(0.5, 1),
+    minWidth: 'auto',
+  },
+  navLabel: {
+    transition: 'opacity 0.3s ease-in-out',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   docRow: {
     display: 'flex',
@@ -855,6 +878,7 @@ function DigitalSalesRoomApp() {
   const [activeSection, setActiveSection] = useState('docs')
   const [accountSaved, setAccountSaved] = useState(false)
   const [proposalAccepted, setProposalAccepted] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   if (!user) {
     if (view === 'signin') return <SignInPage onBack={()=>setView('landing')} onCreateAccount={()=>setView('create')}/>
@@ -887,10 +911,13 @@ function DigitalSalesRoomApp() {
       <ArrowStepperComponent steps={phaseSteps} currentStepId={activeSection} onStepClick={setActiveSection} />
 
       <div className={classes.mainContent}>
-        {/* Sidebar */}
-        <Box className={classes.sidebar}>
+        {/* TourOperator Sidebar Pattern */}
+        <Box className={`${classes.sidebar} ${sidebarCollapsed ? 'collapsed' : ''}`} style={{width: sidebarCollapsed ? 64 : 240}}>
           <Box className={classes.navSection}>
-            <Typography className={classes.navSectionLabel}>Phase 1</Typography>
+            <Typography className={`${classes.navSectionLabel} ${sidebarCollapsed ? 'hidden' : ''}`}>Phase 1</Typography>
+            <IconButton size="small" className={classes.sidebarToggle} onClick={() => setSidebarCollapsed(!sidebarCollapsed)}>
+              {sidebarCollapsed ? <ExpandMoreIcon style={{transform: 'rotate(-90deg)'}} /> : <ExpandMoreIcon style={{transform: 'rotate(90deg)'}} />}
+            </IconButton>
           </Box>
           <Divider/>
           <List disablePadding style={{paddingTop:theme.spacing(0.75)}}>
@@ -916,11 +943,13 @@ function DigitalSalesRoomApp() {
                     cursor: isLocked ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  <ListItemIcon style={{minWidth:36, color: isLocked ? theme.palette.text.disabled : isActive ? theme.palette.primary.main : '#63696F'}}>
+                  <ListItemIcon style={{minWidth:36, color: isLocked ? theme.palette.text.disabled : isActive ? theme.palette.primary.main : '#63696F', transition: 'color 0.2s'}}>
                     {isLocked ? <LockIcon /> : <Icon />}
                   </ListItemIcon>
-                  <ListItemText primary={label}
-                    primaryTypographyProps={{style:{fontWeight:isActive?600:400, color: isLocked?theme.palette.text.disabled: isActive?theme.palette.primary.main:theme.palette.text.primary, fontSize:'0.875rem'}}}/>
+                  {!sidebarCollapsed && (
+                    <ListItemText primary={label}
+                      primaryTypographyProps={{className: classes.navLabel, style:{fontWeight:isActive?600:400, color: isLocked?theme.palette.text.disabled: isActive?theme.palette.primary.main:theme.palette.text.primary, fontSize:'0.875rem'}}}/>
+                  )}
                 </ListItem>
               )
             })}
