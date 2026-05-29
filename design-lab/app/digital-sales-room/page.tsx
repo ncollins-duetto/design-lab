@@ -819,63 +819,83 @@ function ArrowStepperComponent({ steps, currentStepId, onStepClick }: { steps: A
   const theme = useTheme()
   const currentIdx = steps.findIndex(s => s.id === currentStepId)
 
+  // Match Figma node 13429-927:
+  // Active: bg #d7f7ed (teal-50), text #006461 (teal-700), border #006461
+  // Inactive: bg #ffffff, text #4f5b60 (secondary), border #aeb4ba (border/emphasis)
+
   return (
     <Box style={{
       display: 'flex',
-      gap: 0,
+      gap: 8,
       padding: theme.spacing(2, 3),
       background: '#ffffff',
       borderBottom: '1px solid #e0e0e0',
       overflowX: 'auto',
-      alignItems: 'flex-start',
+      alignItems: 'center',
     }}>
       {steps.map((step, index) => {
         const isActive = index === currentIdx
-        const isCompleted = index < currentIdx
         const isLast = index === steps.length - 1
+        const activeBg = '#d7f7ed'
+        const activeBorder = '#006461'
+        const activeText = '#006461'
+        const inactiveBg = '#ffffff'
+        const inactiveBorder = '#aeb4ba'
+        const inactiveText = '#4f5b60'
+
+        const bg = isActive ? activeBg : inactiveBg
+        const border = isActive ? activeBorder : inactiveBorder
+        const textCol = isActive ? activeText : inactiveText
 
         return (
-          <Box key={step.id} style={{display: 'flex', alignItems: 'flex-start', flex: '1 0 auto', minWidth: isLast ? 'auto' : '180px', position: 'relative'}}>
-            {/* Arrow step box */}
-            <Box
-              onClick={() => onStepClick?.(step.id)}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isActive || isCompleted ? '#004948' : '#e8e8e8' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isActive || isCompleted ? '#006461' : '#f5f5f5' }}
-              style={{
-                flex: '1 0 auto',
-                minHeight: 56,
-                background: isActive || isCompleted ? '#006461' : '#f5f5f5',
-                color: isActive || isCompleted ? '#ffffff' : '#4f5b60',
-                padding: theme.spacing(1.5, 2),
-                position: 'relative',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                transition: 'all 0.2s ease',
-                clipPath: !isLast ? 'polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%)' : 'polygon(0 0, 100% 0, 100% 100%, 0 100%)',
-              }}
+          <Box
+            key={step.id}
+            onClick={() => onStepClick?.(step.id)}
+            style={{
+              flex: '1 0 0',
+              minWidth: 0,
+              height: 56,
+              position: 'relative',
+              cursor: 'pointer',
+            }}
+          >
+            {/* SVG arrow shape */}
+            <svg
+              width="100%"
+              height="56"
+              viewBox="0 0 256 56"
+              preserveAspectRatio="none"
+              style={{position: 'absolute', inset: 0, display: 'block'}}
             >
-              <Typography style={{fontSize: '0.875rem', fontWeight: 700, lineHeight: 1.2}}>
+              <path
+                d={isLast
+                  ? 'M1 1 L255 1 L255 55 L1 55 Z'
+                  : 'M1 1 L240 1 L255 28 L240 55 L1 55 Z'}
+                fill={bg}
+                stroke={border}
+                strokeWidth="1"
+              />
+            </svg>
+            {/* Label */}
+            <Box style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              padding: theme.spacing(0, 3),
+              paddingRight: isLast ? theme.spacing(3) : theme.spacing(4),
+              color: textCol,
+            }}>
+              <Typography style={{fontSize: 16, fontWeight: 700, lineHeight: 1.2, color: textCol}}>
                 {step.label}
               </Typography>
               {step.description && (
-                <Typography style={{fontSize: '0.75rem', opacity: 0.8, marginTop: 2, lineHeight: 1.1}}>
+                <Typography style={{fontSize: 12, fontWeight: 400, marginTop: 2, lineHeight: 1.2, color: textCol}}>
                   {step.description}
                 </Typography>
               )}
             </Box>
-            {/* Arrow connector */}
-            {!isLast && (
-              <Box style={{
-                width: 14,
-                height: 56,
-                background: isActive || isCompleted ? '#006461' : '#f5f5f5',
-                position: 'relative',
-                zIndex: 0,
-                clipPath: 'polygon(0 0, 100% 50%, 0 100%)',
-              }} />
-            )}
           </Box>
         )
       })}
@@ -977,6 +997,7 @@ function DigitalSalesRoomApp() {
   const theme = useTheme()
   const { user } = useContext(AuthCtx)
   const [view, setView] = useState('landing')
+  const [activePhase, setActivePhase] = useState('digital-sales-room')
   const [activeSection, setActiveSection] = useState('docs')
   const [accountSaved, setAccountSaved] = useState(false)
   const [proposalAccepted, setProposalAccepted] = useState(false)
@@ -995,10 +1016,9 @@ function DigitalSalesRoomApp() {
     : { section:'proposal', label:'Review Proposal' }
 
   const phaseSteps: ArrowStepConfig[] = [
-    { id: 'docs', label: 'Documents', description: 'Review materials' },
-    { id: 'account', label: 'Account Details', description: 'Your info' },
-    { id: 'hotels', label: 'Hotel Details', description: 'Properties' },
-    { id: 'proposal', label: 'Sales Proposal', description: 'Final review' },
+    { id: 'digital-sales-room', label: 'Digital Sales Room', description: 'Documents, account & proposal' },
+    { id: 'phase-2', label: 'Phase 2', description: 'Coming soon' },
+    { id: 'phase-3', label: 'Phase 3', description: 'Coming soon' },
   ]
 
   return (
@@ -1010,13 +1030,25 @@ function DigitalSalesRoomApp() {
       ]}
     >
       {/* Arrow Stepper Progress Indicator */}
-      <ArrowStepperComponent steps={phaseSteps} currentStepId={activeSection} onStepClick={setActiveSection} />
+      <ArrowStepperComponent steps={phaseSteps} currentStepId={activePhase} onStepClick={setActivePhase} />
 
+      {activePhase !== 'digital-sales-room' && (
+        <Box style={{padding: theme.spacing(8, 4), textAlign: 'center', background: '#f5f5f5', minHeight: '60vh'}}>
+          <Typography variant="h4" style={{fontWeight: 700, color: '#212121', marginBottom: 8}}>
+            {phaseSteps.find(p => p.id === activePhase)?.label}
+          </Typography>
+          <Typography variant="body1" style={{color: '#4f5b60'}}>
+            Coming soon. Content for this phase has not been built yet.
+          </Typography>
+        </Box>
+      )}
+
+      {activePhase === 'digital-sales-room' && (
       <div className={classes.mainContent}>
         {/* TourOperator Sidebar Pattern */}
         <Box className={`${classes.sidebar} ${sidebarCollapsed ? 'collapsed' : ''}`} style={{width: sidebarCollapsed ? 64 : 240}}>
           <Box className={classes.navSection}>
-            <Typography className={`${classes.navSectionLabel} ${sidebarCollapsed ? 'hidden' : ''}`}>Phase 1</Typography>
+            <Typography className={`${classes.navSectionLabel} ${sidebarCollapsed ? 'hidden' : ''}`}>Digital Sales Room</Typography>
             <IconButton size="small" className={classes.sidebarToggle} onClick={() => setSidebarCollapsed(!sidebarCollapsed)}>
               {sidebarCollapsed ? <ExpandMoreIcon style={{transform: 'rotate(-90deg)'}} /> : <ExpandMoreIcon style={{transform: 'rotate(90deg)'}} />}
             </IconButton>
@@ -1200,6 +1232,7 @@ function DigitalSalesRoomApp() {
           )}
         </Box>
       </div>
+      )}
 
       {/* Floating Back Button */}
       {user && (
