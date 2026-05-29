@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useContext, createContext, ReactNode, useEffect, useRef, useMemo } from 'react'
-import { Box, Typography, Button, Card, CardContent, CardActions, Divider, Grid, List, ListItem, ListItemIcon, ListItemText, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, IconButton, Tooltip, makeStyles, useTheme } from '@material-ui/core'
+import { Box, Typography, Button, Card, CardContent, CardActions, Divider, Grid, List, ListItem, ListItemIcon, ListItemText, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, IconButton, Tooltip, makeStyles, useTheme, InputAdornment, Stepper, Step, StepLabel } from '@material-ui/core'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import DeleteIcon from '@material-ui/icons/Delete'
 import AddIcon from '@material-ui/icons/Add'
@@ -12,6 +12,9 @@ import DocumentIcon from '@material-ui/icons/Description'
 import LockIcon from '@material-ui/icons/Lock'
 import EditIcon from '@material-ui/icons/Edit'
 import CheckCircleIcon from '@material-ui/icons/CheckCircle'
+import VisibilityIcon from '@material-ui/icons/Visibility'
+import VisibilityOffIcon from '@material-ui/icons/VisibilityOff'
+import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import AppShell from '@/components/AppShell'
 
 const useStyles = makeStyles((theme) => ({
@@ -107,6 +110,19 @@ const useStyles = makeStyles((theme) => ({
     fontSize: '0.6rem',
     fontWeight: 800,
     letterSpacing: 0.3,
+  },
+  formField: {
+    marginBottom: theme.spacing(2),
+  },
+  floatingButton: {
+    position: 'fixed',
+    bottom: theme.spacing(3),
+    right: theme.spacing(3),
+    zIndex: 999,
+  },
+  stepper: {
+    background: 'transparent',
+    padding: theme.spacing(2, 0),
   },
 }))
 
@@ -325,15 +341,25 @@ function LoginPage({ onSignIn, onCreateAccount }: { onSignIn: () => void, onCrea
 
 function SignInPage({ onBack, onCreateAccount }: { onBack: () => void, onCreateAccount: () => void }) {
   const { loginWithEmail } = useContext(AuthCtx)
+  const classes = useStyles()
+  const theme = useTheme()
   const [vals, setVals] = useState({ email:'', password:'' })
+  const [showPassword, setShowPassword] = useState(false)
   const [errs, setErrs] = useState<{email?:string, password?:string}>({})
   const [serverErr, setServerErr] = useState('')
+
+  const validateEmail = (email: string) => {
+    if (!email) return 'Email is required'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Invalid email address'
+    return ''
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const newErrs: typeof errs = {}
-    if (!vals.email) newErrs.email = 'Required'
-    if (!vals.password) newErrs.password = 'Required'
+    const emailErr = validateEmail(vals.email)
+    if (emailErr) newErrs.email = emailErr
+    if (!vals.password) newErrs.password = 'Password is required'
     if (Object.keys(newErrs).length) { setErrs(newErrs); return }
     const err = loginWithEmail(vals.email, vals.password)
     if (err) setServerErr(err)
@@ -341,18 +367,57 @@ function SignInPage({ onBack, onCreateAccount }: { onBack: () => void, onCreateA
 
   return (
     <AuthShell title="Sign In" subtitle="Sign in to your Digital Sales Room account">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <TextField label="Email" type="email" variant="outlined" fullWidth size="small"
-            value={vals.email} onChange={e => { setVals(v=>({...v,email:e.target.value})); setErrs(r=>({...r,email:''})); }}
-            error={!!errs.email} helperText={errs.email}/>
-        </div>
-        <div>
-          <TextField label="Password" type="password" variant="outlined" fullWidth size="small"
-            value={vals.password} onChange={e => { setVals(v=>({...v,password:e.target.value})); setErrs(r=>({...r,password:''})); }}
-            error={!!errs.password} helperText={errs.password}/>
-        </div>
-        {serverErr && <p className="text-red-600 text-xs mt-2">{serverErr}</p>}
+      <form onSubmit={handleSubmit}>
+        <TextField
+          label="Email address"
+          type="email"
+          variant="outlined"
+          fullWidth
+          size="small"
+          className={classes.formField}
+          value={vals.email}
+          onChange={e => { setVals(v=>({...v,email:e.target.value})); setErrs(r=>({...r,email:''})); setServerErr('') }}
+          error={!!errs.email}
+          helperText={errs.email}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+        />
+        <TextField
+          label="Password"
+          type={showPassword ? 'text' : 'password'}
+          variant="outlined"
+          fullWidth
+          size="small"
+          className={classes.formField}
+          value={vals.password}
+          onChange={e => { setVals(v=>({...v,password:e.target.value})); setErrs(r=>({...r,password:''})); setServerErr('') }}
+          error={!!errs.password}
+          helperText={errs.password}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockIcon fontSize="small" />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setShowPassword(!showPassword)} edge="end">
+                  {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+        {serverErr && (
+          <Box style={{color: theme.palette.error.main, fontSize:'0.875rem', marginBottom: theme.spacing(2)}}>
+            {serverErr}
+          </Box>
+        )}
         <Button type="submit" variant="contained" color="primary" fullWidth
           style={{textTransform:'none',fontWeight:600,padding:'10px 0',marginTop:8}}>
           Sign In
@@ -373,16 +438,23 @@ function SignInPage({ onBack, onCreateAccount }: { onBack: () => void, onCreateA
 
 function CreateAccountPage({ onBack }: { onBack: () => void }) {
   const { createAccount } = useContext(AuthCtx)
+  const classes = useStyles()
+  const theme = useTheme()
   const [vals, setVals] = useState({ name:'', email:'', password:'', confirm:'' })
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [errs, setErrs] = useState<Record<string,string>>({})
   const [serverErr, setServerErr] = useState('')
 
   const validate = () => {
     const e: Record<string,string> = {}
-    if (!vals.name) e.name = 'Required'
-    if (!vals.email || !/\S+@\S+\.\S+/.test(vals.email)) e.email = 'Valid email required'
-    if (!vals.password || vals.password.length < 8) e.password = 'Min 8 characters'
-    if (vals.password !== vals.confirm) e.confirm = 'Passwords must match'
+    if (!vals.name) e.name = 'Full name is required'
+    if (!vals.email) e.email = 'Email is required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vals.email)) e.email = 'Invalid email address'
+    if (!vals.password) e.password = 'Password is required'
+    else if (vals.password.length < 8) e.password = 'Password must be at least 8 characters'
+    if (!vals.confirm) e.confirm = 'Confirm password is required'
+    else if (vals.password !== vals.confirm) e.confirm = 'Passwords do not match'
     return e
   }
 
@@ -396,17 +468,97 @@ function CreateAccountPage({ onBack }: { onBack: () => void }) {
 
   return (
     <AuthShell title="Create Account" subtitle="Set up your Digital Sales Room account">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {[['name','Full Name','text'],['email','Email','email'],['password','Password','password'],['confirm','Confirm Password','password']].map(([k,l,t])=>(
-          <div key={k}>
-            <TextField label={l as string} type={t as string} variant="outlined" fullWidth size="small"
-              value={vals[k as keyof typeof vals]} onChange={e => { setVals(v=>({...v,[k]:e.target.value})); setErrs(r=>({...r,[k]:''})); }}
-              error={!!errs[k]} helperText={errs[k]}/>
-          </div>
-        ))}
-        {serverErr && <p className="text-red-600 text-xs">{serverErr}</p>}
+      <form onSubmit={handleSubmit}>
+        <TextField
+          label="Full Name"
+          type="text"
+          variant="outlined"
+          fullWidth
+          size="small"
+          className={classes.formField}
+          value={vals.name}
+          onChange={e => { setVals(v=>({...v,name:e.target.value})); setErrs(r=>({...r,name:''})); setServerErr('') }}
+          error={!!errs.name}
+          helperText={errs.name}
+        />
+        <TextField
+          label="Email address"
+          type="email"
+          variant="outlined"
+          fullWidth
+          size="small"
+          className={classes.formField}
+          value={vals.email}
+          onChange={e => { setVals(v=>({...v,email:e.target.value})); setErrs(r=>({...r,email:''})); setServerErr('') }}
+          error={!!errs.email}
+          helperText={errs.email}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+        />
+        <TextField
+          label="Password"
+          type={showPassword ? 'text' : 'password'}
+          variant="outlined"
+          fullWidth
+          size="small"
+          className={classes.formField}
+          value={vals.password}
+          onChange={e => { setVals(v=>({...v,password:e.target.value})); setErrs(r=>({...r,password:''})); setServerErr('') }}
+          error={!!errs.password}
+          helperText={errs.password}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockIcon fontSize="small" />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setShowPassword(!showPassword)} edge="end">
+                  {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+        <TextField
+          label="Confirm Password"
+          type={showConfirm ? 'text' : 'password'}
+          variant="outlined"
+          fullWidth
+          size="small"
+          className={classes.formField}
+          value={vals.confirm}
+          onChange={e => { setVals(v=>({...v,confirm:e.target.value})); setErrs(r=>({...r,confirm:''})); setServerErr('') }}
+          error={!!errs.confirm}
+          helperText={errs.confirm}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockIcon fontSize="small" />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setShowConfirm(!showConfirm)} edge="end">
+                  {showConfirm ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+        {serverErr && (
+          <Box style={{color: theme.palette.error.main, fontSize:'0.875rem', marginBottom: theme.spacing(2)}}>
+            {serverErr}
+          </Box>
+        )}
         <Button type="submit" variant="contained" color="primary" fullWidth
-          style={{textTransform:'none',fontWeight:600,padding:'10px 0',marginTop:4}}>
+          style={{textTransform:'none',fontWeight:600,padding:'10px 0',marginTop:8}}>
           Create Account
         </Button>
       </form>
@@ -817,6 +969,22 @@ function DigitalSalesRoomApp() {
           )}
         </Box>
       </div>
+
+      {/* Floating Back Button */}
+      {user && (
+        <Tooltip title="Back to Design Lab">
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<ArrowBackIcon />}
+            className={classes.floatingButton}
+            href="/"
+            style={{ textTransform: 'none', fontWeight: 600, minWidth: 'auto' }}
+          >
+            Back
+          </Button>
+        </Tooltip>
+      )}
     </AppShell>
   )
 }
