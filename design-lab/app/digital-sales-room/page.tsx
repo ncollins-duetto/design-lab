@@ -445,6 +445,7 @@ function CreateAccountPage({ onBack }: { onBack: () => void }) {
 function PhaseBar({ userName, nextStep, onNextStep }: { userName?: string, nextStep?: any, onNextStep: () => void }) {
   const { logout } = useContext(AuthCtx)
   const theme = useTheme()
+  const classes = useStyles()
   const phases = ['Digital Sales Room','Phase 2','Phase 3']
   const nextStepColors: Record<string, {bg: string, text: string}> = {
     account:  { bg:'#FFB90F', text:'#774700' },
@@ -455,12 +456,22 @@ function PhaseBar({ userName, nextStep, onNextStep }: { userName?: string, nextS
   const col = nextStep ? nextStepColors[nextStep.section] : null
   const isComplete = nextStep?.section === 'complete'
 
+  const headerBg = (theme.palette as any).header?.background ?? '#0e2124'
+
   return (
-    <Box className={useStyles().phaseBar}>
-      {/* Logo row */}
-      <Box className={useStyles().logoRow}>
-        <Typography style={{color:'white',fontWeight:700,letterSpacing:3,fontSize:'0.85rem'}}>DUETTO</Typography>
-        <Box style={{display:'flex',alignItems:'center',gap:theme.spacing(2)}}>
+    <Box style={{position:'sticky',top:0,zIndex:1200,background:headerBg,width:'100%'}}>
+      {/* Logo & Nav row */}
+      <Box style={{display:'flex',alignItems:'center',height:40,paddingLeft:theme.spacing(2),paddingRight:theme.spacing(2),gap:theme.spacing(0.5)}}>
+        <Box style={{display:'flex',alignItems:'center',marginRight:theme.spacing(2),flexShrink:0}}>
+          <Typography style={{color:'white',fontWeight:700,letterSpacing:3,fontSize:'0.85rem'}}>DUETTO</Typography>
+        </Box>
+        <Box style={{display:'flex',alignItems:'stretch',flex:1,height:'100%'}}>
+          <Box style={{display:'flex',alignItems:'center',padding:'0 12px',fontSize:13,fontWeight:400,color:'rgba(255,255,255,0.85)',height:'100%',gap:2,
+            borderBottom:'2px solid transparent',whiteSpace:'nowrap',background:'rgba(255,255,255,0.1)',cursor:'default'}}>
+            Digital Sales Room
+          </Box>
+        </Box>
+        <Box style={{display:'flex',alignItems:'center',marginLeft:'auto',gap:theme.spacing(2)}}>
           {nextStep && (
             <Box onClick={isComplete ? undefined : onNextStep}
               style={{display:'flex',alignItems:'center',gap:8,background:col?.bg,color:col?.text,
@@ -468,11 +479,7 @@ function PhaseBar({ userName, nextStep, onNextStep }: { userName?: string, nextS
                 boxShadow:'0 2px 8px rgba(0,0,0,0.3)',transition:'opacity 0.15s',userSelect:'none'}}
               onMouseOver={e=>{ if(!isComplete) (e.currentTarget as HTMLElement).style.opacity='0.88'; }}
               onMouseOut={e=>(e.currentTarget as HTMLElement).style.opacity='1'}>
-              {isComplete
-                ? <span style={{fontSize:'0.9rem',marginRight:2}}>✓</span>
-                : <><span style={{fontSize:'0.7rem',opacity:0.8,fontWeight:600,textTransform:'uppercase',letterSpacing:0.5}}>Next Step</span>
-                   <span style={{width:1,height:12,background:col?.text,opacity:0.3}}/></>
-              }
+              {isComplete ? <span style={{fontSize:'0.9rem',marginRight:2}}>✓</span> : 'Next Step'}
               {nextStep.label}{!isComplete && ' →'}
             </Box>
           )}
@@ -488,14 +495,15 @@ function PhaseBar({ userName, nextStep, onNextStep }: { userName?: string, nextS
       </Box>
 
       {/* Step indicator */}
-      <Box className={useStyles().stepIndicators}>
+      <Box style={{display:'flex',height:56,background:(theme.palette as any).header?.secondaryBarBackground ?? theme.palette.grey[50]}}>
         {phases.map((label,i)=>{
           const isActive = i===0
           const isLast = i===phases.length-1
           return (
-            <Box key={i} className={useStyles().stepItem} style={{
+            <Box key={i} style={{
+              flex:1,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',
               background: isActive ? theme.palette.primary.main : 'rgba(255,255,255,0.06)',
-            }}>
+              padding:theme.spacing(0,2),gap:theme.spacing(1.25)}}>
               <Box style={{width:26,height:26,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.75rem',fontWeight:700,flexShrink:0,
                 background: isActive ? 'white' : 'transparent',
                 border: isActive ? 'none' : '2px solid rgba(255,255,255,0.25)',
@@ -636,12 +644,12 @@ function DigitalSalesRoomApp() {
       <PhaseBar userName={user.name} nextStep={nextStep} onNextStep={()=>setActiveSection(nextStep.section)}/>
       <div className="flex flex-1">
         {/* Sidebar */}
-        <div className="w-60 flex-shrink-0 bg-white border-r border-gray-300 sticky top-24 h-[calc(100vh-96px)] overflow-y-auto flex flex-col">
-          <div className="px-4 pt-3 pb-2">
-            <p className="text-xs text-gray-600 font-bold uppercase tracking-wider">Phase 1</p>
-          </div>
-          <hr />
-          <List disablePadding className="pt-1">
+        <Box className={classes.sidebar}>
+          <Box className={classes.navSection}>
+            <Typography className={classes.navSectionLabel}>Phase 1</Typography>
+          </Box>
+          <Divider/>
+          <List disablePadding style={{paddingTop:theme.spacing(0.75)}}>
             {[
               { id:'docs',     label:'Documents',      icon:FolderIcon   },
               { id:'account',  label:'Account Details',icon:BusinessIcon },
@@ -657,22 +665,22 @@ function DigitalSalesRoomApp() {
                   onClick={!isLocked ? () => setActiveSection(id) : undefined}
                   style={{
                     borderRadius: 6,
-                    margin: '2px 8px',
-                    background: isActive ? 'rgba(0,73,72,0.08)' : 'transparent',
+                    margin: theme.spacing(0.25, 1),
+                    background: isActive ? `rgba(${theme.palette.primary.main === '#006461' ? '0,100,97' : '0,73,72'},0.08)` : 'transparent',
                     opacity: isLocked ? 0.45 : 1,
                     cursor: isLocked ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  <ListItemIcon style={{minWidth:36, color: isLocked ? '#AEB4BA' : isActive ? '#004948' : '#63696F'}}>
+                  <ListItemIcon style={{minWidth:36, color: isLocked ? theme.palette.text.disabled : isActive ? theme.palette.primary.main : '#63696F'}}>
                     {isLocked ? <LockIcon /> : <Icon />}
                   </ListItemIcon>
                   <ListItemText primary={label}
-                    primaryTypographyProps={{style:{fontWeight:isActive?600:400, color: isLocked?'#AEB4BA': isActive?'#004948':'#1C1C1C', fontSize:'0.875rem'}}}/>
+                    primaryTypographyProps={{style:{fontWeight:isActive?600:400, color: isLocked?theme.palette.text.disabled: isActive?theme.palette.primary.main:theme.palette.text.primary, fontSize:'0.875rem'}}}/>
                 </ListItem>
               )
             })}
           </List>
-        </div>
+        </Box>
 
         {/* Content */}
         <div className="flex-1 bg-gray-50 overflow-y-auto">
