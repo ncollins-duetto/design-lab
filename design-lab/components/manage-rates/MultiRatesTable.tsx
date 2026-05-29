@@ -1,15 +1,14 @@
 'use client'
 
-import React, { useMemo, useRef } from 'react'
+import React, { useMemo, useRef, useState, useEffect } from 'react'
 import { AgGridReact } from 'ag-grid-react'
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
 import { color2026 } from '@duetto/duetto-components'
 
-if (typeof window !== 'undefined') {
-  ModuleRegistry.registerModules([AllCommunityModule])
-}
+ModuleRegistry.registerModules([AllCommunityModule])
+
 import { ColKey } from '@/lib/mock/rates'
 import { buildColumnDefs } from './columnDefs'
 
@@ -21,11 +20,15 @@ interface Props {
 
 export default function MultiRatesTable({ dates, rowData, visibleCols }: Props) {
   const gridRef = useRef<AgGridReact>(null)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   const columnDefs = useMemo(
     () => buildColumnDefs(dates, visibleCols),
     [dates, visibleCols]
   )
+
+  if (!mounted) return <div style={{ minHeight: 400 }} />
 
   return (
     <div
