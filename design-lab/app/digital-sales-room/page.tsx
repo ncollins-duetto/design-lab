@@ -12,6 +12,7 @@ import DocumentIcon from '@material-ui/icons/Description'
 import LockIcon from '@material-ui/icons/Lock'
 import EditIcon from '@material-ui/icons/Edit'
 import CheckCircleIcon from '@material-ui/icons/CheckCircle'
+import AppShell from '@/components/AppShell'
 
 const useStyles = makeStyles((theme) => ({
   authContainer: {
@@ -35,47 +36,34 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(2),
     fontSize: '1.25rem',
   },
-  phaseBar: {
-    position: 'sticky',
-    top: 0,
-    zIndex: 1200,
-    background: theme.palette.secondary.main,
-    width: '100%',
-  },
-  logoRow: {
+  pageHeader: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: theme.spacing(1, 3),
-    height: 40,
-    borderBottom: `1px solid rgba(255,255,255,0.1)`,
+    padding: theme.spacing(2, 3, 1),
+    background: theme.palette.background.default,
   },
-  stepIndicators: {
-    display: 'flex',
-    height: 56,
+  pageTitle: {
+    fontSize: '1.125rem',
+    fontWeight: 600,
+    lineHeight: 1.4,
+    color: theme.palette.text.secondary,
   },
-  stepItem: {
-    flex: 1,
+  actions: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    padding: theme.spacing(0, 2),
-    gap: theme.spacing(1.25),
+    gap: theme.spacing(1.5),
   },
-  appContainer: {
+  mainContent: {
     display: 'flex',
     flex: 1,
-    minHeight: 'calc(100vh - 96px)',
+    minHeight: '100vh',
   },
   sidebar: {
     width: 240,
     flexShrink: 0,
     background: theme.palette.background.paper,
     borderRight: `1px solid ${theme.palette.divider}`,
-    position: 'sticky',
-    top: 96,
-    height: 'calc(100vh - 96px)',
     overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',
@@ -84,6 +72,7 @@ const useStyles = makeStyles((theme) => ({
     flex: 1,
     background: theme.palette.background.default,
     overflowY: 'auto',
+    padding: theme.spacing(2, 3),
   },
   navSection: {
     padding: theme.spacing(1.75, 2),
@@ -118,10 +107,6 @@ const useStyles = makeStyles((theme) => ({
     fontSize: '0.6rem',
     fontWeight: 800,
     letterSpacing: 0.3,
-  },
-  tableHeader: {
-    background: theme.palette.background.paper,
-    padding: theme.spacing(1.5, 2),
   },
 }))
 
@@ -642,9 +627,14 @@ function DigitalSalesRoomApp() {
     : { section:'proposal', label:'Review Proposal' }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <PhaseBar userName={user.name} nextStep={nextStep} onNextStep={()=>setActiveSection(nextStep.section)}/>
-      <div className="flex flex-1">
+    <AppShell
+      activeNav="digital-sales-room"
+      breadcrumbs={[
+        { label: 'Home', href: '/' },
+        { label: 'Digital Sales Room' },
+      ]}
+    >
+      <div className={classes.mainContent}>
         {/* Sidebar */}
         <Box className={classes.sidebar}>
           <Box className={classes.navSection}>
@@ -686,7 +676,7 @@ function DigitalSalesRoomApp() {
         </Box>
 
         {/* Content */}
-        <div className="flex-1 bg-gray-50 overflow-y-auto">
+        <Box className={classes.content}>
           {activeSection === 'docs' && <DocumentStore />}
           {activeSection === 'account' && (
             <div style={{padding:24,maxWidth:720}}>
@@ -825,9 +815,9 @@ function DigitalSalesRoomApp() {
               )}
             </Box>
           )}
-        </div>
+        </Box>
       </div>
-    </div>
+    </AppShell>
   )
 }
 
