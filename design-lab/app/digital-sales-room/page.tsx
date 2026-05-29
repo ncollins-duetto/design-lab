@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useContext, createContext, ReactNode, useEffect, useRef, useMemo } from 'react'
-import { Box, Typography, Button, Card, CardContent, CardActions, Divider, Grid, List, ListItem, ListItemIcon, ListItemText, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, IconButton, Tooltip } from '@material-ui/core'
+import { Box, Typography, Button, Card, CardContent, CardActions, Divider, Grid, List, ListItem, ListItemIcon, ListItemText, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, IconButton, Tooltip, makeStyles, useTheme } from '@material-ui/core'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import DeleteIcon from '@material-ui/icons/Delete'
 import AddIcon from '@material-ui/icons/Add'
@@ -12,6 +12,118 @@ import DocumentIcon from '@material-ui/icons/Description'
 import LockIcon from '@material-ui/icons/Lock'
 import EditIcon from '@material-ui/icons/Edit'
 import CheckCircleIcon from '@material-ui/icons/CheckCircle'
+
+const useStyles = makeStyles((theme) => ({
+  authContainer: {
+    minHeight: '100vh',
+    background: theme.palette.background.default,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing(2),
+  },
+  authCard: {
+    width: '100%',
+    maxWidth: 440,
+    padding: theme.spacing(3),
+  },
+  authLogo: {
+    textAlign: 'center',
+    color: theme.palette.primary.main,
+    fontWeight: 700,
+    letterSpacing: 3,
+    marginBottom: theme.spacing(2),
+    fontSize: '1.25rem',
+  },
+  phaseBar: {
+    position: 'sticky',
+    top: 0,
+    zIndex: 1200,
+    background: theme.palette.secondary.main,
+    width: '100%',
+  },
+  logoRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing(1, 3),
+    height: 40,
+    borderBottom: `1px solid rgba(255,255,255,0.1)`,
+  },
+  stepIndicators: {
+    display: 'flex',
+    height: 56,
+  },
+  stepItem: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    padding: theme.spacing(0, 2),
+    gap: theme.spacing(1.25),
+  },
+  appContainer: {
+    display: 'flex',
+    flex: 1,
+    minHeight: 'calc(100vh - 96px)',
+  },
+  sidebar: {
+    width: 240,
+    flexShrink: 0,
+    background: theme.palette.background.paper,
+    borderRight: `1px solid ${theme.palette.divider}`,
+    position: 'sticky',
+    top: 96,
+    height: 'calc(100vh - 96px)',
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  content: {
+    flex: 1,
+    background: theme.palette.background.default,
+    overflowY: 'auto',
+  },
+  navSection: {
+    padding: theme.spacing(1.75, 2),
+  },
+  navSectionLabel: {
+    color: theme.palette.text.secondary,
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontSize: '0.68rem',
+  },
+  docRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1.25, 1.75),
+    borderRadius: 6,
+    transition: 'background 0.12s',
+    cursor: 'pointer',
+    '&:hover': {
+      background: theme.palette.action.hover,
+    },
+  },
+  docIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 6,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    fontSize: '0.6rem',
+    fontWeight: 800,
+    letterSpacing: 0.3,
+  },
+  tableHeader: {
+    background: theme.palette.background.paper,
+    padding: theme.spacing(1.5, 2),
+  },
+}))
 
 // ───────────────────────────────────────────────────────────────────────────────
 // Mock Data
@@ -156,17 +268,30 @@ function AuthProvider({ children }: { children: ReactNode }) {
 // ───────────────────────────────────────────────────────────────────────────────
 
 function AuthShell({ title, subtitle, children }: { title: string, subtitle?: string, children: ReactNode }) {
+  const theme = useTheme()
+  const classes = useStyles()
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-center text-xl font-bold text-teal-900 tracking-widest mb-4">DUETTO</h1>
-        <h2 className="text-center text-lg font-semibold mb-2">{title}</h2>
-        {subtitle && <p className="text-center text-gray-600 text-sm mb-5">{subtitle}</p>}
-        <hr className="mb-5" />
-        {children}
-        <p className="text-center text-xs text-gray-400 mt-5">By continuing you agree to Duetto's Terms of Service and Privacy Policy.</p>
-      </div>
-    </div>
+    <Box className={classes.authContainer}>
+      <Card className={classes.authCard} elevation={3}>
+        <CardContent>
+          <Typography className={classes.authLogo}>DUETTO</Typography>
+          <Typography variant="h6" align="center" style={{marginBottom: theme.spacing(1)}}>
+            {title}
+          </Typography>
+          {subtitle && (
+            <Typography variant="body2" align="center" style={{color: theme.palette.text.secondary, marginBottom: theme.spacing(2.5)}}>
+              {subtitle}
+            </Typography>
+          )}
+          <Divider style={{marginBottom: theme.spacing(2.5)}}/>
+          {children}
+          <Typography style={{color: theme.palette.text.disabled, textAlign: 'center', fontSize: '0.7rem', marginTop: theme.spacing(2.5)}}>
+            By continuing you agree to Duetto's Terms of Service and Privacy Policy.
+          </Typography>
+        </CardContent>
+      </Card>
+    </Box>
   )
 }
 
@@ -319,66 +444,78 @@ function CreateAccountPage({ onBack }: { onBack: () => void }) {
 
 function PhaseBar({ userName, nextStep, onNextStep }: { userName?: string, nextStep?: any, onNextStep: () => void }) {
   const { logout } = useContext(AuthCtx)
+  const theme = useTheme()
   const phases = ['Digital Sales Room','Phase 2','Phase 3']
   const nextStepColors: Record<string, {bg: string, text: string}> = {
     account:  { bg:'#FFB90F', text:'#774700' },
     hotels:   { bg:'#FFB90F', text:'#774700' },
-    proposal: { bg:'#52D9CE', text:'#004948' },
+    proposal: { bg:'#52D9CE', text: theme.palette.primary.main },
     complete: { bg:'#388C3F', text:'#ffffff' },
   }
   const col = nextStep ? nextStepColors[nextStep.section] : null
   const isComplete = nextStep?.section === 'complete'
 
   return (
-    <div className="sticky top-0 z-40 bg-gray-900">
+    <Box className={useStyles().phaseBar}>
       {/* Logo row */}
-      <div className="flex items-center justify-between px-6 h-10 border-b border-gray-800">
-        <span className="text-white font-bold tracking-widest text-sm">DUETTO</span>
-        <div className="flex items-center gap-4">
+      <Box className={useStyles().logoRow}>
+        <Typography style={{color:'white',fontWeight:700,letterSpacing:3,fontSize:'0.85rem'}}>DUETTO</Typography>
+        <Box style={{display:'flex',alignItems:'center',gap:theme.spacing(2)}}>
           {nextStep && (
-            <button
-              onClick={isComplete ? undefined : onNextStep}
-              className="px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2 transition"
-              style={{background:col?.bg, color:col?.text, cursor:isComplete?'default':'pointer', opacity: isComplete ? 1 : 0.9}}
-              onMouseEnter={e => { if(!isComplete) (e.target as HTMLElement).style.opacity = '0.8' }}
-              onMouseLeave={e => { if(!isComplete) (e.target as HTMLElement).style.opacity = '0.9' }}
-            >
-              {isComplete ? <span>✓</span> : <span className="text-xs">Next Step</span>}
+            <Box onClick={isComplete ? undefined : onNextStep}
+              style={{display:'flex',alignItems:'center',gap:8,background:col?.bg,color:col?.text,
+                padding:'4px 14px',borderRadius:20,cursor:isComplete?'default':'pointer',fontWeight:700,fontSize:'0.78rem',
+                boxShadow:'0 2px 8px rgba(0,0,0,0.3)',transition:'opacity 0.15s',userSelect:'none'}}
+              onMouseOver={e=>{ if(!isComplete) (e.currentTarget as HTMLElement).style.opacity='0.88'; }}
+              onMouseOut={e=>(e.currentTarget as HTMLElement).style.opacity='1'}>
+              {isComplete
+                ? <span style={{fontSize:'0.9rem',marginRight:2}}>✓</span>
+                : <><span style={{fontSize:'0.7rem',opacity:0.8,fontWeight:600,textTransform:'uppercase',letterSpacing:0.5}}>Next Step</span>
+                   <span style={{width:1,height:12,background:col?.text,opacity:0.3}}/></>
+              }
               {nextStep.label}{!isComplete && ' →'}
-            </button>
+            </Box>
           )}
-          {userName && <span className="text-gray-400 text-xs">{userName}</span>}
+          {userName && <Typography style={{color:'rgba(255,255,255,0.5)',fontSize:'0.75rem'}}>{userName}</Typography>}
           {userName && (
-            <button onClick={logout} className="text-gray-500 hover:text-gray-300 text-xs">
+            <Box onClick={logout} style={{color:'rgba(255,255,255,0.35)',fontSize:'0.72rem',cursor:'pointer',userSelect:'none',transition:'color 0.15s'}}
+              onMouseOver={e=>(e.currentTarget as HTMLElement).style.color='rgba(255,255,255,0.7)'}
+              onMouseOut={e=>(e.currentTarget as HTMLElement).style.color='rgba(255,255,255,0.35)'}>
               Sign out
-            </button>
+            </Box>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Step indicator */}
-      <div className="flex h-14">
+      <Box className={useStyles().stepIndicators}>
         {phases.map((label,i)=>{
           const isActive = i===0
           const isLast = i===phases.length-1
           return (
-            <div key={i} className={`flex-1 flex items-center justify-center relative py-4 px-4 gap-2 ${isActive ? 'bg-teal-900' : 'bg-gray-800'}`}>
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isActive ? 'bg-white text-teal-900' : 'border-2 border-gray-600 text-gray-500'}`}>
+            <Box key={i} className={useStyles().stepItem} style={{
+              background: isActive ? theme.palette.primary.main : 'rgba(255,255,255,0.06)',
+            }}>
+              <Box style={{width:26,height:26,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.75rem',fontWeight:700,flexShrink:0,
+                background: isActive ? 'white' : 'transparent',
+                border: isActive ? 'none' : '2px solid rgba(255,255,255,0.25)',
+                color: isActive ? theme.palette.primary.main : 'rgba(255,255,255,0.35)'}}>
                 {i+1}
-              </div>
-              <span className={`text-sm whitespace-nowrap ${isActive ? 'text-white font-semibold' : 'text-gray-500'}`}>{label}</span>
+              </Box>
+              <Typography noWrap style={{fontWeight: isActive?700:400, fontSize:'0.85rem',
+                color: isActive ? 'white' : 'rgba(255,255,255,0.35)'}}>
+                {label}
+              </Typography>
               {!isLast && (
-                <div className="absolute right-0 top-0 h-full w-0" style={{
-                  borderRight: `28px solid ${isActive?'#004948':'#1f2937'}`,
-                  borderTop: '28px solid transparent',
-                  borderBottom: '28px solid transparent',
-                }}/>
+                <Box style={{position:'absolute',right:-14,top:'50%',transform:'translateY(-50%)',width:0,height:0,
+                  borderTop:'28px solid transparent',borderBottom:'28px solid transparent',
+                  borderLeft:`14px solid ${isActive?theme.palette.primary.main:'rgba(255,255,255,0.06)'}`,zIndex:1}}/>
               )}
-            </div>
+            </Box>
           )
         })}
-      </div>
-    </div>
+      </Box>
+    </Box>
   )
 }
 
