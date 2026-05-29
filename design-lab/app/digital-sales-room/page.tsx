@@ -340,12 +340,20 @@ const AuthCtx = createContext<AuthContextType>({
 })
 
 function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
+  // Start unauthenticated on every page load — force login each fresh visit.
+  // Session is held in sessionStorage so it survives client-side navigation
+  // and refreshes within the same tab, but clears when the tab closes.
+  const [user, setUser] = useState<User | null>(null)
+
+  // Hydrate from sessionStorage after mount (avoids SSR/hydration mismatch).
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      try { return JSON.parse(localStorage.getItem('dsr_user')||'null') } catch { return null }
+      try {
+        const stored = sessionStorage.getItem('dsr_user')
+        if (stored) setUser(JSON.parse(stored))
+      } catch {}
     }
-    return null
-  })
+  }, [])
 
   const getAccounts = () => {
     if (typeof window !== 'undefined') {
@@ -362,13 +370,16 @@ function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (u: User) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('dsr_user', JSON.stringify(u))
+      sessionStorage.setItem('dsr_user', JSON.stringify(u))
+      // Clean up legacy persistent session if present
+      localStorage.removeItem('dsr_user')
     }
     setUser(u)
   }
 
   const logout = () => {
     if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('dsr_user')
       localStorage.removeItem('dsr_user')
     }
     setUser(null)
