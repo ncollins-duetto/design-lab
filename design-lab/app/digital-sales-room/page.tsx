@@ -102,7 +102,10 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     flexDirection: 'column',
     transition: 'width 0.3s ease-in-out',
-    position: 'relative',
+    position: 'sticky',
+    top: 145, // header (~60) + stepper (~85)
+    alignSelf: 'flex-start',
+    height: 'calc(100vh - 145px)',
     '&.collapsed': {
       width: 64,
     },
@@ -125,10 +128,10 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   navRowActive: {
-    background: 'rgba(0,100,97,0.07)',
+    background: '#d7f7ed',
     borderLeftColor: '#006461',
     '&:hover': {
-      background: 'rgba(0,100,97,0.07)',
+      background: '#d7f7ed',
     },
   },
   navRowDisabled: {
@@ -153,7 +156,7 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: 'center',
     cursor: 'pointer',
     boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
-    zIndex: 30,
+    zIndex: 1000,
     color: '#4f5b60',
     transition: 'background 0.12s, border-color 0.12s',
     '&:hover': {
@@ -1019,7 +1022,7 @@ function ChevronStep({
         height: 72,
         position: 'relative',
         cursor: onClick ? 'pointer' : 'default',
-        marginLeft: isFirst ? 0 : -ARROW, // overlap so prev point slots into notch
+        marginLeft: isFirst ? 0 : 8, // 8px gap between chevron steps
         zIndex: isActive ? 20 : 1,
       }}
     >
@@ -1687,10 +1690,11 @@ function DigitalSalesRoomApp() {
 
   return (
     <Box style={{display:'flex',flexDirection:'column',minHeight:'100vh',background:'#f5f5f5'}}>
-      <ExternalHeader userName={user?.name} userEmail={user?.email} />
-
-      {/* Arrow Stepper Progress Indicator */}
-      <ArrowStepperComponent steps={phaseSteps} currentStepId={activePhase} onStepClick={setActivePhase} />
+      {/* Sticky header + stepper bundle */}
+      <Box style={{position:'sticky',top:0,zIndex:500,background:'#ffffff'}}>
+        <ExternalHeader userName={user?.name} userEmail={user?.email} />
+        <ArrowStepperComponent steps={phaseSteps} currentStepId={activePhase} onStepClick={setActivePhase} />
+      </Box>
 
       {activePhase !== 'digital-sales-room' && (
         <Box style={{padding: theme.spacing(8, 4), textAlign: 'center', background: '#f5f5f5', minHeight: '60vh'}}>
@@ -1709,16 +1713,16 @@ function DigitalSalesRoomApp() {
         <Box className={`${classes.sidebar} ${sidebarCollapsed ? 'collapsed' : ''}`} style={{width: sidebarCollapsed ? 64 : 220}}>
           <Box style={{paddingTop: 12, paddingBottom: 12, flex: 1}}>
             {[
-              { id:'docs',     label:'Documents',      icon:FolderIcon   },
               { id:'account',  label:'Account Details',icon:BusinessIcon },
               { id:'hotels',   label:'Hotel Details',  icon:HotelIcon    },
+              { id:'docs',     label:'Documents',      icon:FolderIcon   },
               { id:'proposal', label:'Sales Proposal', icon:DocumentIcon },
             ].map(({id,label,icon:Icon})=>{
               const isActive = activeSection === id
               const isLocked = id === 'hotels' && !accountSaved
               const iconColor = isLocked ? '#aeb4ba' : isActive ? '#006461' : '#8A9096'
               const labelColor = isLocked ? '#aeb4ba' : isActive ? '#006461' : '#8A9096'
-              return (
+              const row = (
                 <Box
                   key={id}
                   className={`${classes.navRow} ${isActive ? classes.navRowActive : ''} ${isLocked ? classes.navRowDisabled : ''}`}
@@ -1744,6 +1748,20 @@ function DigitalSalesRoomApp() {
                   )}
                 </Box>
               )
+              // Wrap locked Hotel Details row in Tooltip explaining gate
+              if (isLocked) {
+                return (
+                  <Tooltip
+                    key={id}
+                    title="Complete Account Details first to unlock Hotel Details"
+                    placement="right"
+                    arrow
+                  >
+                    <span style={{display:'block'}}>{row}</span>
+                  </Tooltip>
+                )
+              }
+              return row
             })}
           </Box>
           {/* Floating circular collapse button on right edge */}
@@ -1941,7 +1959,7 @@ function ExternalHeader({ userName, userEmail }: { userName?: string, userEmail?
       flexShrink:0,
     }}>
       <Box style={{display:'flex',alignItems:'center',gap:16}}>
-        <Typography style={{color:'#fff',fontWeight:700,letterSpacing:3,fontSize:'0.95rem'}}>DUETTO</Typography>
+        <img src="/duetto-logo-figma.png" alt="Duetto" style={{height:24,width:'auto',display:'block'}}/>
         <Box style={{width:1,height:20,background:'rgba(255,255,255,0.15)'}}/>
         <Typography style={{color:'rgba(255,255,255,0.85)',fontSize:'0.85rem',fontWeight:500}}>
           Digital Sales Room
