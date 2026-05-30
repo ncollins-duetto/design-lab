@@ -99,16 +99,15 @@ const useStyles = makeStyles((theme) => ({
     flexShrink: 0,
     background: '#ffffff',
     borderRight: '1px solid #e0e0e0',
-    overflowY: 'visible',
-    overflowX: 'visible',
+    overflow: 'visible', // FAB needs to escape, but no internal scroll
     display: 'flex',
     flexDirection: 'column',
     transition: 'width 0.3s ease-in-out',
-    position: 'sticky',
-    top: 145, // header (~60) + stepper (~85)
-    alignSelf: 'flex-start',
-    height: 'calc(100vh - 145px)',
-    zIndex: 600, // above sticky header (500) so FAB can pop over
+    position: 'fixed', // truly fixed — does not scroll with page
+    top: 175, // header (~60) + stepper container (~115)
+    left: 0,
+    height: 'calc(100vh - 175px)',
+    zIndex: 600,
     '&.collapsed': {
       width: 64,
     },
@@ -2000,8 +1999,8 @@ function DigitalSalesRoomApp() {
           </Box>
         </Box>
 
-        {/* Content */}
-        <Box className={classes.content}>
+        {/* Content — offset by sidebar width since sidebar is position:fixed */}
+        <Box className={classes.content} style={{marginLeft: sidebarCollapsed ? 64 : 220, transition: 'margin-left 0.3s ease-in-out'}}>
           {activeSection === 'docs' && <DocumentStore />}
           {activeSection === 'account' && (
             <div style={{padding:24,maxWidth:720}}>
