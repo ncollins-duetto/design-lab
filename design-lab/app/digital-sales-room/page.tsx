@@ -110,34 +110,30 @@ const useStyles = makeStyles((theme) => ({
   navRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(2),
-    padding: theme.spacing(1.5, 2.5),
+    gap: 12,
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingLeft: 26,
+    paddingRight: 20,
     cursor: 'pointer',
     position: 'relative',
     borderRadius: 0,
+    borderLeft: '3px solid transparent', // reserve space so active state doesn't shift content
     transition: 'background 0.12s',
     '&:hover': {
-      background: '#f5f5f5',
+      background: 'rgba(0,100,97,0.04)',
     },
   },
   navRowActive: {
-    background: '#d7f7ed',
+    background: 'rgba(0,100,97,0.07)',
+    borderLeftColor: '#006461',
     '&:hover': {
-      background: '#d7f7ed',
-    },
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      left: 0,
-      top: 0,
-      bottom: 0,
-      width: 4,
-      background: '#006461',
+      background: 'rgba(0,100,97,0.07)',
     },
   },
   navRowDisabled: {
     cursor: 'not-allowed',
-    opacity: 0.45,
+    opacity: 0.5,
     '&:hover': {
       background: 'transparent',
     },
@@ -1711,7 +1707,7 @@ function DigitalSalesRoomApp() {
       <div className={classes.mainContent}>
         {/* Sidebar */}
         <Box className={`${classes.sidebar} ${sidebarCollapsed ? 'collapsed' : ''}`} style={{width: sidebarCollapsed ? 64 : 220}}>
-          <Box style={{paddingTop: 8, flex: 1}}>
+          <Box style={{paddingTop: 12, paddingBottom: 12, flex: 1}}>
             {[
               { id:'docs',     label:'Documents',      icon:FolderIcon   },
               { id:'account',  label:'Account Details',icon:BusinessIcon },
@@ -1720,8 +1716,8 @@ function DigitalSalesRoomApp() {
             ].map(({id,label,icon:Icon})=>{
               const isActive = activeSection === id
               const isLocked = id === 'hotels' && !accountSaved
-              const iconColor = isLocked ? '#aeb4ba' : isActive ? '#006461' : '#63696f'
-              const labelColor = isLocked ? '#aeb4ba' : isActive ? '#006461' : '#4f5b60'
+              const iconColor = isLocked ? '#aeb4ba' : isActive ? '#006461' : '#8A9096'
+              const labelColor = isLocked ? '#aeb4ba' : isActive ? '#006461' : '#8A9096'
               return (
                 <Box
                   key={id}
@@ -1730,16 +1726,17 @@ function DigitalSalesRoomApp() {
                   style={{justifyContent: sidebarCollapsed ? 'center' : 'flex-start'}}
                 >
                   <Box style={{color: iconColor, display:'flex', alignItems:'center', flexShrink: 0, transition:'color 0.2s'}}>
-                    {isLocked ? <LockIcon style={{fontSize: 22}}/> : <Icon style={{fontSize: 22}}/>}
+                    {isLocked ? <LockIcon style={{fontSize: 24}}/> : <Icon style={{fontSize: 24}}/>}
                   </Box>
                   {!sidebarCollapsed && (
                     <Typography
                       className={classes.navLabel}
                       style={{
                         color: labelColor,
-                        fontWeight: isActive ? 600 : 500,
-                        fontSize: '0.95rem',
+                        fontWeight: isActive ? 700 : 400,
+                        fontSize: 14,
                         lineHeight: 1.3,
+                        fontFamily: 'Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
                       }}
                     >
                       {label}
