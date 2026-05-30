@@ -23,6 +23,8 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircle'
 import VisibilityIcon from '@material-ui/icons/Visibility'
 import VisibilityOffIcon from '@material-ui/icons/VisibilityOff'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
+import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 // AppShell removed — Digital Sales Room uses a stripped-down ExternalHeader
 // for customer-facing experience (no internal Duetto nav, property picker, etc.)
 
@@ -131,6 +133,21 @@ const useStyles = makeStyles((theme) => ({
     alignSelf: 'flex-end',
     margin: theme.spacing(0.5, 1),
     minWidth: 'auto',
+  },
+  sidebarCollapseRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    padding: theme.spacing(1.5, 2),
+    borderTop: '1px solid #e0e0e0',
+    cursor: 'pointer',
+    color: '#4f5b60',
+    fontSize: '0.8rem',
+    fontWeight: 500,
+    transition: 'background 0.15s',
+    '&:hover': {
+      background: '#f5f5f5',
+    },
   },
   navLabel: {
     transition: 'opacity 0.3s ease-in-out',
@@ -943,7 +960,7 @@ function ChevronStep({
       style={{
         flex: '1 1 0',
         minWidth: 0,
-        height: 64,
+        height: 72,
         position: 'relative',
         cursor: onClick ? 'pointer' : 'default',
         marginLeft: isFirst ? 0 : -ARROW, // overlap so prev point slots into notch
@@ -979,7 +996,7 @@ function ChevronStep({
           pointerEvents: 'none',
         }}
       >
-        <Typography style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2, color: textCol }}>
+        <Typography style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.2, color: textCol }}>
           {step.label}
         </Typography>
         {step.description && (
@@ -1004,9 +1021,8 @@ function ArrowStepperComponent({ steps, currentStepId, onStepClick }: { steps: A
     <Box style={{
       display: 'flex',
       gap: 0,
-      padding: theme.spacing(2, 3),
+      padding: 0,
       background: '#ffffff',
-      borderBottom: '1px solid #e0e0e0',
       overflowX: 'auto',
       alignItems: 'center',
     }}>
@@ -1607,9 +1623,9 @@ function DigitalSalesRoomApp() {
     : { section:'proposal', label:'Review Proposal' }
 
   const phaseSteps: ArrowStepConfig[] = [
-    { id: 'digital-sales-room', label: 'Digital Sales Room', description: 'Documents, account & proposal' },
-    { id: 'phase-2', label: 'Phase 2', description: 'Coming soon' },
-    { id: 'phase-3', label: 'Phase 3', description: 'Coming soon' },
+    { id: 'digital-sales-room', label: 'Digital Sales Room' },
+    { id: 'phase-2', label: 'Phase 2' },
+    { id: 'phase-3', label: 'Phase 3' },
   ]
 
   return (
@@ -1632,16 +1648,15 @@ function DigitalSalesRoomApp() {
 
       {activePhase === 'digital-sales-room' && (
       <div className={classes.mainContent}>
-        {/* TourOperator Sidebar Pattern */}
+        {/* Sidebar */}
         <Box className={`${classes.sidebar} ${sidebarCollapsed ? 'collapsed' : ''}`} style={{width: sidebarCollapsed ? 64 : 240}}>
-          <Box className={classes.navSection}>
-            <Typography className={`${classes.navSectionLabel} ${sidebarCollapsed ? 'hidden' : ''}`}>Digital Sales Room</Typography>
-            <IconButton size="small" className={classes.sidebarToggle} onClick={() => setSidebarCollapsed(!sidebarCollapsed)}>
-              {sidebarCollapsed ? <ExpandMoreIcon style={{transform: 'rotate(-90deg)'}} /> : <ExpandMoreIcon style={{transform: 'rotate(90deg)'}} />}
-            </IconButton>
-          </Box>
+          {!sidebarCollapsed && (
+            <Box className={classes.navSection}>
+              <Typography className={classes.navSectionLabel}>Digital Sales Room</Typography>
+            </Box>
+          )}
           <Divider/>
-          <List disablePadding style={{paddingTop:theme.spacing(0.75)}}>
+          <List disablePadding style={{paddingTop:theme.spacing(0.75), flex: 1}}>
             {[
               { id:'docs',     label:'Documents',      icon:FolderIcon   },
               { id:'account',  label:'Account Details',icon:BusinessIcon },
@@ -1662,9 +1677,10 @@ function DigitalSalesRoomApp() {
                     background: isActive ? `rgba(${theme.palette.primary.main === '#006461' ? '0,100,97' : '0,73,72'},0.08)` : 'transparent',
                     opacity: isLocked ? 0.45 : 1,
                     cursor: isLocked ? 'not-allowed' : 'pointer',
+                    justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
                   }}
                 >
-                  <ListItemIcon style={{minWidth:36, color: isLocked ? theme.palette.text.disabled : isActive ? theme.palette.primary.main : '#63696F', transition: 'color 0.2s'}}>
+                  <ListItemIcon style={{minWidth:sidebarCollapsed?0:36, color: isLocked ? theme.palette.text.disabled : isActive ? theme.palette.primary.main : '#63696F', transition: 'color 0.2s', justifyContent: sidebarCollapsed ? 'center' : 'flex-start'}}>
                     {isLocked ? <LockIcon /> : <Icon />}
                   </ListItemIcon>
                   {!sidebarCollapsed && (
@@ -1675,6 +1691,21 @@ function DigitalSalesRoomApp() {
               )
             })}
           </List>
+          {/* Bottom collapse toggle */}
+          <Box
+            className={classes.sidebarCollapseRow}
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            style={{justifyContent: sidebarCollapsed ? 'center' : 'flex-start'}}
+          >
+            {sidebarCollapsed ? (
+              <ChevronRightIcon style={{fontSize: 20}}/>
+            ) : (
+              <>
+                <ChevronLeftIcon style={{fontSize: 20}}/>
+                <span>Collapse</span>
+              </>
+            )}
+          </Box>
         </Box>
 
         {/* Content */}
