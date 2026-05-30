@@ -2125,32 +2125,33 @@ function DigitalSalesRoomApp() {
               <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>Provide your company and billing information for your subscription agreement.</Typography>
               <Divider style={{marginBottom:24}}/>
 
-              {!accountSaved && (
-                <form onSubmit={(e) => { e.preventDefault(); setAccountSaved(true); setActiveSection('hotels') }}>
-                  <Typography style={{color:'#4F5B60',fontWeight:600,textTransform:'uppercase',letterSpacing:1,fontSize:'0.7rem',marginBottom:12}}>COMPANY INFORMATION</Typography>
-                  <TextField label="Company Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
-
-                  <Typography style={{color:'#4F5B60',fontWeight:600,textTransform:'uppercase',letterSpacing:1,fontSize:'0.7rem',marginBottom:12,marginTop:16}}>BILLING INFORMATION</Typography>
-                  <TextField label="Billing Contact Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
-                  <TextField label="Billing Email" type="email" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
-                  <TextField label="Billing Entity Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
-                  <TextField label="Billing Address" type="text" variant="outlined" fullWidth size="small" multiline rows={3} style={{marginBottom:16}}/>
-
-                  <div style={{display:'flex',justifyContent:'flex-end',gap:12,marginTop:8,paddingTop:16,borderTop:'1px solid #DDE1E2'}}>
-                    <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
-                    <Button type="submit" variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}}>Save Details</Button>
-                  </div>
-                </form>
-              )}
-
               {accountSaved && (
-                <Box style={{display:'flex',alignItems:'flex-start',gap:10,background:'#E8F5E9',border:'1px solid #A5D6A7',borderRadius:6,padding:'12px 16px'}}>
-                  <span style={{fontSize:'1rem',marginTop:1}}>🔒</span>
+                <Box style={{display:'flex',alignItems:'flex-start',gap:10,background:'#E8F5E9',border:'1px solid #A5D6A7',borderRadius:6,padding:'12px 16px',marginBottom:20}}>
+                  <CheckCircleIcon style={{fontSize:'1.1rem',marginTop:1,color:'#388C3F'}}/>
                   <Typography style={{fontSize:'0.875rem',color:'#28592C'}}>
-                    <strong>Account details saved.</strong> You can now proceed to Hotel Details.
+                    <strong>Account details saved.</strong> Hotel Details unlocked — edit any field below and re-save to update.
                   </Typography>
                 </Box>
               )}
+
+              {/* Account form — always visible, editable before and after save */}
+              <form onSubmit={(e) => { e.preventDefault(); setAccountSaved(true) }}>
+                <Typography style={{color:'#4F5B60',fontWeight:600,textTransform:'uppercase',letterSpacing:1,fontSize:'0.7rem',marginBottom:12}}>COMPANY INFORMATION</Typography>
+                <TextField label="Company Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
+
+                <Typography style={{color:'#4F5B60',fontWeight:600,textTransform:'uppercase',letterSpacing:1,fontSize:'0.7rem',marginBottom:12,marginTop:16}}>BILLING INFORMATION</Typography>
+                <TextField label="Billing Contact Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
+                <TextField label="Billing Email" type="email" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
+                <TextField label="Billing Entity Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
+                <TextField label="Billing Address" type="text" variant="outlined" fullWidth size="small" multiline rows={3} style={{marginBottom:16}}/>
+
+                <div style={{display:'flex',justifyContent:'flex-end',gap:12,marginTop:8,paddingTop:16,borderTop:'1px solid #DDE1E2'}}>
+                  <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
+                  <Button type="submit" variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}}>
+                    {accountSaved ? 'Save Changes' : 'Save Details'}
+                  </Button>
+                </div>
+              </form>
             </div>
           )}
 
