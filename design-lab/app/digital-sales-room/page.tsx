@@ -1742,7 +1742,7 @@ function DigitalSalesRoomApp() {
   const { user } = useContext(AuthCtx)
   const [view, setView] = useState('landing')
   const [activePhase, setActivePhase] = useState('digital-sales-room')
-  const [activeSection, setActiveSection] = useState('docs')
+  const [activeSection, setActiveSection] = useState('account')
   const [accountSaved, setAccountSaved] = useState(false)
   const [proposalAccepted, setProposalAccepted] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -1762,6 +1762,7 @@ function DigitalSalesRoomApp() {
     address: string
     rooms: string // input as string, parse on submit
     products: string[]
+    overrideProducts: boolean // if true, this hotel uses its own products instead of global
     integrations: string
     contactName: string
     contactEmail: string
@@ -1772,6 +1773,7 @@ function DigitalSalesRoomApp() {
     address: '',
     rooms: '',
     products: [...globalProducts],
+    overrideProducts: false,
     integrations: '',
     contactName: '',
     contactEmail: '',
@@ -1795,6 +1797,7 @@ function DigitalSalesRoomApp() {
       address: hotel.address,
       rooms: hotel.rooms ? String(hotel.rooms) : '',
       products: [...hotel.products],
+      overrideProducts: hotel.useCustomProducts,
       integrations: '',
       contactName: '',
       contactEmail: '',
@@ -1808,6 +1811,12 @@ function DigitalSalesRoomApp() {
     const name = newHotelForm.name.trim()
     if (!name) return false
 
+    // Effective override = explicit toggle OR global products are off, OR products differ from globalProducts
+    const override = !allHotelsSameProducts || newHotelForm.overrideProducts ||
+      newHotelForm.products.join(',') !== globalProducts.join(',')
+    // If not overriding, sync products to current global so future global changes propagate
+    const finalProducts = override ? [...newHotelForm.products] : [...globalProducts]
+
     if (editingHotelId) {
       // Edit existing hotel
       setHotels(prev => prev.map(h => h.id === editingHotelId ? {
@@ -1815,9 +1824,8 @@ function DigitalSalesRoomApp() {
         name,
         address: newHotelForm.address.trim(),
         rooms: Number(newHotelForm.rooms) || 0,
-        products: [...newHotelForm.products],
-        useCustomProducts: !allHotelsSameProducts ||
-          newHotelForm.products.join(',') !== globalProducts.join(','),
+        products: finalProducts,
+        useCustomProducts: override,
       } : h))
       return true
     }
@@ -1831,9 +1839,8 @@ function DigitalSalesRoomApp() {
       address: newHotelForm.address.trim(),
       rooms: Number(newHotelForm.rooms) || 0,
       isNew: !matchInDb,
-      useCustomProducts: !allHotelsSameProducts ||
-        newHotelForm.products.join(',') !== globalProducts.join(','),
-      products: [...newHotelForm.products],
+      useCustomProducts: override,
+      products: finalProducts,
     }
     setHotels(prev => [...prev, next])
     return true
@@ -2134,7 +2141,7 @@ function DigitalSalesRoomApp() {
                               <Typography style={{
                                 fontWeight: on ? 600 : 500,
                                 fontSize: '0.85rem',
-                                color: on ? (PRODUCT_COLORS[p]?.text || '#1c1c1c') : '#4F5B60',
+                                color: '#1c1c1c',
                               }}>
                                 {p}
                               </Typography>
@@ -2272,7 +2279,7 @@ function DigitalSalesRoomApp() {
                                       <Typography style={{
                                         fontWeight: on ? 600 : 500,
                                         fontSize: '0.82rem',
-                                        color: on ? (PRODUCT_COLORS[p]?.text || '#1c1c1c') : '#8a9096',
+                                        color: '#1c1c1c',
                                       }}>
                                         {p}
                                       </Typography>
@@ -2309,7 +2316,7 @@ function DigitalSalesRoomApp() {
                                       <Typography style={{
                                         fontWeight: on ? 600 : 500,
                                         fontSize: '0.82rem',
-                                        color: on ? (PRODUCT_COLORS[p]?.text || '#1c1c1c') : '#8a9096',
+                                        color: '#1c1c1c',
                                       }}>
                                         {p}
                                       </Typography>
@@ -2437,13 +2444,35 @@ function DigitalSalesRoomApp() {
                     <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:8,borderBottom:'1px solid #EBEDEF',paddingBottom:8}}>
                       Products
                     </Typography>
+                    {allHotelsSameProducts && (
+                      <Box style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8,padding:'8px 12px',background:'#FAFAFA',borderRadius:6}}>
+                        <Box>
+                          <Typography style={{fontSize:'0.82rem',fontWeight:600,color:'#1c1c1c'}}>Override this hotel</Typography>
+                          <Typography style={{fontSize:'0.72rem',color:'#4F5B60'}}>
+                            Off: this hotel inherits the global product list.
+                          </Typography>
+                        </Box>
+                        <Switch
+                          color="primary"
+                          checked={newHotelForm.overrideProducts}
+                          onChange={(_, checked) => setNewHotelForm(f => ({
+                            ...f,
+                            overrideProducts: checked,
+                            // When turning override OFF, snap products back to current global
+                            products: checked ? f.products : [...globalProducts],
+                          }))}
+                        />
+                      </Box>
+                    )}
                     <Typography style={{fontSize:'0.82rem',color:'#4F5B60',marginBottom:8}}>Select the Duetto products for this property</Typography>
-                    <Box style={{display:'flex',flexWrap:'wrap',columnGap:16}}>
+                    <Box style={{display:'flex',flexWrap:'wrap',columnGap:16,opacity: (allHotelsSameProducts && !newHotelForm.overrideProducts) ? 0.55 : 1}}>
                       {PRODUCTS.map(p => {
                         const on = newHotelForm.products.includes(p)
+                        const disabled = allHotelsSameProducts && !newHotelForm.overrideProducts
                         return (
                           <FormControlLabel
                             key={p}
+                            disabled={disabled}
                             control={
                               <Checkbox
                                 size="small"
@@ -2459,7 +2488,7 @@ function DigitalSalesRoomApp() {
                               <Typography style={{
                                 fontWeight: on ? 600 : 500,
                                 fontSize: '0.85rem',
-                                color: on ? (PRODUCT_COLORS[p]?.text || '#1c1c1c') : '#4F5B60',
+                                color: '#1c1c1c',
                               }}>
                                 {p}
                               </Typography>
