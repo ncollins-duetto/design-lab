@@ -48,7 +48,7 @@ interface StepConfig {
 const useStyles = makeStyles((theme) => ({
   authContainer: {
     minHeight: '100vh',
-    background: '#f5f5f5',
+    background: '#FAFAFA',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -75,7 +75,7 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: theme.spacing(3, 3, 2),
-    background: '#f5f5f5',
+    background: '#FAFAFA',
     borderBottom: '1px solid #e0e0e0',
   },
   pageTitle: {
@@ -99,7 +99,7 @@ const useStyles = makeStyles((theme) => ({
     flexShrink: 0,
     background: '#ffffff',
     borderRight: '1px solid #e0e0e0',
-    overflowY: 'auto',
+    overflowY: 'visible',
     overflowX: 'visible',
     display: 'flex',
     flexDirection: 'column',
@@ -108,6 +108,7 @@ const useStyles = makeStyles((theme) => ({
     top: 145, // header (~60) + stepper (~85)
     alignSelf: 'flex-start',
     height: 'calc(100vh - 145px)',
+    zIndex: 600, // above sticky header (500) so FAB can pop over
     '&.collapsed': {
       width: 64,
     },
@@ -130,10 +131,10 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   navRowActive: {
-    background: '#d7f7ed',
+    background: 'rgba(0,100,97,0.07)',
     borderLeftColor: '#006461',
     '&:hover': {
-      background: '#d7f7ed',
+      background: 'rgba(0,100,97,0.07)',
     },
   },
   navRowDisabled: {
@@ -158,17 +159,17 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: 'center',
     cursor: 'pointer',
     boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
-    zIndex: 1000,
+    zIndex: 9999,
     color: '#4f5b60',
     transition: 'background 0.12s, border-color 0.12s',
     '&:hover': {
-      background: '#f5f5f5',
+      background: '#FAFAFA',
       borderColor: '#aeb4ba',
     },
   },
   content: {
     flex: 1,
-    background: '#f5f5f5',
+    background: '#FAFAFA',
     overflowY: 'auto',
     padding: theme.spacing(3),
   },
@@ -207,7 +208,7 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 500,
     transition: 'background 0.15s',
     '&:hover': {
-      background: '#f5f5f5',
+      background: '#FAFAFA',
     },
   },
   navLabel: {
@@ -594,12 +595,43 @@ function LoginPage({ onSignIn, onCreateAccount }: { onSignIn: () => void, onCrea
       <button
         disabled={loading}
         onClick={handleGoogle}
-        className="w-full border border-gray-300 bg-white rounded py-3 px-4 flex items-center justify-center gap-3 cursor-pointer font-medium mb-4 hover:bg-gray-50 disabled:opacity-50"
+        style={{
+          width: '100%',
+          height: 44,
+          background: '#ffffff',
+          border: '1px solid #d0d4d8',
+          borderRadius: 6,
+          padding: '0 16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 12,
+          cursor: loading ? 'wait' : 'pointer',
+          fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
+          fontSize: 14,
+          fontWeight: 500,
+          color: '#1f1f1f',
+          marginBottom: 16,
+          transition: 'background 0.15s, border-color 0.15s',
+          opacity: loading ? 0.7 : 1,
+        }}
+        onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#f8f9fa' }}
+        onMouseLeave={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#ffffff' }}
       >
-        {loading ? <span>Signing in…</span> : <>
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908C16.658 14.233 17.64 11.925 17.64 9.2z" fill="#4285F4"/></svg>
-          <span>Continue with Google</span>
-        </>}
+        {loading ? (
+          <span>Signing in…</span>
+        ) : (
+          <>
+            {/* Official Google "G" multicolor logo */}
+            <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M17.64 9.2045c0-.6381-.0573-1.2518-.1636-1.8409H9v3.4814h4.8436c-.2086 1.125-.8427 2.0782-1.7959 2.7164v2.2581h2.9087c1.7018-1.5668 2.6836-3.874 2.6836-6.615z" fill="#4285F4"/>
+              <path d="M9 18c2.43 0 4.4673-.806 5.9564-2.1805l-2.9087-2.2581c-.8059.54-1.8368.8595-3.0477.8595-2.344 0-4.3282-1.5832-5.0359-3.7105H.9573v2.3318C2.4382 15.9832 5.4818 18 9 18z" fill="#34A853"/>
+              <path d="M3.9641 10.71c-.18-.54-.2823-1.1168-.2823-1.71s.1023-1.17.2823-1.71V4.9582H.9573C.3477 6.1731 0 7.5477 0 9c0 1.4523.3477 2.8269.9573 4.0418L3.9641 10.71z" fill="#FBBC05"/>
+              <path d="M9 3.5795c1.3214 0 2.5077.4541 3.4405 1.3463l2.5813-2.5814C13.4632.8918 11.426 0 9 0 5.4818 0 2.4382 2.0168.9573 4.9582L3.9641 7.29C4.6718 5.1627 6.656 3.5795 9 3.5795z" fill="#EA4335"/>
+            </svg>
+            <span>Sign in with Google</span>
+          </>
+        )}
       </button>
 
       <div className="flex items-center gap-3 my-4">
@@ -1642,7 +1674,7 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
             --ag-header-cell-padding: 12px 16px;
             --ag-cell-horizontal-padding: 16px;
             --ag-cell-vertical-padding: 14px;
-            --ag-row-hover-color: #f5f5f5;
+            --ag-row-hover-color: #FAFAFA;
             --ag-borders-side-color: #DDE1E2;
             --ag-border-color: #DDE1E2;
             --ag-header-border-color: #DDE1E2;
@@ -1833,7 +1865,7 @@ function DigitalSalesRoomApp() {
   ]
 
   return (
-    <Box style={{display:'flex',flexDirection:'column',minHeight:'100vh',background:'#f5f5f5'}}>
+    <Box style={{display:'flex',flexDirection:'column',minHeight:'100vh',background:'#FAFAFA'}}>
       {/* Sticky header + stepper bundle */}
       <Box style={{position:'sticky',top:0,zIndex:500,background:'#ffffff'}}>
         <ExternalHeader userName={user?.name} userEmail={user?.email} />
@@ -1841,7 +1873,7 @@ function DigitalSalesRoomApp() {
       </Box>
 
       {activePhase !== 'digital-sales-room' && (
-        <Box style={{padding: theme.spacing(8, 4), textAlign: 'center', background: '#f5f5f5', minHeight: '60vh'}}>
+        <Box style={{padding: theme.spacing(8, 4), textAlign: 'center', background: '#FAFAFA', minHeight: '60vh'}}>
           <Typography variant="h4" style={{fontWeight: 700, color: '#212121', marginBottom: 8}}>
             {phaseSteps.find(p => p.id === activePhase)?.label}
           </Typography>
