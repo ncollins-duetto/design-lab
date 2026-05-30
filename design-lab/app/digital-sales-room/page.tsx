@@ -835,6 +835,163 @@ interface ArrowStepConfig {
   description?: string
 }
 
+// Single chevron step — uses ResizeObserver to draw SVG path at exact
+// pixel dimensions so the point/notch stay fixed at 14px regardless of width.
+function ChevronStep({
+  step,
+  isActive,
+  isFirst,
+  isLast,
+  onClick,
+}: {
+  step: ArrowStepConfig
+  isActive: boolean
+  isFirst: boolean
+  isLast: boolean
+  onClick?: () => void
+}) {
+  const theme = useTheme()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState({ w: 0, h: 64 })
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    const el = containerRef.current
+    const obs = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect
+      setSize({ w: Math.max(1, width), h: Math.max(1, height) })
+    })
+    obs.observe(el)
+    // initial measure
+    const r = el.getBoundingClientRect()
+    setSize({ w: Math.max(1, r.width), h: Math.max(1, r.height) })
+    return () => obs.disconnect()
+  }, [])
+
+  // Geometry constants
+  const ARROW = 14    // point/notch horizontal extension in px
+  const R = 8         // outer corner radius in px
+  const STROKE = isActive ? 1.5 : 1
+  const INSET = STROKE / 2  // path inset so stroke stays inside box
+
+  const activeBg = '#d7f7ed'
+  const activeBorder = '#006461'
+  const activeText = '#006461'
+  const inactiveBg = '#ffffff'
+  const inactiveBorder = '#aeb4ba'
+  const inactiveText = '#4f5b60'
+
+  const bg = isActive ? activeBg : inactiveBg
+  const border = isActive ? activeBorder : inactiveBorder
+  const textCol = isActive ? activeText : inactiveText
+
+  const W = size.w
+  const H = size.h
+  const midY = H / 2
+
+  // Build path. Going clockwise from top-left.
+  let d = ''
+  const leftEdgeX = INSET
+  const rightEdgeX = W - INSET
+  const topY = INSET
+  const bottomY = H - INSET
+
+  if (isFirst) {
+    // rounded top-left
+    d += `M ${leftEdgeX + R} ${topY} `
+  } else {
+    // top-left at flat left edge
+    d += `M ${leftEdgeX} ${topY} `
+  }
+
+  if (isLast) {
+    // straight to rounded top-right
+    d += `L ${rightEdgeX - R} ${topY} `
+    d += `A ${R} ${R} 0 0 1 ${rightEdgeX} ${topY + R} `
+    d += `L ${rightEdgeX} ${bottomY - R} `
+    d += `A ${R} ${R} 0 0 1 ${rightEdgeX - R} ${bottomY} `
+  } else {
+    // top edge to base of point
+    d += `L ${rightEdgeX - ARROW} ${topY} `
+    // diagonal to point tip
+    d += `L ${rightEdgeX} ${midY} `
+    // diagonal back to bottom of point base
+    d += `L ${rightEdgeX - ARROW} ${bottomY} `
+  }
+
+  if (isFirst) {
+    // bottom edge to rounded bottom-left
+    d += `L ${leftEdgeX + R} ${bottomY} `
+    d += `A ${R} ${R} 0 0 1 ${leftEdgeX} ${bottomY - R} `
+    d += `L ${leftEdgeX} ${topY + R} `
+    d += `A ${R} ${R} 0 0 1 ${leftEdgeX + R} ${topY} `
+  } else {
+    // bottom edge to bottom-left flat
+    d += `L ${leftEdgeX} ${bottomY} `
+    // up into notch peak (concave) — peak indented by ARROW px
+    d += `L ${leftEdgeX + ARROW} ${midY} `
+    // up to top-left corner
+    d += `L ${leftEdgeX} ${topY} `
+  }
+
+  d += 'Z'
+
+  return (
+    <div
+      ref={containerRef}
+      onClick={onClick}
+      style={{
+        flex: '1 1 0',
+        minWidth: 0,
+        height: 64,
+        position: 'relative',
+        cursor: onClick ? 'pointer' : 'default',
+        marginLeft: isFirst ? 0 : -ARROW, // overlap so prev point slots into notch
+        zIndex: isActive ? 20 : 1,
+      }}
+    >
+      <svg
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="none"
+        style={{ position: 'absolute', inset: 0, display: 'block', overflow: 'visible' }}
+      >
+        <path
+          d={d}
+          fill={bg}
+          stroke={border}
+          strokeWidth={STROKE}
+          strokeLinejoin="round"
+        />
+      </svg>
+      {/* Label content — padded to clear notch on left and point on right */}
+      <Box
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          paddingLeft: isFirst ? 20 : ARROW + 12,
+          paddingRight: isLast ? 20 : ARROW + 12,
+          color: textCol,
+          pointerEvents: 'none',
+        }}
+      >
+        <Typography style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.2, color: textCol }}>
+          {step.label}
+        </Typography>
+        {step.description && (
+          <Typography style={{ fontSize: 12, fontWeight: 400, marginTop: 4, lineHeight: 1.2, color: textCol, opacity: 0.85 }}>
+            {step.description}
+          </Typography>
+        )}
+      </Box>
+    </div>
+  )
+}
+
 function ArrowStepperComponent({ steps, currentStepId, onStepClick }: { steps: ArrowStepConfig[], currentStepId: string, onStepClick?: (id: string) => void }) {
   const theme = useTheme()
   const currentIdx = steps.findIndex(s => s.id === currentStepId)
@@ -853,74 +1010,16 @@ function ArrowStepperComponent({ steps, currentStepId, onStepClick }: { steps: A
       overflowX: 'auto',
       alignItems: 'center',
     }}>
-      {steps.map((step, index) => {
-        const isActive = index === currentIdx
-        const isLast = index === steps.length - 1
-        const activeBg = '#d7f7ed'
-        const activeBorder = '#006461'
-        const activeText = '#006461'
-        const inactiveBg = '#ffffff'
-        const inactiveBorder = '#aeb4ba'
-        const inactiveText = '#4f5b60'
-
-        const bg = isActive ? activeBg : inactiveBg
-        const border = isActive ? activeBorder : inactiveBorder
-        const textCol = isActive ? activeText : inactiveText
-
-        return (
-          <Box
-            key={step.id}
-            onClick={() => onStepClick?.(step.id)}
-            style={{
-              flex: '1 0 0',
-              minWidth: 0,
-              height: 56,
-              position: 'relative',
-              cursor: 'pointer',
-              marginLeft: index > 0 ? -10 : 0,
-              zIndex: isActive ? 10 : index,
-            }}
-          >
-            {/* SVG arrow shape */}
-            <svg
-              width="100%"
-              height="56"
-              viewBox="0 0 256 56"
-              preserveAspectRatio="none"
-              style={{position: 'absolute', inset: 0, display: 'block'}}
-            >
-              <path
-                d={isLast
-                  ? 'M1 1 L255 1 L255 55 L1 55 Z'
-                  : 'M1 1 L240 1 L255 28 L240 55 L1 55 Z'}
-                fill={bg}
-                stroke={border}
-                strokeWidth="1"
-              />
-            </svg>
-            {/* Label */}
-            <Box style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              padding: theme.spacing(0, 3),
-              paddingRight: isLast ? theme.spacing(3) : theme.spacing(4),
-              color: textCol,
-            }}>
-              <Typography style={{fontSize: 16, fontWeight: 700, lineHeight: 1.2, color: textCol}}>
-                {step.label}
-              </Typography>
-              {step.description && (
-                <Typography style={{fontSize: 12, fontWeight: 400, marginTop: 2, lineHeight: 1.2, color: textCol}}>
-                  {step.description}
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        )
-      })}
+      {steps.map((step, index) => (
+        <ChevronStep
+          key={step.id}
+          step={step}
+          isActive={index === currentIdx}
+          isFirst={index === 0}
+          isLast={index === steps.length - 1}
+          onClick={() => onStepClick?.(step.id)}
+        />
+      ))}
     </Box>
   )
 }
