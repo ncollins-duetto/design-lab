@@ -479,15 +479,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
   // and refreshes within the same tab, but clears when the tab closes.
   const [user, setUser] = useState<User | null>(null)
 
-  // Hydrate from sessionStorage after mount (avoids SSR/hydration mismatch).
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = sessionStorage.getItem('dsr_user')
-        if (stored) setUser(JSON.parse(stored))
-      } catch {}
-    }
-  }, [])
+  // (Sign-in stays up on every page visit — no auto-hydration of stored user.)
 
   const getAccounts = () => {
     if (typeof window !== 'undefined') {
@@ -989,6 +981,67 @@ interface ArrowStepConfig {
   id: string
   label: string
   description?: string
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// Duetto Switch — matches Figma 12536:1630 (iOS-style compact pill)
+// ───────────────────────────────────────────────────────────────────────────────
+const useDuettoSwitchStyles = makeStyles({
+  root: {
+    width: 36,
+    height: 20,
+    padding: 0,
+    margin: 4,
+    overflow: 'visible',
+  },
+  switchBase: {
+    padding: 2,
+    color: '#ffffff',
+    '&$checked': {
+      transform: 'translateX(16px)',
+      color: '#ffffff',
+      '& + $track': {
+        backgroundColor: '#006461',
+        opacity: 1,
+        border: 'none',
+      },
+    },
+    '&$focusVisible $thumb': {
+      color: '#006461',
+      border: '6px solid #ffffff',
+    },
+  },
+  thumb: {
+    width: 16,
+    height: 16,
+    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+  },
+  track: {
+    borderRadius: 10,
+    border: '1px solid #aeb4ba',
+    backgroundColor: '#cfd3d6',
+    opacity: 1,
+    transition: 'background-color 0.15s, border-color 0.15s',
+  },
+  checked: {},
+  focusVisible: {},
+})
+
+function DuettoSwitch(props: React.ComponentProps<typeof Switch>) {
+  const classes = useDuettoSwitchStyles()
+  return (
+    <Switch
+      disableRipple
+      classes={{
+        root: classes.root,
+        switchBase: classes.switchBase,
+        thumb: classes.thumb,
+        track: classes.track,
+        checked: classes.checked,
+      }}
+      {...props}
+    />
+  )
 }
 
 // Single chevron step — uses ResizeObserver to draw SVG path at exact
@@ -1743,6 +1796,7 @@ function DigitalSalesRoomApp() {
   const [view, setView] = useState('landing')
   const [activePhase, setActivePhase] = useState('digital-sales-room')
   const [activeSection, setActiveSection] = useState('account')
+  // (Auth hydration removed — sign-in screen always shows on a fresh page visit.)
   const [accountSaved, setAccountSaved] = useState(false)
   const [proposalAccepted, setProposalAccepted] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -2113,7 +2167,7 @@ function DigitalSalesRoomApp() {
                     <Typography style={{fontSize:'0.9rem',fontWeight:700,color:'#1c1c1c'}}>All hotels have the same products</Typography>
                     <Typography style={{fontSize:'0.75rem',color:'#4F5B60'}}>Toggle off to set products per hotel.</Typography>
                   </Box>
-                  <Switch
+                  <DuettoSwitch
                     checked={allHotelsSameProducts}
                     color="primary"
                     onChange={(_, checked) => {
@@ -2278,14 +2332,6 @@ function DigitalSalesRoomApp() {
                                 {h.rooms.toLocaleString()} rooms
                               </Box>
                             )}
-                            <IconButton
-                              size="small"
-                              onClick={(e) => { e.stopPropagation(); removeHotel(h.id) }}
-                              style={{color:'#D32F2F'}}
-                              aria-label="Remove hotel"
-                            >
-                              <DeleteIcon style={{fontSize:20}}/>
-                            </IconButton>
                             <ExpandMoreIcon
                               style={{
                                 color:'#4F5B60',
@@ -2355,18 +2401,54 @@ function DigitalSalesRoomApp() {
                               <Typography style={{fontSize:'0.875rem',color:'#8a9096'}}>—</Typography>
                             </Box>
 
-                            {/* Actions */}
-                            <Box style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:12,paddingTop:12,borderTop:'1px dashed #EBEDEF'}}>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="primary"
-                                startIcon={<EditIcon style={{fontSize:16}}/>}
+                            {/* Actions — Figma text buttons (11533:1107): Lato 16px, color #006461, 44px tall, 16px h-padding */}
+                            <Box style={{display:'flex',justifyContent:'flex-end',gap:4,marginTop:12,paddingTop:12,borderTop:'1px dashed #EBEDEF'}}>
+                              <button
                                 onClick={() => openEditHotelModal(h)}
-                                style={{textTransform:'none',fontWeight:600}}
+                                style={{
+                                  height:44,
+                                  padding:'12px 16px',
+                                  border:'none',
+                                  background:'transparent',
+                                  borderRadius:4,
+                                  cursor:'pointer',
+                                  fontFamily:'Lato, -apple-system, BlinkMacSystemFont, sans-serif',
+                                  fontSize:16,
+                                  fontWeight:400,
+                                  color:'#006461',
+                                  display:'inline-flex',
+                                  alignItems:'center',
+                                  gap:8,
+                                  transition:'background 0.12s',
+                                }}
+                                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F5' }}
+                                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
                               >
                                 Edit
-                              </Button>
+                              </button>
+                              <button
+                                onClick={() => removeHotel(h.id)}
+                                style={{
+                                  height:44,
+                                  padding:'12px 16px',
+                                  border:'none',
+                                  background:'transparent',
+                                  borderRadius:4,
+                                  cursor:'pointer',
+                                  fontFamily:'Lato, -apple-system, BlinkMacSystemFont, sans-serif',
+                                  fontSize:16,
+                                  fontWeight:400,
+                                  color:'#006461',
+                                  display:'inline-flex',
+                                  alignItems:'center',
+                                  gap:8,
+                                  transition:'background 0.12s',
+                                }}
+                                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F5' }}
+                                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+                              >
+                                Remove
+                              </button>
                             </Box>
                           </Box>
                         )}
@@ -2495,7 +2577,7 @@ function DigitalSalesRoomApp() {
                             Off: this hotel inherits the global product list.
                           </Typography>
                         </Box>
-                        <Switch
+                        <DuettoSwitch
                           color="primary"
                           checked={newHotelForm.overrideProducts}
                           onChange={(_, checked) => setNewHotelForm(f => ({
