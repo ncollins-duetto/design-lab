@@ -2100,87 +2100,32 @@ function DigitalSalesRoomApp() {
                 )}
               </Box>
 
-              {/* Search & Excel upload */}
-              <Box style={{display:'grid',gridTemplateColumns:'1fr auto',gap:12,marginBottom:24,alignItems:'center'}}>
-                <Autocomplete<HotelRecord, false, false, true>
-                  freeSolo
-                  options={HOTEL_DATABASE.filter(d => !hotels.some(h => h.name.toLowerCase() === d.name.toLowerCase()))}
-                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.name)}
-                  filterOptions={(opts, state) => {
-                    const q = state.inputValue.trim().toLowerCase()
-                    if (!q) return opts.slice(0, 10)
-                    return opts.filter(o => o.name.toLowerCase().includes(q) || o.address.toLowerCase().includes(q)).slice(0, 20)
-                  }}
-                  inputValue={hotelSearch}
-                  onInputChange={(_, v, reason) => { if (reason !== 'reset') setHotelSearch(v) }}
-                  onChange={(_, value) => {
-                    if (!value) return
-                    if (typeof value === 'string') {
-                      // Free-typed: open modal pre-filled
-                      openNewHotelModal(value)
-                    } else {
-                      addHotelByName(value.name)
-                    }
-                  }}
-                  renderOption={(opt) => (
-                    <Box style={{display:'flex',flexDirection:'column'}}>
-                      <Typography style={{fontSize:'0.875rem',fontWeight:600}}>{opt.name}</Typography>
-                      <Typography style={{fontSize:'0.72rem',color:'#8a9096'}}>{opt.address} · {opt.rooms.toLocaleString()} rooms</Typography>
-                    </Box>
-                  )}
-                  noOptionsText={
-                    hotelSearch.trim() ? (
-                      <Box
-                        onMouseDown={(e) => { e.preventDefault(); openNewHotelModal(hotelSearch.trim()) }}
-                        style={{cursor:'pointer',padding:'4px 0'}}
-                      >
-                        <Typography style={{fontSize:'0.875rem',fontWeight:700,fontStyle:'italic',color:'#006461'}}>
-                          Add "{hotelSearch.trim()}" as a new hotel…
-                        </Typography>
-                        <Typography style={{fontSize:'0.72rem',color:'#8a9096',marginTop:2}}>
-                          Not in Duetto's database — opens a form to capture property details
-                        </Typography>
-                      </Box>
-                    ) : (
-                      'Type a hotel name'
-                    )
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Search hotel name"
-                      placeholder="Search Duetto database or type new hotel name…"
-                      variant="outlined"
-                      size="small"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && hotelSearch.trim()) {
-                          const matches = HOTEL_DATABASE.filter(o => o.name.toLowerCase().includes(hotelSearch.trim().toLowerCase()))
-                          if (matches.length === 0) {
-                            e.preventDefault()
-                            openNewHotelModal(hotelSearch.trim())
-                          }
-                        }
-                      }}
-                    />
-                  )}
+              {/* Add Hotel + Excel upload */}
+              <Box style={{display:'flex',gap:12,marginBottom:24,alignItems:'center',justifyContent:'flex-end'}}>
+                <input
+                  ref={excelInputRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={handleExcelUpload}
+                  style={{display:'none'}}
                 />
-                <Box>
-                  <input
-                    ref={excelInputRef}
-                    type="file"
-                    accept=".xlsx,.xls,.csv"
-                    onChange={handleExcelUpload}
-                    style={{display:'none'}}
-                  />
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    style={{textTransform:'none'}}
-                    onClick={() => excelInputRef.current?.click()}
-                  >
-                    ⬆ Upload from Excel
-                  </Button>
-                </Box>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  style={{textTransform:'none'}}
+                  onClick={() => excelInputRef.current?.click()}
+                >
+                  ⬆ Upload from Excel
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<AddIcon/>}
+                  style={{textTransform:'none',fontWeight:600}}
+                  onClick={() => openNewHotelModal('')}
+                >
+                  Add Hotel
+                </Button>
               </Box>
               {excelError && (
                 <Box style={{marginBottom:16,padding:'8px 12px',background:'#FFE9E9',borderRadius:6,color:'#A12121',fontSize:'0.8rem'}}>
@@ -2344,6 +2289,56 @@ function DigitalSalesRoomApp() {
                   <Typography style={{fontSize:'1.05rem',fontWeight:700}}>Add New Hotel</Typography>
                 </DialogTitle>
                 <DialogContent style={{padding:'24px',display:'flex',flexDirection:'column',gap:24}}>
+                  {/* Search Duetto database — auto-populates Property Details when picked */}
+                  <Box style={{padding:'14px 16px',background:'#F4F8F7',borderRadius:8,border:'1px solid #DDE7E5'}}>
+                    <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:8}}>
+                      Search Duetto's Hotel Database
+                    </Typography>
+                    <Autocomplete<HotelRecord, false, false, true>
+                      freeSolo
+                      options={HOTEL_DATABASE.filter(d => !hotels.some(h => h.name.toLowerCase() === d.name.toLowerCase()))}
+                      getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.name)}
+                      filterOptions={(opts, state) => {
+                        const q = state.inputValue.trim().toLowerCase()
+                        if (!q) return opts.slice(0, 10)
+                        return opts.filter(o => o.name.toLowerCase().includes(q) || o.address.toLowerCase().includes(q)).slice(0, 20)
+                      }}
+                      onChange={(_, value) => {
+                        if (!value) return
+                        if (typeof value === 'string') {
+                          setNewHotelForm(f => ({ ...f, name: value }))
+                        } else {
+                          // Populate full property details from DB record
+                          setNewHotelForm(f => ({
+                            ...f,
+                            name: value.name,
+                            address: value.address,
+                            rooms: String(value.rooms || ''),
+                          }))
+                        }
+                      }}
+                      renderOption={(opt) => (
+                        <Box style={{display:'flex',flexDirection:'column'}}>
+                          <Typography style={{fontSize:'0.875rem',fontWeight:600}}>{opt.name}</Typography>
+                          <Typography style={{fontSize:'0.72rem',color:'#8a9096'}}>{opt.address} · {opt.rooms.toLocaleString()} rooms</Typography>
+                        </Box>
+                      )}
+                      noOptionsText="No match — fill the form below to add a new hotel"
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder="Search hotel name or address…"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                        />
+                      )}
+                    />
+                    <Typography style={{fontSize:'0.72rem',color:'#4F5B60',marginTop:6}}>
+                      Pick a known hotel to auto-fill name, address &amp; rooms. Or type a new one and fill in the details below.
+                    </Typography>
+                  </Box>
+
                   {/* Property Details */}
                   <Box>
                     <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:12}}>
