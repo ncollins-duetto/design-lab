@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useContext, createContext, ReactNode, useEffect, useRef, useMemo } from 'react'
-import { Box, Typography, Button, Card, CardContent, CardActions, Divider, Grid, List, ListItem, ListItemIcon, ListItemText, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, IconButton, Tooltip, makeStyles, useTheme, InputAdornment, Stepper, Step, StepLabel, Menu, MenuItem, Switch, FormControlLabel } from '@material-ui/core'
+import { Box, Typography, Button, Card, CardContent, CardActions, Divider, Grid, List, ListItem, ListItemIcon, ListItemText, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, IconButton, Tooltip, makeStyles, useTheme, InputAdornment, Stepper, Step, StepLabel, Menu, MenuItem, Switch, FormControlLabel, Checkbox } from '@material-ui/core'
 import { Autocomplete } from '@material-ui/lab'
 import * as XLSX from 'xlsx'
 import { AgGridReact } from 'ag-grid-react'
@@ -1757,6 +1757,55 @@ function DigitalSalesRoomApp() {
   const [excelError, setExcelError] = useState('')
   const [excelToast, setExcelToast] = useState('')
   const excelInputRef = useRef<HTMLInputElement>(null)
+  // Add New Hotel modal
+  interface NewHotelForm {
+    name: string
+    address: string
+    rooms: string // input as string, parse on submit
+    products: string[]
+    integrations: string
+    contactName: string
+    contactEmail: string
+    contactPhone: string
+  }
+  const emptyNewHotelForm = (prefilledName = ''): NewHotelForm => ({
+    name: prefilledName,
+    address: '',
+    rooms: '',
+    products: [...globalProducts],
+    integrations: '',
+    contactName: '',
+    contactEmail: '',
+    contactPhone: '',
+  })
+  const [newHotelOpen, setNewHotelOpen] = useState(false)
+  const [newHotelForm, setNewHotelForm] = useState<NewHotelForm>(emptyNewHotelForm())
+
+  const openNewHotelModal = (prefilledName = '') => {
+    setNewHotelForm(emptyNewHotelForm(prefilledName))
+    setNewHotelOpen(true)
+  }
+
+  const submitNewHotel = () => {
+    const name = newHotelForm.name.trim()
+    if (!name) return
+    if (hotels.some(h => h.name.toLowerCase() === name.toLowerCase())) {
+      setNewHotelOpen(false)
+      return
+    }
+    const next: AddedHotel = {
+      id: `new-${Date.now()}`,
+      name,
+      address: newHotelForm.address.trim(),
+      rooms: Number(newHotelForm.rooms) || 0,
+      isNew: true,
+      useCustomProducts: !allHotelsSameProducts || newHotelForm.products.join(',') !== globalProducts.join(','),
+      products: [...newHotelForm.products],
+    }
+    setHotels(prev => [...prev, next])
+    setNewHotelOpen(false)
+    setHotelSearch('')
+  }
 
   // Add hotel from search field. If value matches database, copy known data.
   // Otherwise mark as a new (manually entered) hotel.
@@ -1995,6 +2044,62 @@ function DigitalSalesRoomApp() {
               <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>Search Duetto's hotel database or type a new property name. Assign products globally or per hotel.</Typography>
               <Divider style={{marginBottom:24}}/>
 
+              {/* Global products toggle + checkbox editor — ABOVE search */}
+              <Box style={{marginBottom:24,padding:'14px 16px',background:'#FAFAFA',borderRadius:8,border:'1px solid #EBEDEF'}}>
+                <Box style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:allHotelsSameProducts?12:0}}>
+                  <Box>
+                    <Typography style={{fontSize:'0.9rem',fontWeight:700,color:'#1c1c1c'}}>All hotels have the same products</Typography>
+                    <Typography style={{fontSize:'0.75rem',color:'#4F5B60'}}>Toggle off to set products per hotel.</Typography>
+                  </Box>
+                  <Switch
+                    checked={allHotelsSameProducts}
+                    color="primary"
+                    onChange={(_, checked) => {
+                      setAllHotelsSameProducts(checked)
+                      if (checked) {
+                        setHotels(prev => prev.map(h => ({ ...h, useCustomProducts: false, products: [...globalProducts] })))
+                      }
+                    }}
+                  />
+                </Box>
+                {allHotelsSameProducts && (
+                  <Box>
+                    <Typography style={{fontSize:'0.75rem',fontWeight:600,color:'#4F5B60',marginBottom:8}}>Products applied to all hotels</Typography>
+                    <Box style={{display:'flex',flexWrap:'wrap',rowGap:4,columnGap:16}}>
+                      {PRODUCTS.map(p => {
+                        const on = globalProducts.includes(p)
+                        return (
+                          <FormControlLabel
+                            key={p}
+                            control={
+                              <Checkbox
+                                size="small"
+                                color="primary"
+                                checked={on}
+                                onChange={() => {
+                                  const nextGlobal = on ? globalProducts.filter(x => x !== p) : [...globalProducts, p]
+                                  setGlobalProducts(nextGlobal)
+                                  setHotels(prev => prev.map(h => h.useCustomProducts ? h : { ...h, products: nextGlobal }))
+                                }}
+                              />
+                            }
+                            label={
+                              <Typography style={{
+                                fontWeight: on ? 600 : 500,
+                                fontSize: '0.85rem',
+                                color: on ? (PRODUCT_COLORS[p]?.text || '#1c1c1c') : '#4F5B60',
+                              }}>
+                                {p}
+                              </Typography>
+                            }
+                          />
+                        )
+                      })}
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+
               {/* Search & Excel upload */}
               <Box style={{display:'grid',gridTemplateColumns:'1fr auto',gap:12,marginBottom:24,alignItems:'center'}}>
                 <Autocomplete<HotelRecord, false, false, true>
@@ -2010,8 +2115,12 @@ function DigitalSalesRoomApp() {
                   onInputChange={(_, v, reason) => { if (reason !== 'reset') setHotelSearch(v) }}
                   onChange={(_, value) => {
                     if (!value) return
-                    if (typeof value === 'string') addHotelByName(value)
-                    else addHotelByName(value.name)
+                    if (typeof value === 'string') {
+                      // Free-typed: open modal pre-filled
+                      openNewHotelModal(value)
+                    } else {
+                      addHotelByName(value.name)
+                    }
                   }}
                   renderOption={(opt) => (
                     <Box style={{display:'flex',flexDirection:'column'}}>
@@ -2022,14 +2131,14 @@ function DigitalSalesRoomApp() {
                   noOptionsText={
                     hotelSearch.trim() ? (
                       <Box
-                        onClick={() => addHotelByName(hotelSearch)}
+                        onMouseDown={(e) => { e.preventDefault(); openNewHotelModal(hotelSearch.trim()) }}
                         style={{cursor:'pointer',padding:'4px 0'}}
                       >
-                        <Typography style={{fontSize:'0.875rem',fontWeight:600,color:'#006461'}}>
-                          + Add "{hotelSearch.trim()}" as a new hotel
+                        <Typography style={{fontSize:'0.875rem',fontWeight:700,fontStyle:'italic',color:'#006461'}}>
+                          Add "{hotelSearch.trim()}" as a new hotel…
                         </Typography>
-                        <Typography style={{fontSize:'0.72rem',color:'#8a9096'}}>
-                          Not in Duetto's database — will be flagged as new for review
+                        <Typography style={{fontSize:'0.72rem',color:'#8a9096',marginTop:2}}>
+                          Not in Duetto's database — opens a form to capture property details
                         </Typography>
                       </Box>
                     ) : (
@@ -2039,14 +2148,17 @@ function DigitalSalesRoomApp() {
                   renderInput={(params) => (
                     <TextField
                       {...params}
+                      label="Search hotel name"
                       placeholder="Search Duetto database or type new hotel name…"
                       variant="outlined"
                       size="small"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && hotelSearch.trim()) {
-                          // Allow adding free-typed name even when Autocomplete keeps no-options open
                           const matches = HOTEL_DATABASE.filter(o => o.name.toLowerCase().includes(hotelSearch.trim().toLowerCase()))
-                          if (matches.length === 0) { e.preventDefault(); addHotelByName(hotelSearch) }
+                          if (matches.length === 0) {
+                            e.preventDefault()
+                            openNewHotelModal(hotelSearch.trim())
+                          }
                         }
                       }}
                     />
@@ -2075,58 +2187,6 @@ function DigitalSalesRoomApp() {
                   {excelError}
                 </Box>
               )}
-
-              {/* Global products toggle + editor */}
-              <Box style={{marginBottom:24,padding:'14px 16px',background:'#FAFAFA',borderRadius:8,border:'1px solid #EBEDEF'}}>
-                <Box style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:allHotelsSameProducts?12:0}}>
-                  <Box>
-                    <Typography style={{fontSize:'0.9rem',fontWeight:700,color:'#1c1c1c'}}>All hotels have the same products</Typography>
-                    <Typography style={{fontSize:'0.75rem',color:'#4F5B60'}}>Toggle off to set products per hotel.</Typography>
-                  </Box>
-                  <Switch
-                    checked={allHotelsSameProducts}
-                    color="primary"
-                    onChange={(_, checked) => {
-                      setAllHotelsSameProducts(checked)
-                      // When turning global ON, reset per-hotel overrides
-                      if (checked) {
-                        setHotels(prev => prev.map(h => ({ ...h, useCustomProducts: false, products: [...globalProducts] })))
-                      }
-                    }}
-                  />
-                </Box>
-                {allHotelsSameProducts && (
-                  <Box>
-                    <Typography style={{fontSize:'0.75rem',fontWeight:600,color:'#4F5B60',marginBottom:8}}>Products applied to all hotels</Typography>
-                    <Box style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                      {PRODUCTS.map(p => {
-                        const on = globalProducts.includes(p)
-                        return (
-                          <Chip
-                            key={p}
-                            label={p}
-                            size="small"
-                            clickable
-                            onClick={() => {
-                              const nextGlobal = on ? globalProducts.filter(x => x !== p) : [...globalProducts, p]
-                              setGlobalProducts(nextGlobal)
-                              // Sync to non-overriding hotels
-                              setHotels(prev => prev.map(h => h.useCustomProducts ? h : { ...h, products: nextGlobal }))
-                            }}
-                            style={{
-                              height:28,
-                              background: on ? (PRODUCT_COLORS[p]?.bg || '#E0F0EF') : '#fff',
-                              color:    on ? (PRODUCT_COLORS[p]?.text || '#004948') : '#8a9096',
-                              border:   on ? '1px solid transparent' : '1px solid #d0d4d8',
-                              fontWeight: 600,
-                            }}
-                          />
-                        )
-                      })}
-                    </Box>
-                  </Box>
-                )}
-              </Box>
 
               {/* Contact Details */}
               <Box style={{marginBottom:24,padding:'12px 16px',background:'#FAFAFA',borderRadius:8}}>
@@ -2175,7 +2235,7 @@ function DigitalSalesRoomApp() {
 
                         {/* Per-hotel product controls — only when global toggle is ON */}
                         {allHotelsSameProducts && (
-                          <Box style={{marginTop:10,paddingTop:10,borderTop:'1px dashed #E5E7EB',display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+                          <Box style={{marginTop:10,paddingTop:10,borderTop:'1px dashed #E5E7EB'}}>
                             <FormControlLabel
                               control={
                                 <Switch
@@ -2187,28 +2247,34 @@ function DigitalSalesRoomApp() {
                               }
                               label={<Typography style={{fontSize:'0.78rem',color:'#4F5B60'}}>Override products for this hotel</Typography>}
                             />
-                            <Box style={{display:'flex',flexWrap:'wrap',gap:6,flex:1}}>
-                              {(h.useCustomProducts ? PRODUCTS : h.products).map(p => {
+                            <Box style={{display:'flex',flexWrap:'wrap',rowGap:0,columnGap:16,marginTop:4}}>
+                              {PRODUCTS.map(p => {
                                 const on = h.products.includes(p)
                                 const interactive = h.useCustomProducts
                                 return (
-                                  <Chip
+                                  <FormControlLabel
                                     key={p}
-                                    label={p}
-                                    size="small"
-                                    clickable={interactive}
-                                    onClick={interactive ? () => {
-                                      const next = on ? h.products.filter(x => x !== p) : [...h.products, p]
-                                      setHotelProducts(h.id, next)
-                                    } : undefined}
-                                    style={{
-                                      height:26,
-                                      background: on ? (PRODUCT_COLORS[p]?.bg || '#E0F0EF') : '#fff',
-                                      color:    on ? (PRODUCT_COLORS[p]?.text || '#004948') : '#8a9096',
-                                      border:   on ? '1px solid transparent' : '1px solid #d0d4d8',
-                                      fontWeight: 600,
-                                      opacity: interactive ? 1 : 0.85,
-                                    }}
+                                    disabled={!interactive}
+                                    control={
+                                      <Checkbox
+                                        size="small"
+                                        color="primary"
+                                        checked={on}
+                                        onChange={() => {
+                                          const next = on ? h.products.filter(x => x !== p) : [...h.products, p]
+                                          setHotelProducts(h.id, next)
+                                        }}
+                                      />
+                                    }
+                                    label={
+                                      <Typography style={{
+                                        fontWeight: on ? 600 : 500,
+                                        fontSize: '0.82rem',
+                                        color: on ? (PRODUCT_COLORS[p]?.text || '#1c1c1c') : '#8a9096',
+                                      }}>
+                                        {p}
+                                      </Typography>
+                                    }
                                   />
                                 )
                               })}
@@ -2219,27 +2285,33 @@ function DigitalSalesRoomApp() {
                         {/* Per-hotel product editor when global toggle is OFF */}
                         {!allHotelsSameProducts && (
                           <Box style={{marginTop:10,paddingTop:10,borderTop:'1px dashed #E5E7EB'}}>
-                            <Typography style={{fontSize:'0.72rem',fontWeight:600,color:'#4F5B60',marginBottom:6}}>Products for this hotel</Typography>
-                            <Box style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                            <Typography style={{fontSize:'0.72rem',fontWeight:600,color:'#4F5B60',marginBottom:4}}>Products for this hotel</Typography>
+                            <Box style={{display:'flex',flexWrap:'wrap',rowGap:0,columnGap:16}}>
                               {PRODUCTS.map(p => {
                                 const on = h.products.includes(p)
                                 return (
-                                  <Chip
+                                  <FormControlLabel
                                     key={p}
-                                    label={p}
-                                    size="small"
-                                    clickable
-                                    onClick={() => {
-                                      const next = on ? h.products.filter(x => x !== p) : [...h.products, p]
-                                      setHotelProducts(h.id, next)
-                                    }}
-                                    style={{
-                                      height:26,
-                                      background: on ? (PRODUCT_COLORS[p]?.bg || '#E0F0EF') : '#fff',
-                                      color:    on ? (PRODUCT_COLORS[p]?.text || '#004948') : '#8a9096',
-                                      border:   on ? '1px solid transparent' : '1px solid #d0d4d8',
-                                      fontWeight: 600,
-                                    }}
+                                    control={
+                                      <Checkbox
+                                        size="small"
+                                        color="primary"
+                                        checked={on}
+                                        onChange={() => {
+                                          const next = on ? h.products.filter(x => x !== p) : [...h.products, p]
+                                          setHotelProducts(h.id, next)
+                                        }}
+                                      />
+                                    }
+                                    label={
+                                      <Typography style={{
+                                        fontWeight: on ? 600 : 500,
+                                        fontSize: '0.82rem',
+                                        color: on ? (PRODUCT_COLORS[p]?.text || '#1c1c1c') : '#8a9096',
+                                      }}>
+                                        {p}
+                                      </Typography>
+                                    }
                                   />
                                 )
                               })}
@@ -2259,6 +2331,160 @@ function DigitalSalesRoomApp() {
                 message={excelToast}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
               />
+
+              {/* Add New Hotel modal */}
+              <Dialog
+                open={newHotelOpen}
+                onClose={() => setNewHotelOpen(false)}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{ style: { borderRadius: 10 } }}
+              >
+                <DialogTitle disableTypography style={{padding:'20px 24px',borderBottom:'1px solid #EBEDEF'}}>
+                  <Typography style={{fontSize:'1.05rem',fontWeight:700}}>Add New Hotel</Typography>
+                </DialogTitle>
+                <DialogContent style={{padding:'24px',display:'flex',flexDirection:'column',gap:24}}>
+                  {/* Property Details */}
+                  <Box>
+                    <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:12}}>
+                      Property Details
+                    </Typography>
+                    <Box style={{display:'flex',flexDirection:'column',gap:12}}>
+                      <TextField
+                        label="Property Name"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        value={newHotelForm.name}
+                        onChange={(e) => setNewHotelForm(f => ({ ...f, name: e.target.value }))}
+                      />
+                      <TextField
+                        label="Property Address"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        value={newHotelForm.address}
+                        onChange={(e) => setNewHotelForm(f => ({ ...f, address: e.target.value }))}
+                      />
+                      <TextField
+                        label="Number of Rooms"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        type="number"
+                        value={newHotelForm.rooms}
+                        onChange={(e) => setNewHotelForm(f => ({ ...f, rooms: e.target.value }))}
+                      />
+                    </Box>
+                  </Box>
+
+                  {/* Products */}
+                  <Box>
+                    <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:8,borderBottom:'1px solid #EBEDEF',paddingBottom:8}}>
+                      Products
+                    </Typography>
+                    <Typography style={{fontSize:'0.82rem',color:'#4F5B60',marginBottom:8}}>Select the Duetto products for this property</Typography>
+                    <Box style={{display:'flex',flexWrap:'wrap',columnGap:16}}>
+                      {PRODUCTS.map(p => {
+                        const on = newHotelForm.products.includes(p)
+                        return (
+                          <FormControlLabel
+                            key={p}
+                            control={
+                              <Checkbox
+                                size="small"
+                                color="primary"
+                                checked={on}
+                                onChange={() => setNewHotelForm(f => ({
+                                  ...f,
+                                  products: on ? f.products.filter(x => x !== p) : [...f.products, p],
+                                }))}
+                              />
+                            }
+                            label={
+                              <Typography style={{
+                                fontWeight: on ? 600 : 500,
+                                fontSize: '0.85rem',
+                                color: on ? (PRODUCT_COLORS[p]?.text || '#1c1c1c') : '#4F5B60',
+                              }}>
+                                {p}
+                              </Typography>
+                            }
+                          />
+                        )
+                      })}
+                    </Box>
+                  </Box>
+
+                  {/* Integrations */}
+                  <Box>
+                    <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:8,borderBottom:'1px solid #EBEDEF',paddingBottom:8}}>
+                      Integrations
+                    </Typography>
+                    <Typography style={{fontSize:'0.82rem',color:'#4F5B60',marginBottom:8}}>PMS &amp; other integrating systems</Typography>
+                    <TextField
+                      placeholder="Search integrations…"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      value={newHotelForm.integrations}
+                      onChange={(e) => setNewHotelForm(f => ({ ...f, integrations: e.target.value }))}
+                    />
+                  </Box>
+
+                  {/* Contact Details */}
+                  <Box>
+                    <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:12,borderBottom:'1px solid #EBEDEF',paddingBottom:8}}>
+                      Property Implementation Contact Details
+                    </Typography>
+                    <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+                      <TextField
+                        label="Contact Name"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        value={newHotelForm.contactName}
+                        onChange={(e) => setNewHotelForm(f => ({ ...f, contactName: e.target.value }))}
+                      />
+                      <TextField
+                        label="Contact Email"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        type="email"
+                        value={newHotelForm.contactEmail}
+                        onChange={(e) => setNewHotelForm(f => ({ ...f, contactEmail: e.target.value }))}
+                      />
+                      <TextField
+                        label="Contact Phone"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        value={newHotelForm.contactPhone}
+                        onChange={(e) => setNewHotelForm(f => ({ ...f, contactPhone: e.target.value }))}
+                      />
+                    </Box>
+                  </Box>
+                </DialogContent>
+                <DialogActions style={{padding:'16px 24px',borderTop:'1px solid #EBEDEF',gap:8}}>
+                  <Button
+                    variant="text"
+                    onClick={() => setNewHotelOpen(false)}
+                    style={{textTransform:'none',color:'#1c1c1c',fontWeight:600}}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={submitNewHotel}
+                    disabled={!newHotelForm.name.trim()}
+                    style={{textTransform:'none',fontWeight:600,paddingLeft:20,paddingRight:20}}
+                  >
+                    Add Hotel
+                  </Button>
+                </DialogActions>
+              </Dialog>
             </Box>
           )}
 
