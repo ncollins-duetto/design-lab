@@ -93,16 +93,76 @@ const useStyles = makeStyles((theme) => ({
     minHeight: '100vh',
   },
   sidebar: {
-    width: 240,
+    width: 220,
     flexShrink: 0,
     background: '#ffffff',
     borderRight: '1px solid #e0e0e0',
     overflowY: 'auto',
+    overflowX: 'visible',
     display: 'flex',
     flexDirection: 'column',
     transition: 'width 0.3s ease-in-out',
+    position: 'relative',
     '&.collapsed': {
       width: 64,
+    },
+  },
+  navRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+    padding: theme.spacing(1.5, 2.5),
+    cursor: 'pointer',
+    position: 'relative',
+    borderRadius: 0,
+    transition: 'background 0.12s',
+    '&:hover': {
+      background: '#f5f5f5',
+    },
+  },
+  navRowActive: {
+    background: '#d7f7ed',
+    '&:hover': {
+      background: '#d7f7ed',
+    },
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 4,
+      background: '#006461',
+    },
+  },
+  navRowDisabled: {
+    cursor: 'not-allowed',
+    opacity: 0.45,
+    '&:hover': {
+      background: 'transparent',
+    },
+  },
+  sidebarCollapseFab: {
+    position: 'absolute',
+    top: '50%',
+    right: -14,
+    transform: 'translateY(-50%)',
+    width: 28,
+    height: 28,
+    borderRadius: '50%',
+    background: '#ffffff',
+    border: '1px solid #d0d4d8',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+    zIndex: 30,
+    color: '#4f5b60',
+    transition: 'background 0.12s, border-color 0.12s',
+    '&:hover': {
+      background: '#f5f5f5',
+      borderColor: '#aeb4ba',
     },
   },
   content: {
@@ -1021,8 +1081,9 @@ function ArrowStepperComponent({ steps, currentStepId, onStepClick }: { steps: A
     <Box style={{
       display: 'flex',
       gap: 0,
-      padding: 0,
+      padding: '20px 32px',
       background: '#ffffff',
+      borderBottom: '1px solid #e0e0e0',
       overflowX: 'auto',
       alignItems: 'center',
     }}>
@@ -1649,14 +1710,8 @@ function DigitalSalesRoomApp() {
       {activePhase === 'digital-sales-room' && (
       <div className={classes.mainContent}>
         {/* Sidebar */}
-        <Box className={`${classes.sidebar} ${sidebarCollapsed ? 'collapsed' : ''}`} style={{width: sidebarCollapsed ? 64 : 240}}>
-          {!sidebarCollapsed && (
-            <Box className={classes.navSection}>
-              <Typography className={classes.navSectionLabel}>Digital Sales Room</Typography>
-            </Box>
-          )}
-          <Divider/>
-          <List disablePadding style={{paddingTop:theme.spacing(0.75), flex: 1}}>
+        <Box className={`${classes.sidebar} ${sidebarCollapsed ? 'collapsed' : ''}`} style={{width: sidebarCollapsed ? 64 : 220}}>
+          <Box style={{paddingTop: 8, flex: 1}}>
             {[
               { id:'docs',     label:'Documents',      icon:FolderIcon   },
               { id:'account',  label:'Account Details',icon:BusinessIcon },
@@ -1665,46 +1720,43 @@ function DigitalSalesRoomApp() {
             ].map(({id,label,icon:Icon})=>{
               const isActive = activeSection === id
               const isLocked = id === 'hotels' && !accountSaved
+              const iconColor = isLocked ? '#aeb4ba' : isActive ? '#006461' : '#63696f'
+              const labelColor = isLocked ? '#aeb4ba' : isActive ? '#006461' : '#4f5b60'
               return (
-                <ListItem
+                <Box
                   key={id}
-                  button
-                  disabled={isLocked}
+                  className={`${classes.navRow} ${isActive ? classes.navRowActive : ''} ${isLocked ? classes.navRowDisabled : ''}`}
                   onClick={!isLocked ? () => setActiveSection(id) : undefined}
-                  style={{
-                    borderRadius: 6,
-                    margin: theme.spacing(0.25, 1),
-                    background: isActive ? `rgba(${theme.palette.primary.main === '#006461' ? '0,100,97' : '0,73,72'},0.08)` : 'transparent',
-                    opacity: isLocked ? 0.45 : 1,
-                    cursor: isLocked ? 'not-allowed' : 'pointer',
-                    justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
-                  }}
+                  style={{justifyContent: sidebarCollapsed ? 'center' : 'flex-start'}}
                 >
-                  <ListItemIcon style={{minWidth:sidebarCollapsed?0:36, color: isLocked ? theme.palette.text.disabled : isActive ? theme.palette.primary.main : '#63696F', transition: 'color 0.2s', justifyContent: sidebarCollapsed ? 'center' : 'flex-start'}}>
-                    {isLocked ? <LockIcon /> : <Icon />}
-                  </ListItemIcon>
+                  <Box style={{color: iconColor, display:'flex', alignItems:'center', flexShrink: 0, transition:'color 0.2s'}}>
+                    {isLocked ? <LockIcon style={{fontSize: 22}}/> : <Icon style={{fontSize: 22}}/>}
+                  </Box>
                   {!sidebarCollapsed && (
-                    <ListItemText primary={label}
-                      primaryTypographyProps={{className: classes.navLabel, style:{fontWeight:isActive?600:400, color: isLocked?theme.palette.text.disabled: isActive?theme.palette.primary.main:theme.palette.text.primary, fontSize:'0.875rem'}}}/>
+                    <Typography
+                      className={classes.navLabel}
+                      style={{
+                        color: labelColor,
+                        fontWeight: isActive ? 600 : 500,
+                        fontSize: '0.95rem',
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {label}
+                    </Typography>
                   )}
-                </ListItem>
+                </Box>
               )
             })}
-          </List>
-          {/* Bottom collapse toggle */}
+          </Box>
+          {/* Floating circular collapse button on right edge */}
           <Box
-            className={classes.sidebarCollapseRow}
+            className={classes.sidebarCollapseFab}
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            style={{justifyContent: sidebarCollapsed ? 'center' : 'flex-start'}}
+            role="button"
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            {sidebarCollapsed ? (
-              <ChevronRightIcon style={{fontSize: 20}}/>
-            ) : (
-              <>
-                <ChevronLeftIcon style={{fontSize: 20}}/>
-                <span>Collapse</span>
-              </>
-            )}
+            {sidebarCollapsed ? <ChevronRightIcon style={{fontSize: 18}}/> : <ChevronLeftIcon style={{fontSize: 18}}/>}
           </Box>
         </Box>
 
