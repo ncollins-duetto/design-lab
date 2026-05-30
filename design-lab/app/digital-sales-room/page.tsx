@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useContext, createContext, ReactNode, useEffect, useRef, useMemo } from 'react'
-import { Box, Typography, Button, Card, CardContent, CardActions, Divider, Grid, List, ListItem, ListItemIcon, ListItemText, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, IconButton, Tooltip, makeStyles, useTheme, InputAdornment, Stepper, Step, StepLabel } from '@material-ui/core'
+import { Box, Typography, Button, Card, CardContent, CardActions, Divider, Grid, List, ListItem, ListItemIcon, ListItemText, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, IconButton, Tooltip, makeStyles, useTheme, InputAdornment, Stepper, Step, StepLabel, Menu, MenuItem } from '@material-ui/core'
 import { AgGridReact } from 'ag-grid-react'
 import { ModuleRegistry, AllCommunityModule, ColDef } from 'ag-grid-community'
 import 'ag-grid-community/styles/ag-grid.css'
@@ -1843,6 +1843,12 @@ function DigitalSalesRoomApp() {
 
 function ExternalHeader({ userName, userEmail }: { userName?: string, userEmail?: string }) {
   const { logout } = useContext(AuthCtx)
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const open = Boolean(anchorEl)
+  const handleOpen = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget)
+  const handleClose = () => setAnchorEl(null)
+  const handleSignOut = () => { handleClose(); logout() }
+
   return (
     <Box style={{
       display:'flex',
@@ -1869,34 +1875,74 @@ function ExternalHeader({ userName, userEmail }: { userName?: string, userEmail?
           Need help?
         </a>
         {userName && (
-          <Box style={{display:'flex',alignItems:'center',gap:10}}>
-            <Box style={{
-              width:28,height:28,borderRadius:'50%',background:'#006461',
-              display:'flex',alignItems:'center',justifyContent:'center',
-              fontSize:'0.75rem',fontWeight:700,color:'#fff',
-            }}>
-              {userName.charAt(0).toUpperCase()}
-            </Box>
-            <Box style={{display:'flex',flexDirection:'column',lineHeight:1.2}}>
-              <Typography style={{color:'#fff',fontSize:'0.8rem',fontWeight:600}}>{userName}</Typography>
-              {userEmail && (
-                <Typography style={{color:'rgba(255,255,255,0.45)',fontSize:'0.7rem'}}>{userEmail}</Typography>
-              )}
-            </Box>
-            <Button
-              size="small"
-              onClick={logout}
+          <>
+            <Box
+              onClick={handleOpen}
+              aria-haspopup="true"
+              aria-expanded={open}
               style={{
-                color:'rgba(255,255,255,0.7)',
-                textTransform:'none',
-                fontSize:'0.78rem',
-                fontWeight:500,
-                marginLeft:4,
+                display:'flex',
+                alignItems:'center',
+                gap:10,
+                padding:'4px 10px 4px 4px',
+                borderRadius:24,
+                cursor:'pointer',
+                background: open ? 'rgba(255,255,255,0.08)' : 'transparent',
+                transition:'background 0.15s',
               }}
+              onMouseEnter={e => { if (!open) (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.05)' }}
+              onMouseLeave={e => { if (!open) (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
             >
-              Sign out
-            </Button>
-          </Box>
+              <Box style={{
+                width:32,height:32,borderRadius:'50%',background:'#006461',
+                display:'flex',alignItems:'center',justifyContent:'center',
+                fontSize:'0.85rem',fontWeight:700,color:'#fff',
+              }}>
+                {userName.charAt(0).toUpperCase()}
+              </Box>
+              <Typography style={{color:'#fff',fontSize:'0.85rem',fontWeight:600}}>{userName}</Typography>
+              <ExpandMoreIcon style={{
+                color:'rgba(255,255,255,0.6)',
+                fontSize:18,
+                transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition:'transform 0.15s',
+              }}/>
+            </Box>
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+              getContentAnchorEl={null}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              PaperProps={{
+                style: {
+                  marginTop: 8,
+                  minWidth: 220,
+                  borderRadius: 8,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.16)',
+                },
+              }}
+              MenuListProps={{ disablePadding: true }}
+            >
+              <Box style={{padding:'12px 16px',borderBottom:'1px solid #eee'}}>
+                <Typography style={{fontSize:'0.85rem',fontWeight:600,color:'#1c1c1c',lineHeight:1.3}}>{userName}</Typography>
+                {userEmail && (
+                  <Typography style={{fontSize:'0.75rem',color:'#4f5b60',lineHeight:1.3,marginTop:2}}>{userEmail}</Typography>
+                )}
+              </Box>
+              <MenuItem
+                onClick={handleSignOut}
+                style={{
+                  fontSize:'0.85rem',
+                  color:'#1c1c1c',
+                  padding:'10px 16px',
+                }}
+              >
+                Sign out
+              </MenuItem>
+            </Menu>
+          </>
         )}
       </Box>
     </Box>
