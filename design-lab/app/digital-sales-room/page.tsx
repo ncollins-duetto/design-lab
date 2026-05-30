@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useContext, createContext, ReactNode, useEffect, useRef, useMemo } from 'react'
-import { Box, Typography, Button, Card, CardContent, CardActions, Divider, Grid, List, ListItem, ListItemIcon, ListItemText, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, IconButton, Tooltip, makeStyles, useTheme, InputAdornment, Stepper, Step, StepLabel, Menu, MenuItem } from '@material-ui/core'
+import { Box, Typography, Button, Card, CardContent, CardActions, Divider, Grid, List, ListItem, ListItemIcon, ListItemText, TextField, Chip, Paper, Accordion, AccordionSummary, AccordionDetails, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, IconButton, Tooltip, makeStyles, useTheme, InputAdornment, Stepper, Step, StepLabel, Menu, MenuItem, Switch, FormControlLabel } from '@material-ui/core'
+import { Autocomplete } from '@material-ui/lab'
+import * as XLSX from 'xlsx'
 import { AgGridReact } from 'ag-grid-react'
 import { ModuleRegistry, AllCommunityModule, ColDef } from 'ag-grid-community'
 import 'ag-grid-community/styles/ag-grid.css'
@@ -352,11 +354,58 @@ const useStyles = makeStyles((theme) => ({
 // Mock Data
 // ───────────────────────────────────────────────────────────────────────────────
 
-const MOCK_HOTELS = [
+// Searchable hotel database — Duetto-curated list of known properties.
+// In production this would be backed by an API; here it's static.
+interface HotelRecord {
+  id: string
+  name: string
+  address: string
+  rooms: number
+  tz?: string
+  lat?: number
+  lng?: number
+}
+
+const HOTEL_DATABASE: HotelRecord[] = [
   { id:'h1',  name:'The Grand Hyatt New York',         address:'109 E 42nd St, New York, NY',          rooms:1298, tz:'America/New_York',    lat:40.7527, lng:-73.9772 },
   { id:'h2',  name:'Marriott Marquis Times Square',    address:'1535 Broadway, New York, NY',           rooms:1966, tz:'America/New_York',    lat:40.7580, lng:-73.9855 },
   { id:'h3',  name:'The Westin Bonaventure',           address:'404 S Figueroa St, Los Angeles, CA',    rooms:1354, tz:'America/Los_Angeles', lat:34.0504, lng:-118.2588 },
+  { id:'h4',  name:'The Ritz-Carlton San Francisco',   address:'600 Stockton St, San Francisco, CA',    rooms:336,  tz:'America/Los_Angeles' },
+  { id:'h5',  name:'Four Seasons Hotel Chicago',       address:'120 E Delaware Pl, Chicago, IL',        rooms:345,  tz:'America/Chicago' },
+  { id:'h6',  name:'The Plaza Hotel',                  address:'768 5th Ave, New York, NY',             rooms:282,  tz:'America/New_York' },
+  { id:'h7',  name:'Waldorf Astoria New York',         address:'301 Park Ave, New York, NY',            rooms:1413, tz:'America/New_York' },
+  { id:'h8',  name:'The Beverly Hills Hotel',          address:'9641 Sunset Blvd, Beverly Hills, CA',   rooms:208,  tz:'America/Los_Angeles' },
+  { id:'h9',  name:'The Peninsula Beverly Hills',      address:'9882 S Santa Monica Blvd, Beverly Hills, CA', rooms:194, tz:'America/Los_Angeles' },
+  { id:'h10', name:'Hotel del Coronado',               address:'1500 Orange Ave, Coronado, CA',         rooms:757,  tz:'America/Los_Angeles' },
+  { id:'h11', name:'Fontainebleau Miami Beach',        address:'4441 Collins Ave, Miami Beach, FL',     rooms:1594, tz:'America/New_York' },
+  { id:'h12', name:'The Breakers Palm Beach',          address:'1 S County Rd, Palm Beach, FL',         rooms:540,  tz:'America/New_York' },
+  { id:'h13', name:'Bellagio Las Vegas',               address:'3600 S Las Vegas Blvd, Las Vegas, NV',  rooms:3950, tz:'America/Los_Angeles' },
+  { id:'h14', name:'Wynn Las Vegas',                   address:'3131 S Las Vegas Blvd, Las Vegas, NV',  rooms:2716, tz:'America/Los_Angeles' },
+  { id:'h15', name:'The Cosmopolitan of Las Vegas',    address:'3708 S Las Vegas Blvd, Las Vegas, NV',  rooms:3027, tz:'America/Los_Angeles' },
+  { id:'h16', name:'Hyatt Regency Atlanta',            address:'265 Peachtree St NE, Atlanta, GA',      rooms:1260, tz:'America/New_York' },
+  { id:'h17', name:'The Mark Hotel',                   address:'25 E 77th St, New York, NY',            rooms:152,  tz:'America/New_York' },
+  { id:'h18', name:'Hotel Bel-Air',                    address:'701 Stone Canyon Rd, Los Angeles, CA',  rooms:103,  tz:'America/Los_Angeles' },
+  { id:'h19', name:'Mandarin Oriental, Boston',        address:'776 Boylston St, Boston, MA',           rooms:148,  tz:'America/New_York' },
+  { id:'h20', name:'The Langham, Chicago',             address:'330 N Wabash Ave, Chicago, IL',         rooms:316,  tz:'America/Chicago' },
+  { id:'h21', name:'Faena Hotel Miami Beach',          address:'3201 Collins Ave, Miami Beach, FL',     rooms:169,  tz:'America/New_York' },
+  { id:'h22', name:'The St. Regis Atlanta',            address:'88 W Paces Ferry Rd NW, Atlanta, GA',   rooms:151,  tz:'America/New_York' },
+  { id:'h23', name:'Conrad New York Downtown',         address:'102 North End Ave, New York, NY',       rooms:463,  tz:'America/New_York' },
+  { id:'h24', name:'The Joule Dallas',                 address:'1530 Main St, Dallas, TX',              rooms:160,  tz:'America/Chicago' },
+  { id:'h25', name:'Loews Miami Beach Hotel',          address:'1601 Collins Ave, Miami Beach, FL',     rooms:790,  tz:'America/New_York' },
 ];
+
+// Backward-compat alias used in proposal table seeds
+const MOCK_HOTELS = HOTEL_DATABASE.slice(0, 3);
+
+// Default products applied to all hotels (used as initial state)
+const DEFAULT_PRODUCTS = ['GameChanger','ScoreBoard','Advance'];
+
+// Hotel as added by the customer (extends HotelRecord with custom-product settings)
+interface AddedHotel extends HotelRecord {
+  isNew: boolean              // true if not found in HOTEL_DATABASE (manually typed)
+  useCustomProducts: boolean  // if true, this hotel overrides global products
+  products: string[]
+}
 
 const MOCK_DOCS = [
   { id:'d1',  name:'Duetto Platform Overview 2026',              type:'pptx', date:'Apr 15, 2026', size:'4.2 MB', section:'marketing' },
@@ -1667,8 +1716,103 @@ function DigitalSalesRoomApp() {
   const [proposalAccepted, setProposalAccepted] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   // Hotels: prefilled from Duetto + customer-added ones
-  const [hotels, setHotels] = useState<typeof MOCK_HOTELS>([...MOCK_HOTELS])
+  const [hotels, setHotels] = useState<AddedHotel[]>(() =>
+    MOCK_HOTELS.map(h => ({ ...h, isNew: false, useCustomProducts: false, products: [...DEFAULT_PRODUCTS] }))
+  )
   const [hotelSearch, setHotelSearch] = useState('')
+  const [allHotelsSameProducts, setAllHotelsSameProducts] = useState(true)
+  const [globalProducts, setGlobalProducts] = useState<string[]>([...DEFAULT_PRODUCTS])
+  const [excelError, setExcelError] = useState('')
+  const [excelToast, setExcelToast] = useState('')
+  const excelInputRef = useRef<HTMLInputElement>(null)
+
+  // Add hotel from search field. If value matches database, copy known data.
+  // Otherwise mark as a new (manually entered) hotel.
+  const addHotelByName = (rawName: string) => {
+    const name = rawName.trim()
+    if (!name) return
+    if (hotels.some(h => h.name.toLowerCase() === name.toLowerCase())) return // dedupe
+    const match = HOTEL_DATABASE.find(h => h.name.toLowerCase() === name.toLowerCase())
+    const next: AddedHotel = match
+      ? { ...match, isNew: false, useCustomProducts: false, products: [...globalProducts] }
+      : {
+          id: `new-${Date.now()}`,
+          name,
+          address: '',
+          rooms: 0,
+          isNew: true,
+          useCustomProducts: false,
+          products: [...globalProducts],
+        }
+    setHotels(prev => [...prev, next])
+    setHotelSearch('')
+  }
+
+  const removeHotel = (id: string) => setHotels(prev => prev.filter(h => h.id !== id))
+
+  const setHotelProducts = (id: string, products: string[]) =>
+    setHotels(prev => prev.map(h => (h.id === id ? { ...h, products } : h)))
+
+  const setHotelCustomToggle = (id: string, useCustomProducts: boolean) =>
+    setHotels(prev =>
+      prev.map(h =>
+        h.id === id
+          ? { ...h, useCustomProducts, products: useCustomProducts ? h.products : [...globalProducts] }
+          : h,
+      ),
+    )
+
+  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setExcelError('')
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const buf = await file.arrayBuffer()
+      const wb = XLSX.read(buf, { type: 'array' })
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, { defval: '' })
+      if (!rows.length) throw new Error('Sheet is empty')
+      // Accept any header that includes "name" (case-insensitive) as hotel name.
+      const nameKey = Object.keys(rows[0]).find(k => /name/i.test(k))
+      if (!nameKey) throw new Error('No "name" column found in spreadsheet')
+      const addressKey = Object.keys(rows[0]).find(k => /address/i.test(k))
+      const roomsKey = Object.keys(rows[0]).find(k => /room/i.test(k))
+
+      let added = 0
+      setHotels(prev => {
+        const next = [...prev]
+        rows.forEach((row, i) => {
+          const name = String(row[nameKey] || '').trim()
+          if (!name) return
+          if (next.some(h => h.name.toLowerCase() === name.toLowerCase())) return
+          const match = HOTEL_DATABASE.find(h => h.name.toLowerCase() === name.toLowerCase())
+          const address = addressKey ? String(row[addressKey] || '').trim() : ''
+          const roomsNum = roomsKey ? Number(row[roomsKey]) || 0 : 0
+          next.push(
+            match
+              ? { ...match, isNew: false, useCustomProducts: false, products: [...globalProducts] }
+              : {
+                  id: `xls-${Date.now()}-${i}`,
+                  name,
+                  address: address || (match as any)?.address || '',
+                  rooms: roomsNum || (match as any)?.rooms || 0,
+                  isNew: true,
+                  useCustomProducts: false,
+                  products: [...globalProducts],
+                },
+          )
+          added += 1
+        })
+        return next
+      })
+      setExcelToast(added > 0 ? `${added} hotel${added === 1 ? '' : 's'} imported` : 'No new hotels to import')
+    } catch (err: any) {
+      setExcelError(err?.message || 'Failed to read spreadsheet')
+    } finally {
+      // Reset input so the same file can be re-uploaded
+      if (excelInputRef.current) excelInputRef.current.value = ''
+    }
+  }
 
   if (!user) {
     if (view === 'signin') return <SignInPage onBack={()=>setView('landing')} onCreateAccount={()=>setView('create')}/>
@@ -1816,38 +1960,140 @@ function DigitalSalesRoomApp() {
           {activeSection === 'hotels' && accountSaved && (
             <Box style={{padding:24,maxWidth:1000}}>
               <Typography variant="h5" style={{fontWeight:700,marginBottom:4}}>Hotel Details</Typography>
-              <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>Search for your properties or add them manually. Select products and integrations for each hotel.</Typography>
+              <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>Search Duetto's hotel database or type a new property name. Assign products globally or per hotel.</Typography>
               <Divider style={{marginBottom:24}}/>
 
-              {/* Search & Add Section */}
-              <Box style={{display:'grid',gridTemplateColumns:'1fr auto auto',gap:12,marginBottom:24}}>
-                <TextField
-                  placeholder="Search hotel name"
-                  variant="outlined"
-                  size="small"
-                  value={hotelSearch}
-                  onChange={e => setHotelSearch(e.target.value)}
-                  fullWidth
+              {/* Search & Excel upload */}
+              <Box style={{display:'grid',gridTemplateColumns:'1fr auto',gap:12,marginBottom:24,alignItems:'center'}}>
+                <Autocomplete<HotelRecord, false, false, true>
+                  freeSolo
+                  options={HOTEL_DATABASE.filter(d => !hotels.some(h => h.name.toLowerCase() === d.name.toLowerCase()))}
+                  getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.name)}
+                  filterOptions={(opts, state) => {
+                    const q = state.inputValue.trim().toLowerCase()
+                    if (!q) return opts.slice(0, 10)
+                    return opts.filter(o => o.name.toLowerCase().includes(q) || o.address.toLowerCase().includes(q)).slice(0, 20)
+                  }}
+                  inputValue={hotelSearch}
+                  onInputChange={(_, v, reason) => { if (reason !== 'reset') setHotelSearch(v) }}
+                  onChange={(_, value) => {
+                    if (!value) return
+                    if (typeof value === 'string') addHotelByName(value)
+                    else addHotelByName(value.name)
+                  }}
+                  renderOption={(opt) => (
+                    <Box style={{display:'flex',flexDirection:'column'}}>
+                      <Typography style={{fontSize:'0.875rem',fontWeight:600}}>{opt.name}</Typography>
+                      <Typography style={{fontSize:'0.72rem',color:'#8a9096'}}>{opt.address} · {opt.rooms.toLocaleString()} rooms</Typography>
+                    </Box>
+                  )}
+                  noOptionsText={
+                    hotelSearch.trim() ? (
+                      <Box
+                        onClick={() => addHotelByName(hotelSearch)}
+                        style={{cursor:'pointer',padding:'4px 0'}}
+                      >
+                        <Typography style={{fontSize:'0.875rem',fontWeight:600,color:'#006461'}}>
+                          + Add "{hotelSearch.trim()}" as a new hotel
+                        </Typography>
+                        <Typography style={{fontSize:'0.72rem',color:'#8a9096'}}>
+                          Not in Duetto's database — will be flagged as new for review
+                        </Typography>
+                      </Box>
+                    ) : (
+                      'Type a hotel name'
+                    )
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder="Search Duetto database or type new hotel name…"
+                      variant="outlined"
+                      size="small"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && hotelSearch.trim()) {
+                          // Allow adding free-typed name even when Autocomplete keeps no-options open
+                          const matches = HOTEL_DATABASE.filter(o => o.name.toLowerCase().includes(hotelSearch.trim().toLowerCase()))
+                          if (matches.length === 0) { e.preventDefault(); addHotelByName(hotelSearch) }
+                        }
+                      }}
+                    />
+                  )}
                 />
-                <Button variant="outlined" color="primary" style={{textTransform:'none'}}>+ Add Manually</Button>
-                <Button variant="outlined" color="primary" style={{textTransform:'none'}}>⬆ Upload from Excel</Button>
-              </Box>
-
-              {/* Default Products & Integrations */}
-              <Box style={{marginBottom:24,padding:'12px 16px',background:'#FAFAFA',borderRadius:8}}>
-                <Typography style={{fontSize:'0.8rem',fontWeight:600,textTransform:'uppercase',color:'#4F5B60',marginBottom:8}}>Apply to All New Hotels</Typography>
-                <Box style={{marginBottom:8}}>
-                  <Typography style={{fontSize:'0.75rem',fontWeight:600,color:'#4F5B60',marginBottom:8}}>Default products</Typography>
-                  <Box style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                    {['GameChanger','ScoreBoard','BlockBuster','Advance','GameTime','HotStats'].map(p => (
-                      <Chip key={p} label={p} size="small" style={{height:28}}/>
-                    ))}
-                  </Box>
-                </Box>
                 <Box>
-                  <Typography style={{fontSize:'0.75rem',fontWeight:600,color:'#4F5B60',marginBottom:8}}>Default integrations (PMS & other systems)</Typography>
-                  <TextField placeholder="Search integrations..." variant="outlined" size="small" fullWidth style={{maxWidth:300}}/>
+                  <input
+                    ref={excelInputRef}
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={handleExcelUpload}
+                    style={{display:'none'}}
+                  />
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    style={{textTransform:'none'}}
+                    onClick={() => excelInputRef.current?.click()}
+                  >
+                    ⬆ Upload from Excel
+                  </Button>
                 </Box>
+              </Box>
+              {excelError && (
+                <Box style={{marginBottom:16,padding:'8px 12px',background:'#FFE9E9',borderRadius:6,color:'#A12121',fontSize:'0.8rem'}}>
+                  {excelError}
+                </Box>
+              )}
+
+              {/* Global products toggle + editor */}
+              <Box style={{marginBottom:24,padding:'14px 16px',background:'#FAFAFA',borderRadius:8,border:'1px solid #EBEDEF'}}>
+                <Box style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:allHotelsSameProducts?12:0}}>
+                  <Box>
+                    <Typography style={{fontSize:'0.9rem',fontWeight:700,color:'#1c1c1c'}}>All hotels have the same products</Typography>
+                    <Typography style={{fontSize:'0.75rem',color:'#4F5B60'}}>Toggle off to set products per hotel.</Typography>
+                  </Box>
+                  <Switch
+                    checked={allHotelsSameProducts}
+                    color="primary"
+                    onChange={(_, checked) => {
+                      setAllHotelsSameProducts(checked)
+                      // When turning global ON, reset per-hotel overrides
+                      if (checked) {
+                        setHotels(prev => prev.map(h => ({ ...h, useCustomProducts: false, products: [...globalProducts] })))
+                      }
+                    }}
+                  />
+                </Box>
+                {allHotelsSameProducts && (
+                  <Box>
+                    <Typography style={{fontSize:'0.75rem',fontWeight:600,color:'#4F5B60',marginBottom:8}}>Products applied to all hotels</Typography>
+                    <Box style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                      {PRODUCTS.map(p => {
+                        const on = globalProducts.includes(p)
+                        return (
+                          <Chip
+                            key={p}
+                            label={p}
+                            size="small"
+                            clickable
+                            onClick={() => {
+                              const nextGlobal = on ? globalProducts.filter(x => x !== p) : [...globalProducts, p]
+                              setGlobalProducts(nextGlobal)
+                              // Sync to non-overriding hotels
+                              setHotels(prev => prev.map(h => h.useCustomProducts ? h : { ...h, products: nextGlobal }))
+                            }}
+                            style={{
+                              height:28,
+                              background: on ? (PRODUCT_COLORS[p]?.bg || '#E0F0EF') : '#fff',
+                              color:    on ? (PRODUCT_COLORS[p]?.text || '#004948') : '#8a9096',
+                              border:   on ? '1px solid transparent' : '1px solid #d0d4d8',
+                              fontWeight: 600,
+                            }}
+                          />
+                        )
+                      })}
+                    </Box>
+                  </Box>
+                )}
               </Box>
 
               {/* Contact Details */}
@@ -1864,23 +2110,123 @@ function DigitalSalesRoomApp() {
               <Box style={{border:'1px solid #DDE1E2',borderRadius:8,overflow:'hidden'}}>
                 {hotels.length === 0 ? (
                   <div style={{padding:'20px',textAlign:'center',color:'#AEB4BA'}}>
-                    No hotels added yet. Search above, add manually, or upload from Excel.
+                    No hotels added yet. Search above or upload from Excel.
                   </div>
                 ) : (
                   hotels.map((h, i) => (
                     <div key={h.id}>
                       {i > 0 && <Divider/>}
-                      <div style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:i%2===0?'white':'#FAFAFA'}}>
-                        <div style={{flex:1}}>
-                          <Typography style={{fontWeight:600,fontSize:'0.875rem'}}>{h.name}</Typography>
-                          <Typography style={{fontSize:'0.72rem',color:'#AEB4BA',marginTop:2}}>{h.address} · {h.rooms} rooms</Typography>
-                        </div>
-                        <Button size="small" style={{color:'#004948',textTransform:'none',fontWeight:600,fontSize:'0.8rem'}}>Edit</Button>
-                      </div>
+                      <Box style={{padding:'14px 16px',background:i%2===0?'white':'#FAFAFA'}}>
+                        <Box style={{display:'flex',alignItems:'flex-start',gap:12}}>
+                          <Box style={{flex:1,minWidth:0}}>
+                            <Box style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                              <Typography style={{fontWeight:600,fontSize:'0.95rem'}}>{h.name}</Typography>
+                              {h.isNew && (
+                                <Box style={{padding:'2px 8px',borderRadius:10,background:'#FFF4D6',color:'#7A5400',fontSize:'0.68rem',fontWeight:700,letterSpacing:0.3,textTransform:'uppercase'}}>
+                                  New hotel
+                                </Box>
+                              )}
+                            </Box>
+                            <Typography style={{fontSize:'0.75rem',color:'#8a9096',marginTop:2}}>
+                              {h.address || (h.isNew ? 'No address on file — Duetto will follow up' : '—')}
+                              {h.rooms ? ` · ${h.rooms.toLocaleString()} rooms` : ''}
+                            </Typography>
+                          </Box>
+                          <Button
+                            size="small"
+                            onClick={() => removeHotel(h.id)}
+                            style={{color:'#A12121',textTransform:'none',fontWeight:600,fontSize:'0.8rem'}}
+                          >
+                            Remove
+                          </Button>
+                        </Box>
+
+                        {/* Per-hotel product controls — only when global toggle is ON */}
+                        {allHotelsSameProducts && (
+                          <Box style={{marginTop:10,paddingTop:10,borderTop:'1px dashed #E5E7EB',display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  size="small"
+                                  color="primary"
+                                  checked={h.useCustomProducts}
+                                  onChange={(_, checked) => setHotelCustomToggle(h.id, checked)}
+                                />
+                              }
+                              label={<Typography style={{fontSize:'0.78rem',color:'#4F5B60'}}>Override products for this hotel</Typography>}
+                            />
+                            <Box style={{display:'flex',flexWrap:'wrap',gap:6,flex:1}}>
+                              {(h.useCustomProducts ? PRODUCTS : h.products).map(p => {
+                                const on = h.products.includes(p)
+                                const interactive = h.useCustomProducts
+                                return (
+                                  <Chip
+                                    key={p}
+                                    label={p}
+                                    size="small"
+                                    clickable={interactive}
+                                    onClick={interactive ? () => {
+                                      const next = on ? h.products.filter(x => x !== p) : [...h.products, p]
+                                      setHotelProducts(h.id, next)
+                                    } : undefined}
+                                    style={{
+                                      height:26,
+                                      background: on ? (PRODUCT_COLORS[p]?.bg || '#E0F0EF') : '#fff',
+                                      color:    on ? (PRODUCT_COLORS[p]?.text || '#004948') : '#8a9096',
+                                      border:   on ? '1px solid transparent' : '1px solid #d0d4d8',
+                                      fontWeight: 600,
+                                      opacity: interactive ? 1 : 0.85,
+                                    }}
+                                  />
+                                )
+                              })}
+                            </Box>
+                          </Box>
+                        )}
+
+                        {/* Per-hotel product editor when global toggle is OFF */}
+                        {!allHotelsSameProducts && (
+                          <Box style={{marginTop:10,paddingTop:10,borderTop:'1px dashed #E5E7EB'}}>
+                            <Typography style={{fontSize:'0.72rem',fontWeight:600,color:'#4F5B60',marginBottom:6}}>Products for this hotel</Typography>
+                            <Box style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                              {PRODUCTS.map(p => {
+                                const on = h.products.includes(p)
+                                return (
+                                  <Chip
+                                    key={p}
+                                    label={p}
+                                    size="small"
+                                    clickable
+                                    onClick={() => {
+                                      const next = on ? h.products.filter(x => x !== p) : [...h.products, p]
+                                      setHotelProducts(h.id, next)
+                                    }}
+                                    style={{
+                                      height:26,
+                                      background: on ? (PRODUCT_COLORS[p]?.bg || '#E0F0EF') : '#fff',
+                                      color:    on ? (PRODUCT_COLORS[p]?.text || '#004948') : '#8a9096',
+                                      border:   on ? '1px solid transparent' : '1px solid #d0d4d8',
+                                      fontWeight: 600,
+                                    }}
+                                  />
+                                )
+                              })}
+                            </Box>
+                          </Box>
+                        )}
+                      </Box>
                     </div>
                   ))
                 )}
               </Box>
+
+              <Snackbar
+                open={!!excelToast}
+                autoHideDuration={3000}
+                onClose={() => setExcelToast('')}
+                message={excelToast}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+              />
             </Box>
           )}
 
