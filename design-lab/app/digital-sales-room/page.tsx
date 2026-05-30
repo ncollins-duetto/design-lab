@@ -1408,7 +1408,7 @@ function DocumentStore() {
               style={{
                 border: `2px dashed ${isDragOver ? '#006461' : '#AEB4BA'}`,
                 background: isDragOver ? '#d7f7ed' : '#FAFAFA',
-                borderRadius: 8,
+                borderRadius: 6,
                 padding: '14px 18px',
                 textAlign: 'center',
                 cursor: 'pointer',
@@ -1421,7 +1421,7 @@ function DocumentStore() {
               {isDragOver ? 'Drop files here' : 'Drag and drop files or videos here, or click to browse'}
             </div>
 
-            <Paper elevation={0} style={{border:'1px solid #DDE1E2',borderRadius:8,overflow:'hidden'}}>
+            <Paper elevation={0} style={{border:'1px solid #DDE1E2',borderRadius:6,overflow:'hidden'}}>
               {/* Mock docs */}
               {mockDocs.map((doc, i) => {
                 const colors = iconColors(doc.type)
@@ -1664,7 +1664,7 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
 
   return (
     <Box>
-      <Box style={{border:'1px solid #DDE1E2',borderRadius:8,marginBottom:16}}>
+      <Box style={{border:'1px solid #DDE1E2',borderRadius:6,marginBottom:16}}>
         <style>{`
           .ag-theme-alpine {
             --ag-header-background-color: #F8F9FD;
@@ -1717,7 +1717,7 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
       </Box>
 
       {/* Footer totals */}
-      <Box style={{display:'flex',gap:40,background:'#FAFAFA',borderRadius:8,padding:'12px 16px',marginBottom:16,borderTop:'2px solid #DDE1E2'}}>
+      <Box style={{display:'flex',gap:40,background:'#FAFAFA',borderRadius:6,padding:'12px 16px',marginBottom:16,borderTop:'2px solid #DDE1E2'}}>
         <Box style={{flex:1}}>
           <Typography style={{fontSize:'0.72rem',fontWeight:700,textTransform:'uppercase',letterSpacing:0.5,color:'#4F5B60',marginBottom:4}}>Total</Typography>
         </Box>
@@ -1783,6 +1783,14 @@ function DigitalSalesRoomApp() {
   const [newHotelForm, setNewHotelForm] = useState<NewHotelForm>(emptyNewHotelForm())
   // When editing, holds the id of the hotel being edited; null = add mode
   const [editingHotelId, setEditingHotelId] = useState<string | null>(null)
+  // Hotel card expansion state
+  const [expandedHotels, setExpandedHotels] = useState<Set<string>>(new Set())
+  const toggleHotelExpanded = (id: string) =>
+    setExpandedHotels(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
 
   const openNewHotelModal = (prefilledName = '') => {
     setEditingHotelId(null)
@@ -2082,7 +2090,7 @@ function DigitalSalesRoomApp() {
               )}
 
               {accountSaved && (
-                <Box style={{display:'flex',alignItems:'flex-start',gap:10,background:'#E8F5E9',border:'1px solid #A5D6A7',borderRadius:8,padding:'12px 16px'}}>
+                <Box style={{display:'flex',alignItems:'flex-start',gap:10,background:'#E8F5E9',border:'1px solid #A5D6A7',borderRadius:6,padding:'12px 16px'}}>
                   <span style={{fontSize:'1rem',marginTop:1}}>🔒</span>
                   <Typography style={{fontSize:'0.875rem',color:'#28592C'}}>
                     <strong>Account details saved.</strong> You can now proceed to Hotel Details.
@@ -2099,7 +2107,7 @@ function DigitalSalesRoomApp() {
               <Divider style={{marginBottom:24}}/>
 
               {/* Global products toggle + checkbox editor — ABOVE search */}
-              <Box style={{marginBottom:24,padding:'14px 16px',background:'#FAFAFA',borderRadius:8,border:'1px solid #EBEDEF'}}>
+              <Box style={{marginBottom:24,padding:'14px 16px',background:'#ffffff',borderRadius:6,border:'1px solid #EBEDEF'}}>
                 <Box style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:allHotelsSameProducts?12:0}}>
                   <Box>
                     <Typography style={{fontSize:'0.9rem',fontWeight:700,color:'#1c1c1c'}}>All hotels have the same products</Typography>
@@ -2197,141 +2205,176 @@ function DigitalSalesRoomApp() {
                 </Box>
               </Box>
 
-              {/* Hotels List */}
-              <Box style={{border:'1px solid #DDE1E2',borderRadius:8,overflow:'hidden'}}>
-                {hotels.length === 0 ? (
-                  <div style={{padding:'20px',textAlign:'center',color:'#AEB4BA'}}>
-                    No hotels added yet. Search above or upload from Excel.
-                  </div>
-                ) : (
-                  hotels.map((h, i) => (
-                    <div key={h.id}>
-                      {i > 0 && <Divider/>}
-                      <Box style={{padding:'14px 16px',background:i%2===0?'white':'#FAFAFA'}}>
-                        <Box style={{display:'flex',alignItems:'flex-start',gap:12}}>
-                          <Box style={{flex:1,minWidth:0}}>
-                            <Box style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-                              <Typography style={{fontWeight:600,fontSize:'0.95rem'}}>{h.name}</Typography>
-                              {h.isNew && (
-                                <Box style={{padding:'2px 8px',borderRadius:10,background:'#FFF4D6',color:'#7A5400',fontSize:'0.68rem',fontWeight:700,letterSpacing:0.3,textTransform:'uppercase'}}>
-                                  New hotel
+              {/* Hotels List — accordion cards */}
+              {hotels.length === 0 ? (
+                <Box style={{border:'1px solid #DDE1E2',borderRadius:6,padding:'20px',textAlign:'center',color:'#AEB4BA',background:'#ffffff'}}>
+                  No hotels added yet. Click "Add Hotel" above or upload from Excel.
+                </Box>
+              ) : (
+                <Box style={{display:'flex',flexDirection:'column',gap:10}}>
+                  {hotels.map((h) => {
+                    const isOpen = expandedHotels.has(h.id)
+                    const dbMatch = HOTEL_DATABASE.find(d => d.name.toLowerCase() === h.name.toLowerCase())
+                    const coords = dbMatch && dbMatch.lat && dbMatch.lng ? `${dbMatch.lat}, ${dbMatch.lng}` : '—'
+                    const tz = dbMatch?.tz || '—'
+                    return (
+                      <Box
+                        key={h.id}
+                        style={{
+                          background:'#ffffff',
+                          border:'1px solid #DDE1E2',
+                          borderRadius:6,
+                          overflow:'hidden',
+                        }}
+                      >
+                        {/* Header row */}
+                        <Box
+                          onClick={() => toggleHotelExpanded(h.id)}
+                          style={{
+                            display:'flex',
+                            alignItems:'center',
+                            gap:12,
+                            padding:'14px 16px',
+                            cursor:'pointer',
+                          }}
+                        >
+                          <HotelIcon style={{color:'#006461',fontSize:22,flexShrink:0}}/>
+                          <Box style={{flex:1,minWidth:0,display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                            <Typography style={{fontWeight:700,fontSize:'0.95rem',color:'#1c1c1c'}}>{h.name}</Typography>
+                            {h.isNew && (
+                              <Box style={{padding:'2px 8px',borderRadius:10,background:'#FFF4D6',color:'#7A5400',fontSize:'0.68rem',fontWeight:700,letterSpacing:0.3,textTransform:'uppercase'}}>
+                                New hotel
+                              </Box>
+                            )}
+                          </Box>
+
+                          {/* Right cluster: small product chips + room count + trash + chevron */}
+                          <Box style={{display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+                            <Box style={{display:'flex',gap:4,flexWrap:'nowrap'}}>
+                              {h.products.slice(0,3).map(p => (
+                                <Box
+                                  key={p}
+                                  style={{
+                                    padding:'3px 10px',
+                                    borderRadius:10,
+                                    fontSize:'0.72rem',
+                                    fontWeight:700,
+                                    background: PRODUCT_COLORS[p]?.bg || '#E0F0EF',
+                                    color: PRODUCT_COLORS[p]?.text || '#004948',
+                                    whiteSpace:'nowrap',
+                                  }}
+                                >
+                                  {p}
+                                </Box>
+                              ))}
+                              {h.products.length > 3 && (
+                                <Box style={{padding:'3px 8px',borderRadius:10,fontSize:'0.7rem',fontWeight:700,background:'#F1F3F5',color:'#4F5B60'}}>
+                                  +{h.products.length - 3}
                                 </Box>
                               )}
                             </Box>
-                            <Typography style={{fontSize:'0.75rem',color:'#8a9096',marginTop:2}}>
-                              {h.address || (h.isNew ? 'No address on file — Duetto will follow up' : '—')}
-                              {h.rooms ? ` · ${h.rooms.toLocaleString()} rooms` : ''}
-                            </Typography>
-                          </Box>
-                          <Box style={{display:'flex',alignItems:'center',gap:4}}>
-                            <Button
+                            {h.rooms > 0 && (
+                              <Box style={{padding:'3px 10px',borderRadius:10,fontSize:'0.72rem',fontWeight:600,background:'#F4F6F8',color:'#4F5B60',whiteSpace:'nowrap'}}>
+                                {h.rooms.toLocaleString()} rooms
+                              </Box>
+                            )}
+                            <IconButton
                               size="small"
-                              startIcon={<EditIcon style={{fontSize:16}}/>}
-                              onClick={() => openEditHotelModal(h)}
-                              style={{color:'#006461',textTransform:'none',fontWeight:600,fontSize:'0.8rem'}}
+                              onClick={(e) => { e.stopPropagation(); removeHotel(h.id) }}
+                              style={{color:'#D32F2F'}}
+                              aria-label="Remove hotel"
                             >
-                              Edit
-                            </Button>
-                            <Button
-                              size="small"
-                              onClick={() => removeHotel(h.id)}
-                              style={{color:'#A12121',textTransform:'none',fontWeight:600,fontSize:'0.8rem'}}
-                            >
-                              Remove
-                            </Button>
+                              <DeleteIcon style={{fontSize:20}}/>
+                            </IconButton>
+                            <ExpandMoreIcon
+                              style={{
+                                color:'#4F5B60',
+                                transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                transition: 'transform 0.2s',
+                              }}
+                            />
                           </Box>
                         </Box>
 
-                        {/* Per-hotel product controls — only when global toggle is ON */}
-                        {allHotelsSameProducts && (
-                          <Box style={{marginTop:10,paddingTop:10,borderTop:'1px dashed #E5E7EB'}}>
-                            <FormControlLabel
-                              control={
-                                <Switch
-                                  size="small"
-                                  color="primary"
-                                  checked={h.useCustomProducts}
-                                  onChange={(_, checked) => setHotelCustomToggle(h.id, checked)}
-                                />
-                              }
-                              label={<Typography style={{fontSize:'0.78rem',color:'#4F5B60'}}>Override products for this hotel</Typography>}
-                            />
-                            <Box style={{display:'flex',flexWrap:'wrap',rowGap:0,columnGap:16,marginTop:4}}>
-                              {PRODUCTS.map(p => {
-                                const on = h.products.includes(p)
-                                const interactive = h.useCustomProducts
-                                return (
-                                  <FormControlLabel
-                                    key={p}
-                                    disabled={!interactive}
-                                    control={
-                                      <Checkbox
-                                        size="small"
-                                        color="primary"
-                                        checked={on}
-                                        onChange={() => {
-                                          const next = on ? h.products.filter(x => x !== p) : [...h.products, p]
-                                          setHotelProducts(h.id, next)
-                                        }}
-                                      />
-                                    }
-                                    label={
-                                      <Typography style={{
-                                        fontWeight: on ? 600 : 500,
-                                        fontSize: '0.82rem',
-                                        color: '#1c1c1c',
-                                      }}>
-                                        {p}
-                                      </Typography>
-                                    }
-                                  />
-                                )
-                              })}
+                        {/* Expanded body */}
+                        {isOpen && (
+                          <Box style={{borderTop:'1px solid #EBEDEF',padding:'16px 20px'}}>
+                            {/* Metadata grid */}
+                            <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:24,marginBottom:20}}>
+                              <Box>
+                                <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Address</Typography>
+                                <Typography style={{fontSize:'0.875rem',color:'#1c1c1c'}}>
+                                  {h.address || (h.isNew ? 'Pending Duetto follow-up' : '—')}
+                                </Typography>
+                              </Box>
+                              <Box>
+                                <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Coordinates</Typography>
+                                <Typography style={{fontSize:'0.875rem',color:'#1c1c1c'}}>{coords}</Typography>
+                              </Box>
+                              <Box>
+                                <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Timezone</Typography>
+                                <Typography style={{fontSize:'0.875rem',color:'#1c1c1c'}}>{tz}</Typography>
+                              </Box>
                             </Box>
-                          </Box>
-                        )}
 
-                        {/* Per-hotel product editor when global toggle is OFF */}
-                        {!allHotelsSameProducts && (
-                          <Box style={{marginTop:10,paddingTop:10,borderTop:'1px dashed #E5E7EB'}}>
-                            <Typography style={{fontSize:'0.72rem',fontWeight:600,color:'#4F5B60',marginBottom:4}}>Products for this hotel</Typography>
-                            <Box style={{display:'flex',flexWrap:'wrap',rowGap:0,columnGap:16}}>
-                              {PRODUCTS.map(p => {
-                                const on = h.products.includes(p)
-                                return (
-                                  <FormControlLabel
-                                    key={p}
-                                    control={
-                                      <Checkbox
-                                        size="small"
-                                        color="primary"
-                                        checked={on}
-                                        onChange={() => {
-                                          const next = on ? h.products.filter(x => x !== p) : [...h.products, p]
-                                          setHotelProducts(h.id, next)
-                                        }}
-                                      />
-                                    }
-                                    label={
-                                      <Typography style={{
-                                        fontWeight: on ? 600 : 500,
-                                        fontSize: '0.82rem',
-                                        color: '#1c1c1c',
-                                      }}>
-                                        {p}
-                                      </Typography>
-                                    }
-                                  />
-                                )
-                              })}
+                            {/* Products */}
+                            <Box style={{marginBottom:16}}>
+                              <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Products</Typography>
+                              {h.products.length === 0 ? (
+                                <Typography style={{fontSize:'0.85rem',color:'#8a9096'}}>—</Typography>
+                              ) : (
+                                <Box style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                                  {h.products.map(p => (
+                                    <Box
+                                      key={p}
+                                      style={{
+                                        padding:'4px 12px',
+                                        borderRadius:12,
+                                        fontSize:'0.75rem',
+                                        fontWeight:700,
+                                        background: PRODUCT_COLORS[p]?.bg || '#E0F0EF',
+                                        color: PRODUCT_COLORS[p]?.text || '#004948',
+                                      }}
+                                    >
+                                      {p}
+                                    </Box>
+                                  ))}
+                                </Box>
+                              )}
+                            </Box>
+
+                            {/* Integrations */}
+                            <Box style={{marginBottom:16}}>
+                              <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Integrations</Typography>
+                              <Typography style={{fontSize:'0.875rem',color:'#8a9096'}}>—</Typography>
+                            </Box>
+
+                            {/* Implementation Contact */}
+                            <Box style={{marginBottom:8}}>
+                              <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Implementation Contact</Typography>
+                              <Typography style={{fontSize:'0.875rem',color:'#8a9096'}}>—</Typography>
+                            </Box>
+
+                            {/* Actions */}
+                            <Box style={{display:'flex',justifyContent:'flex-end',gap:8,marginTop:12,paddingTop:12,borderTop:'1px dashed #EBEDEF'}}>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="primary"
+                                startIcon={<EditIcon style={{fontSize:16}}/>}
+                                onClick={() => openEditHotelModal(h)}
+                                style={{textTransform:'none',fontWeight:600}}
+                              >
+                                Edit
+                              </Button>
                             </Box>
                           </Box>
                         )}
                       </Box>
-                    </div>
-                  ))
-                )}
-              </Box>
+                    )
+                  })}
+                </Box>
+              )}
 
               <Snackbar
                 open={!!excelToast}
@@ -2356,7 +2399,7 @@ function DigitalSalesRoomApp() {
                 </DialogTitle>
                 <DialogContent style={{padding:'24px',display:'flex',flexDirection:'column',gap:24}}>
                   {/* Search Duetto database — auto-populates Property Details when picked */}
-                  <Box style={{padding:'14px 16px',background:'#F4F8F7',borderRadius:8,border:'1px solid #DDE7E5'}}>
+                  <Box style={{padding:'14px 16px',background:'#F4F8F7',borderRadius:6,border:'1px solid #DDE7E5'}}>
                     <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:8}}>
                       Search Duetto's Hotel Database
                     </Typography>
@@ -2717,7 +2760,7 @@ function ExternalHeader({ userName, userEmail }: { userName?: string, userEmail?
                 style: {
                   marginTop: 8,
                   minWidth: 220,
-                  borderRadius: 8,
+                  borderRadius: 6,
                   boxShadow: '0 4px 16px rgba(0,0,0,0.16)',
                 },
               }}
