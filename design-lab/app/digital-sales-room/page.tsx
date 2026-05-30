@@ -1779,31 +1779,79 @@ function DigitalSalesRoomApp() {
   })
   const [newHotelOpen, setNewHotelOpen] = useState(false)
   const [newHotelForm, setNewHotelForm] = useState<NewHotelForm>(emptyNewHotelForm())
+  // When editing, holds the id of the hotel being edited; null = add mode
+  const [editingHotelId, setEditingHotelId] = useState<string | null>(null)
 
   const openNewHotelModal = (prefilledName = '') => {
+    setEditingHotelId(null)
     setNewHotelForm(emptyNewHotelForm(prefilledName))
     setNewHotelOpen(true)
   }
 
-  const submitNewHotel = () => {
+  const openEditHotelModal = (hotel: AddedHotel) => {
+    setEditingHotelId(hotel.id)
+    setNewHotelForm({
+      name: hotel.name,
+      address: hotel.address,
+      rooms: hotel.rooms ? String(hotel.rooms) : '',
+      products: [...hotel.products],
+      integrations: '',
+      contactName: '',
+      contactEmail: '',
+      contactPhone: '',
+    })
+    setNewHotelOpen(true)
+  }
+
+  // Persist current form to hotels list. Returns true on success, false if invalid.
+  const persistHotelForm = (): boolean => {
     const name = newHotelForm.name.trim()
-    if (!name) return
-    if (hotels.some(h => h.name.toLowerCase() === name.toLowerCase())) {
-      setNewHotelOpen(false)
-      return
+    if (!name) return false
+
+    if (editingHotelId) {
+      // Edit existing hotel
+      setHotels(prev => prev.map(h => h.id === editingHotelId ? {
+        ...h,
+        name,
+        address: newHotelForm.address.trim(),
+        rooms: Number(newHotelForm.rooms) || 0,
+        products: [...newHotelForm.products],
+        useCustomProducts: !allHotelsSameProducts ||
+          newHotelForm.products.join(',') !== globalProducts.join(','),
+      } : h))
+      return true
     }
+
+    // Add new
+    if (hotels.some(h => h.name.toLowerCase() === name.toLowerCase())) return false
+    const matchInDb = HOTEL_DATABASE.find(d => d.name.toLowerCase() === name.toLowerCase())
     const next: AddedHotel = {
       id: `new-${Date.now()}`,
       name,
       address: newHotelForm.address.trim(),
       rooms: Number(newHotelForm.rooms) || 0,
-      isNew: true,
-      useCustomProducts: !allHotelsSameProducts || newHotelForm.products.join(',') !== globalProducts.join(','),
+      isNew: !matchInDb,
+      useCustomProducts: !allHotelsSameProducts ||
+        newHotelForm.products.join(',') !== globalProducts.join(','),
       products: [...newHotelForm.products],
     }
     setHotels(prev => [...prev, next])
-    setNewHotelOpen(false)
-    setHotelSearch('')
+    return true
+  }
+
+  const handleSaveAndClose = () => {
+    if (persistHotelForm()) {
+      setNewHotelOpen(false)
+      setHotelSearch('')
+    }
+  }
+
+  const handleSaveAndAddAnother = () => {
+    if (persistHotelForm()) {
+      // Reset to fresh add-mode for the next hotel; keep modal open
+      setEditingHotelId(null)
+      setNewHotelForm(emptyNewHotelForm())
+    }
   }
 
   // Add hotel from search field. If value matches database, copy known data.
@@ -2168,13 +2216,23 @@ function DigitalSalesRoomApp() {
                               {h.rooms ? ` · ${h.rooms.toLocaleString()} rooms` : ''}
                             </Typography>
                           </Box>
-                          <Button
-                            size="small"
-                            onClick={() => removeHotel(h.id)}
-                            style={{color:'#A12121',textTransform:'none',fontWeight:600,fontSize:'0.8rem'}}
-                          >
-                            Remove
-                          </Button>
+                          <Box style={{display:'flex',alignItems:'center',gap:4}}>
+                            <Button
+                              size="small"
+                              startIcon={<EditIcon style={{fontSize:16}}/>}
+                              onClick={() => openEditHotelModal(h)}
+                              style={{color:'#006461',textTransform:'none',fontWeight:600,fontSize:'0.8rem'}}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="small"
+                              onClick={() => removeHotel(h.id)}
+                              style={{color:'#A12121',textTransform:'none',fontWeight:600,fontSize:'0.8rem'}}
+                            >
+                              Remove
+                            </Button>
+                          </Box>
                         </Box>
 
                         {/* Per-hotel product controls — only when global toggle is ON */}
@@ -2285,7 +2343,9 @@ function DigitalSalesRoomApp() {
                 PaperProps={{ style: { borderRadius: 10 } }}
               >
                 <DialogTitle disableTypography style={{padding:'20px 24px',borderBottom:'1px solid #EBEDEF'}}>
-                  <Typography style={{fontSize:'1.05rem',fontWeight:700}}>Add New Hotel</Typography>
+                  <Typography style={{fontSize:'1.05rem',fontWeight:700}}>
+                    {editingHotelId ? 'Edit Hotel' : 'Add New Hotel'}
+                  </Typography>
                 </DialogTitle>
                 <DialogContent style={{padding:'24px',display:'flex',flexDirection:'column',gap:24}}>
                   {/* Search Duetto database — auto-populates Property Details when picked */}
@@ -2460,7 +2520,7 @@ function DigitalSalesRoomApp() {
                     </Box>
                   </Box>
                 </DialogContent>
-                <DialogActions style={{padding:'16px 24px',borderTop:'1px solid #EBEDEF',gap:8}}>
+                <DialogActions style={{padding:'16px 24px',borderTop:'1px solid #EBEDEF',gap:8,justifyContent:'space-between'}}>
                   <Button
                     variant="text"
                     onClick={() => setNewHotelOpen(false)}
@@ -2468,15 +2528,28 @@ function DigitalSalesRoomApp() {
                   >
                     Cancel
                   </Button>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={submitNewHotel}
-                    disabled={!newHotelForm.name.trim()}
-                    style={{textTransform:'none',fontWeight:600,paddingLeft:20,paddingRight:20}}
-                  >
-                    Add Hotel
-                  </Button>
+                  <Box style={{display:'flex',gap:8}}>
+                    {!editingHotelId && (
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={handleSaveAndAddAnother}
+                        disabled={!newHotelForm.name.trim()}
+                        style={{textTransform:'none',fontWeight:600}}
+                      >
+                        Save and add another
+                      </Button>
+                    )}
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSaveAndClose}
+                      disabled={!newHotelForm.name.trim()}
+                      style={{textTransform:'none',fontWeight:600,paddingLeft:20,paddingRight:20}}
+                    >
+                      Save and close
+                    </Button>
+                  </Box>
                 </DialogActions>
               </Dialog>
             </Box>
