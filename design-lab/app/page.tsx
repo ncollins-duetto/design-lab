@@ -26,6 +26,9 @@ export default function Home() {
           <Button variant="contained" color="primary" href="/digital-sales-room">
             Digital Sales Room
           </Button>
+          <Button variant="contained" color="primary" href="/min-max-bounds">
+            Min/Max
+          </Button>
         </Box>
       </Box>
     </AppShell>
