@@ -455,9 +455,15 @@ export default function MinMaxBoundsPage() {
                 <MenuItem disabled>Season</MenuItem>
                 <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
                 <MenuItem value="May 26 26 - Jun 25 26">May 26 26 - Jun 25 26</MenuItem>
-                <MenuItem disabled>Override</MenuItem>
-                <MenuItem value="override-1">Override 1</MenuItem>
-                <MenuItem value="override-2">Override 2</MenuItem>
+                <MenuItem disabled>Season Override</MenuItem>
+                <MenuItem value="season-override-1">Season Override 1</MenuItem>
+                <MenuItem value="season-override-2">Season Override 2</MenuItem>
+                <MenuItem disabled>Room Types</MenuItem>
+                <MenuItem value="room-types-deluxe">Deluxe</MenuItem>
+                <MenuItem value="room-types-suite">Suite</MenuItem>
+                <MenuItem disabled>Room Types Override</MenuItem>
+                <MenuItem value="room-types-override-1">Room Types Override 1</MenuItem>
+                <MenuItem value="room-types-override-2">Room Types Override 2</MenuItem>
               </Select>
             </Box>
           </div>
