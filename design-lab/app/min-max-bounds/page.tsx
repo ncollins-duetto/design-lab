@@ -23,6 +23,11 @@ ModuleRegistry.registerModules([AllCommunityModule])
 
 const useStyles = makeStyles((theme) => ({
   '@global': {
+    '.MuiPopover-paper.MuiMenu-paper': {
+      width: '215px !important',
+      maxWidth: '215px !important',
+      minWidth: '215px !important',
+    },
     '.ag-theme-alpine': {
       '--ag-header-background-color': '#ffffff',
       '--ag-header-foreground-color': '#4f5b60',
@@ -662,13 +667,15 @@ export default function MinMaxBoundsPage() {
             variant="outlined"
             IconComponent={ExpandMoreIcon}
             autoWidth={false}
+            SelectDisplayProps={{ style: { width: 175 } }}
             MenuProps={{
               classes: { paper: classes.selectMenuPaper },
               getContentAnchorEl: null,
               anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
               transformOrigin: { vertical: 'top', horizontal: 'left' },
-              PaperProps: { style: { width: 215, maxWidth: 215, minWidth: 215, overflowX: 'hidden' } },
-              MenuListProps: { style: { width: 215, maxWidth: 215, overflow: 'hidden' } },
+              PaperProps: { style: { width: 215, maxWidth: 215, minWidth: '215px', overflowX: 'hidden' } },
+              MenuListProps: { style: { width: 215, maxWidth: 215, overflow: 'hidden', padding: 0 } },
+              PopoverClasses: { paper: classes.selectMenuPaper },
             }}
           >
             <MenuItem disabled>Season</MenuItem>
