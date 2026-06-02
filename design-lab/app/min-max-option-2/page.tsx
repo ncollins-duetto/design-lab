@@ -309,6 +309,26 @@ export default function MinMaxOption2Page() {
     setSelectedRooms(newSelected)
   }
 
+  const getSeasonPrices = (baseMin: string, baseMax: string): [string, string] => {
+    // Parse price value
+    const minVal = parseFloat(baseMin.replace(/[^0-9.]/g, ''))
+    const maxVal = parseFloat(baseMax.replace(/[^0-9.]/g, ''))
+
+    // Apply season multiplier
+    let multiplier = 1
+    if (selectedSeason === 'January 1 - April 31') {
+      multiplier = 0.8
+    } else if (selectedSeason === 'May 1 - September 31') {
+      multiplier = 1.2
+    } else if (selectedSeason === 'October 1 - December 31') {
+      multiplier = 1.1
+    }
+
+    const newMin = (minVal * multiplier).toFixed(2)
+    const newMax = (maxVal * multiplier).toFixed(2)
+    return [`€${newMin}`, `€${newMax}`]
+  }
+
   const rowData = useMemo(() => {
     const rows: Record<string, any>[] = []
     rows.push({
@@ -317,8 +337,8 @@ export default function MinMaxOption2Page() {
       rowClass: 'bar-row',
     })
     filteredRooms.forEach((room) => {
-      const min = MOCK_PRICES[room as keyof typeof MOCK_PRICES][0]
-      const max = MOCK_PRICES[room as keyof typeof MOCK_PRICES][1]
+      const basePrices = MOCK_PRICES[room as keyof typeof MOCK_PRICES]
+      const [min, max] = getSeasonPrices(basePrices[0], basePrices[1])
       rows.push({
         roomType: room,
         sun: min, mon: min, tue: min, wed: min, thu: min, fri: min, sat: min,
@@ -332,7 +352,7 @@ export default function MinMaxOption2Page() {
       })
     })
     return rows
-  }, [filteredRooms])
+  }, [filteredRooms, selectedSeason])
 
   const columnDefs = useMemo<any[]>(
     () => [
