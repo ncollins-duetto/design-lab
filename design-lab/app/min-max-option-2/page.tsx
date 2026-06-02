@@ -483,10 +483,18 @@ export default function MinMaxOption2Page() {
                 }}
               >
                 <MenuItem disabled>Season</MenuItem>
-                <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
-                <MenuItem value="January 1 - April 31">January 1 - April 31</MenuItem>
-                <MenuItem value="May 1 - September 31">May 1 - September 31</MenuItem>
-                <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
+                <MenuItem value="January 1 - December 31">
+                  January 1 - December 31
+                </MenuItem>
+                <MenuItem value="January 1 - April 31">
+                  January 1 - April 31 {MOCK_OVERRIDES.some(o => o.dateRange.includes('January') || o.dateRange.includes('March')) ? '◆' : ''}
+                </MenuItem>
+                <MenuItem value="May 1 - September 31">
+                  May 1 - September 31 {MOCK_OVERRIDES.some(o => o.dateRange.includes('June') || o.dateRange.includes('August')) ? '◆' : ''}
+                </MenuItem>
+                <MenuItem value="October 1 - December 31">
+                  October 1 - December 31 {MOCK_OVERRIDES.some(o => o.dateRange.includes('December')) ? '◆' : ''}
+                </MenuItem>
               </Select>
             </Box>
           </div>
