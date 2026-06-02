@@ -669,11 +669,13 @@ export default function MinMaxBoundsPage() {
                 </MenuItem>
               ))
             )}
-            <MenuItem disabled>
+            <MenuItem disabled style={{ pointerEvents: 'auto' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 Room Types Override
-                <Tooltip title="For overrides that do not fall into the seasons override" arrow>
-                  <InfoOutlinedIcon style={{ fontSize: 14, color: '#4f5b60', cursor: 'pointer' }} />
+                <Tooltip title="For overrides that do not fall into the seasons override" arrow placement="right">
+                  <span style={{ display: 'inline-flex', cursor: 'pointer' }}>
+                    <InfoOutlinedIcon style={{ fontSize: 14, color: '#4f5b60' }} />
+                  </span>
                 </Tooltip>
               </span>
             </MenuItem>
