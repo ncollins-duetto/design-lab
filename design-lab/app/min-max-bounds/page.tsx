@@ -219,15 +219,19 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   selectMenuPaper: {
-    marginTop: 4,
-    width: 215,
-    maxWidth: 215,
-    background: '#ffffff',
-    border: '1px solid #dde1e2',
-    borderRadius: 4,
-    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+    marginTop: '4px !important',
+    width: '215px !important',
+    maxWidth: '215px !important',
+    minWidth: '215px !important',
+    background: '#ffffff !important',
+    border: '1px solid #dde1e2 !important',
+    borderRadius: '4px !important',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08) !important',
     '& .MuiList-root': {
       padding: '4px 0',
+      width: '215px !important',
+      maxWidth: '215px !important',
+      overflow: 'hidden',
     },
     '& .MuiMenuItem-root': {
       fontFamily: 'Lato, sans-serif',
@@ -235,10 +239,12 @@ const useStyles = makeStyles((theme) => ({
       color: '#1c1c1c',
       padding: '8px 12px',
       minHeight: 'unset',
-      display: 'block',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
+      display: 'block !important',
+      overflow: 'hidden !important',
+      textOverflow: 'ellipsis !important',
+      whiteSpace: 'nowrap !important',
+      maxWidth: '215px !important',
+      boxSizing: 'border-box',
       '&:hover': {
         backgroundColor: '#f5f5f5',
       },
@@ -655,11 +661,14 @@ export default function MinMaxBoundsPage() {
             className={classes.seasonSelect}
             variant="outlined"
             IconComponent={ExpandMoreIcon}
+            autoWidth={false}
             MenuProps={{
               classes: { paper: classes.selectMenuPaper },
               getContentAnchorEl: null,
               anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
               transformOrigin: { vertical: 'top', horizontal: 'left' },
+              PaperProps: { style: { width: 215, maxWidth: 215, minWidth: 215, overflowX: 'hidden' } },
+              MenuListProps: { style: { width: 215, maxWidth: 215, overflow: 'hidden' } },
             }}
           >
             <MenuItem disabled>Season</MenuItem>
