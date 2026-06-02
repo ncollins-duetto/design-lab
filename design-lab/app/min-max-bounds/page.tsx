@@ -677,15 +677,9 @@ export default function MinMaxBoundsPage() {
               >
                 <MenuItem disabled>Season</MenuItem>
                 <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
-                <MenuItem value="January 1 - April 30">
-                  January 1 - April 30 {SEASON_OVERRIDES['January 1 - April 30'] ? '◆' : ''}
-                </MenuItem>
-                <MenuItem value="May 1 - September 30">
-                  May 1 - September 30 {SEASON_OVERRIDES['May 1 - September 30'] ? '◆' : ''}
-                </MenuItem>
-                <MenuItem value="October 1 - December 31">
-                  October 1 - December 31 {SEASON_OVERRIDES['October 1 - December 31'] ? '◆' : ''}
-                </MenuItem>
+                <MenuItem value="January 1 - April 30">January 1 - April 30</MenuItem>
+                <MenuItem value="May 1 - September 30">May 1 - September 30</MenuItem>
+                <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
                 <MenuItem disabled>Season Override</MenuItem>
                 {seasonOverrides.map((so) => (
                   <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}`}>
