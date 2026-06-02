@@ -2,6 +2,9 @@
 
 import React, { useMemo, useRef, useState } from 'react'
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Checkbox,
@@ -300,6 +303,7 @@ const SEASON_OVERRIDES: Record<string, SeasonOverride[]> = {
   'May 1 - September 31': [
     { label: 'Early Summer', dateRange: 'May 15 - Jun 14', minMultiplier: 1.15, maxMultiplier: 1.10 },
     { label: 'Peak Summer', dateRange: 'Jun 15 - Aug 15', minMultiplier: 1.30, maxMultiplier: 1.25 },
+    { label: 'Festival Weekend', dateRange: 'Jul 10 - Jul 13', minMultiplier: 1.45, maxMultiplier: 1.40 },
     { label: 'Late Summer', dateRange: 'Aug 16 - Sep 15', minMultiplier: 1.20, maxMultiplier: 1.15 },
   ],
   'October 1 - December 31': [
@@ -351,6 +355,24 @@ const ROOM_TYPE_OVERRIDES: Record<string, RoomTypeOverride[]> = {
     },
   ],
   'May 1 - September 31': [
+    {
+      label: 'Festival Weekend Surcharge',
+      dateRange: 'Jul 10 - Jul 13',
+      rooms: {
+        'Deluxe': ['+€400.00', '+€900.00'],
+        'Deluxe 2/3sin vistas': ['+€400.00', '+€900.00'],
+        'Deluxe 2/3 vista mar': ['+€450.00', '+€1,000.00'],
+        'Deluxe 4p sin vistas': ['+€380.00', '+€850.00'],
+        'Deluxe 4p Vista Mar': ['+€380.00', '+€850.00'],
+        'Deluxe Accessible': ['+€380.00', '+€850.00'],
+        'Deluxe City View - C2V': ['+€400.00', '+€900.00'],
+        'Deluxe Club San Juan': ['+€420.00', '+€950.00'],
+        'Deluxe Twin': ['+€380.00', '+€850.00'],
+        'Deluxe VM 5p': ['+€380.00', '+€850.00'],
+        'Dexint': ['+€350.00', '+€800.00'],
+        'Double Dusal Seaview': ['+€450.00', '+€1,000.00'],
+      },
+    },
     {
       label: 'Peak Summer Room Surcharge',
       dateRange: 'Jun 15 - Aug 15',
@@ -658,64 +680,88 @@ export default function MinMaxOption2Page() {
             </Box>
           </div>
 
-          {/* Season Override Grids */}
-          {overrideGrids.length > 0 && (
-            <div style={{ padding: '16px 24px 4px', background: '#ffffff' }}>
-              <Typography variant="subtitle2" style={{ color: '#4f5b60', fontWeight: 600 }}>
-                Season Overrides ({overrideGrids.length})
-              </Typography>
-            </div>
-          )}
-          {overrideGrids.map((gridRows, idx) => (
-            <div key={`season-override-${idx}`}>
-              <div className={`ag-theme-alpine ${classes.gridContainer}`}>
-                <AgGridReact
-                  theme="legacy"
-                  rowData={gridRows}
-                  columnDefs={columnDefs}
-                  suppressColumnVirtualisation
-                  suppressRowVirtualisation
-                  suppressRowTransform
-                  domLayout="autoHeight"
-                  getRowClass={(params) => params.data?.rowClass || ''}
-                  defaultColDef={{
-                    resizable: true,
-                    sortable: false,
-                    suppressHeaderMenuButton: true,
-                  }}
-                />
-              </div>
-            </div>
+          {/* Season Override Accordions */}
+          {overrideGrids.length > 0 && overrideGrids.map((gridRows, idx) => (
+            <Accordion
+              key={`season-override-${idx}`}
+              defaultExpanded={false}
+              style={{ margin: 0, boxShadow: 'none', borderBottom: '1px solid #dde1e2' }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                style={{ background: '#f5f5f5', minHeight: 40, padding: '0 16px' }}
+              >
+                <Box display="flex" alignItems="center" gridGap={8}>
+                  <Typography style={{ fontSize: 13, fontWeight: 600, color: '#006461' }}>
+                    Season Override
+                  </Typography>
+                  <Typography style={{ fontSize: 13, color: '#4f5b60' }}>
+                    {seasonOverrides[idx]?.label} · {seasonOverrides[idx]?.dateRange}
+                  </Typography>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails style={{ padding: 0 }}>
+                <div className={`ag-theme-alpine ${classes.gridContainer}`} style={{ width: '100%' }}>
+                  <AgGridReact
+                    theme="legacy"
+                    rowData={gridRows}
+                    columnDefs={columnDefs}
+                    suppressColumnVirtualisation
+                    suppressRowVirtualisation
+                    suppressRowTransform
+                    domLayout="autoHeight"
+                    getRowClass={(params) => params.data?.rowClass || ''}
+                    defaultColDef={{
+                      resizable: true,
+                      sortable: false,
+                      suppressHeaderMenuButton: true,
+                    }}
+                  />
+                </div>
+              </AccordionDetails>
+            </Accordion>
           ))}
 
-          {/* Room Type Override Grids */}
-          {roomOverrideGrids.length > 0 && (
-            <div style={{ padding: '16px 24px 4px', background: '#ffffff' }}>
-              <Typography variant="subtitle2" style={{ color: '#4f5b60', fontWeight: 600 }}>
-                Room Type Overrides ({roomOverrideGrids.length})
-              </Typography>
-            </div>
-          )}
-          {roomOverrideGrids.map((gridRows, idx) => (
-            <div key={`room-override-${idx}`}>
-              <div className={`ag-theme-alpine ${classes.gridContainer}`}>
-                <AgGridReact
-                  theme="legacy"
-                  rowData={gridRows}
-                  columnDefs={columnDefs}
-                  suppressColumnVirtualisation
-                  suppressRowVirtualisation
-                  suppressRowTransform
-                  domLayout="autoHeight"
-                  getRowClass={(params) => params.data?.rowClass || ''}
-                  defaultColDef={{
-                    resizable: true,
-                    sortable: false,
-                    suppressHeaderMenuButton: true,
-                  }}
-                />
-              </div>
-            </div>
+          {/* Room Type Override Accordions */}
+          {roomOverrideGrids.length > 0 && roomOverrideGrids.map((gridRows, idx) => (
+            <Accordion
+              key={`room-override-${idx}`}
+              defaultExpanded={false}
+              style={{ margin: 0, boxShadow: 'none', borderBottom: '1px solid #dde1e2' }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                style={{ background: '#f5f5f5', minHeight: 40, padding: '0 16px' }}
+              >
+                <Box display="flex" alignItems="center" gridGap={8}>
+                  <Typography style={{ fontSize: 13, fontWeight: 600, color: '#006461' }}>
+                    Room Type Override
+                  </Typography>
+                  <Typography style={{ fontSize: 13, color: '#4f5b60' }}>
+                    {roomTypeOverrides[idx]?.label} · {roomTypeOverrides[idx]?.dateRange}
+                  </Typography>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails style={{ padding: 0 }}>
+                <div className={`ag-theme-alpine ${classes.gridContainer}`} style={{ width: '100%' }}>
+                  <AgGridReact
+                    theme="legacy"
+                    rowData={gridRows}
+                    columnDefs={columnDefs}
+                    suppressColumnVirtualisation
+                    suppressRowVirtualisation
+                    suppressRowTransform
+                    domLayout="autoHeight"
+                    getRowClass={(params) => params.data?.rowClass || ''}
+                    defaultColDef={{
+                      resizable: true,
+                      sortable: false,
+                      suppressHeaderMenuButton: true,
+                    }}
+                  />
+                </div>
+              </AccordionDetails>
+            </Accordion>
           ))}
 
           {/* AG Grid Table */}
