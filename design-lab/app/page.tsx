@@ -29,6 +29,9 @@ export default function Home() {
           <Button variant="contained" color="primary" href="/min-max-bounds">
             Min/Max
           </Button>
+          <Button variant="contained" color="primary" href="/min-max-option-2">
+            Min/Max Option 2
+          </Button>
         </Box>
       </Box>
     </AppShell>
