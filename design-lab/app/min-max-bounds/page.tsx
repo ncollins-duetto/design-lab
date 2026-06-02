@@ -639,6 +639,44 @@ export default function MinMaxBoundsPage() {
             </Typography>
           )}
         </div>
+        <Box display="flex" alignItems="center" gridGap={12}>
+          <Typography variant="subtitle2" style={{ color: '#4f5b60', whiteSpace: 'nowrap' }}>Seasons & Overrides</Typography>
+          <Select
+            value={selectedSeason}
+            onChange={(e) => setSelectedSeason(e.target.value as string)}
+            className={classes.seasonSelect}
+            variant="outlined"
+            IconComponent={ExpandMoreIcon}
+            MenuProps={{
+              classes: { paper: classes.selectMenuPaper },
+              getContentAnchorEl: null,
+              anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+              transformOrigin: { vertical: 'top', horizontal: 'left' },
+            }}
+          >
+            <MenuItem disabled>Season</MenuItem>
+            <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
+            <MenuItem value="January 1 - April 30">January 1 - April 30</MenuItem>
+            <MenuItem value="May 1 - September 30">May 1 - September 30</MenuItem>
+            <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
+            <MenuItem disabled>Season Override</MenuItem>
+            {Object.entries(SEASON_OVERRIDES).flatMap(([season, overrides]) =>
+              overrides.map((so) => (
+                <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}::${season}`}>
+                  {so.label} ({so.dateRange})
+                </MenuItem>
+              ))
+            )}
+            <MenuItem disabled>Room Types Override - for overrides that do not fall into seasons override</MenuItem>
+            {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
+              overrides.map((rto) => (
+                <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
+                  {rto.label} ({rto.dateRange})
+                </MenuItem>
+              ))
+            )}
+          </Select>
+        </Box>
       </div>
 
       {/* Main Content */}
@@ -696,48 +734,6 @@ export default function MinMaxBoundsPage() {
 
         {/* Table Area */}
         <div className={classes.tableWrapper}>
-          {/* Table Header with Season Selector */}
-          <div className={classes.tableHeader}>
-            <Box display="flex" justifyContent="flex-end" alignItems="center" gridGap={12}>
-              <Typography variant="subtitle2" style={{ color: '#4f5b60' }}>Seasons & Overrides</Typography>
-              <Select
-                value={selectedSeason}
-                onChange={(e) => setSelectedSeason(e.target.value as string)}
-                className={classes.seasonSelect}
-                variant="outlined"
-                IconComponent={ExpandMoreIcon}
-                MenuProps={{
-                  classes: { paper: classes.selectMenuPaper },
-                  getContentAnchorEl: null,
-                  anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
-                  transformOrigin: { vertical: 'top', horizontal: 'left' },
-                }}
-              >
-                <MenuItem disabled>Season</MenuItem>
-                <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
-                <MenuItem value="January 1 - April 30">January 1 - April 30</MenuItem>
-                <MenuItem value="May 1 - September 30">May 1 - September 30</MenuItem>
-                <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
-                <MenuItem disabled>Season Override</MenuItem>
-                {Object.entries(SEASON_OVERRIDES).flatMap(([season, overrides]) =>
-                  overrides.map((so) => (
-                    <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}::${season}`}>
-                      {so.label} ({so.dateRange})
-                    </MenuItem>
-                  ))
-                )}
-                <MenuItem disabled>Room Types Override - for overrides that do not fall into seasons override</MenuItem>
-                {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
-                  overrides.map((rto) => (
-                    <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
-                      {rto.label} ({rto.dateRange})
-                    </MenuItem>
-                  ))
-                )}
-              </Select>
-            </Box>
-          </div>
-
           {/* AG Grid Table — shows season or selected override */}
           <div className={`ag-theme-alpine ${classes.gridContainer}`}>
             <AgGridReact
