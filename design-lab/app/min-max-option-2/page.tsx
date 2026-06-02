@@ -458,12 +458,6 @@ export default function MinMaxOption2Page() {
                 <MenuItem disabled>Season</MenuItem>
                 <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
                 <MenuItem value="May 26 26 - Jun 25 26">May 26 26 - Jun 25 26</MenuItem>
-                <MenuItem disabled>Season Override</MenuItem>
-                <MenuItem value="season-override-1">Season Override 1</MenuItem>
-                <MenuItem value="season-override-2">Season Override 2</MenuItem>
-                <MenuItem disabled>Room Types Override</MenuItem>
-                <MenuItem value="room-types-override-1">Room Types Override 1</MenuItem>
-                <MenuItem value="room-types-override-2">Room Types Override 2</MenuItem>
               </Select>
             </Box>
           </div>
