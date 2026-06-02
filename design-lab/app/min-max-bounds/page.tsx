@@ -8,10 +8,12 @@ import {
   makeStyles,
   MenuItem,
   Select,
+  Tooltip,
   Typography,
 } from '@material-ui/core'
 import EditIcon from '@material-ui/icons/Edit'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
+import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import { AgGridReact } from 'ag-grid-react'
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import 'ag-grid-community/styles/ag-grid.css'
@@ -667,7 +669,14 @@ export default function MinMaxBoundsPage() {
                 </MenuItem>
               ))
             )}
-            <MenuItem disabled>Room Types Override - for overrides that do not fall into seasons override</MenuItem>
+            <MenuItem disabled>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                Room Types Override
+                <Tooltip title="For overrides that do not fall into the seasons override" arrow>
+                  <InfoOutlinedIcon style={{ fontSize: 14, color: '#4f5b60', cursor: 'pointer' }} />
+                </Tooltip>
+              </span>
+            </MenuItem>
             {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
               overrides.map((rto) => (
                 <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
