@@ -8,6 +8,7 @@ import {
   makeStyles,
   MenuItem,
   Select,
+  Tooltip,
   Typography,
 } from '@material-ui/core'
 import EditIcon from '@material-ui/icons/Edit'
@@ -225,27 +226,32 @@ const useStyles = makeStyles((theme) => ({
     minWidth: '0 !important' as any,
     background: '#ffffff',
     border: '1px solid #dde1e2',
-    borderRadius: 4,
+    borderRadius: 5,
     boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
     '& .MuiList-root': {
-      padding: '4px 0',
+      padding: 0,
       width: '100%',
       maxWidth: '100%',
       boxSizing: 'border-box',
     },
     '& .MuiMenuItem-root': {
-      fontFamily: 'Lato, sans-serif',
-      fontSize: 14,
+      fontFamily: 'Lato, sans-serif !important' as any,
+      fontSize: '16px !important' as any,
+      lineHeight: '24px !important' as any,
       color: '#1c1c1c',
-      padding: '8px 12px',
-      minHeight: 'unset',
+      padding: '6px 8px 6px 16px !important' as any,
+      minHeight: 'unset !important' as any,
       display: 'block !important' as any,
       width: '100%',
       maxWidth: '100%',
       boxSizing: 'border-box',
+      borderBottom: '1px solid #dde1e2 !important' as any,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+      '&:last-child': {
+        borderBottom: 'none !important' as any,
+      },
       '&:hover': {
         backgroundColor: '#f5f5f5',
       },
@@ -257,14 +263,44 @@ const useStyles = makeStyles((theme) => ({
       },
       '&.Mui-disabled': {
         opacity: 1,
-        fontSize: 11,
-        fontWeight: 600,
-        color: '#4f5b60',
-        textTransform: 'uppercase' as const,
-        letterSpacing: '0.5px',
-        padding: '8px 12px 4px',
+        fontSize: '16px !important' as any,
+        lineHeight: '24px !important' as any,
+        fontWeight: 400,
+        color: '#8a9096 !important' as any,
+        textTransform: 'none !important' as any,
+        letterSpacing: '0 !important' as any,
+        padding: '6px 8px !important' as any,
       },
     },
+  },
+  overlapTooltip: {
+    fontFamily: 'Lato, sans-serif',
+    fontSize: 11,
+    fontWeight: 400,
+    lineHeight: '14px',
+    color: '#1c1c1c',
+    backgroundColor: '#ffffff',
+    border: '1px solid #dde1e2',
+    borderRadius: 4,
+    padding: '10px',
+    boxShadow:
+      '0px 1px 3px rgba(0,0,0,0.2), 0px 2px 1px -1px rgba(0,0,0,0.12), 0px 1px 1px rgba(0,0,0,0.14)',
+    maxWidth: 'none',
+  },
+  overlapTooltipArrow: {
+    color: '#ffffff',
+    '&::before': {
+      border: '1px solid #dde1e2',
+      backgroundColor: '#ffffff',
+      boxSizing: 'border-box',
+    },
+  },
+  overlapTriggerWrap: {
+    display: 'block',
+    width: '100%',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   gridContainer: {
     flex: 1,
@@ -676,19 +712,56 @@ export default function MinMaxBoundsPage() {
             <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
             <MenuItem disabled>Season Override</MenuItem>
             {Object.entries(SEASON_OVERRIDES).flatMap(([season, overrides]) =>
-              overrides.map((so) => (
-                <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}::${season}`}>
-                  {so.label} ({so.dateRange})
-                </MenuItem>
-              ))
+              overrides.map((so) => {
+                const label = `${so.label} (${so.dateRange})`
+                return (
+                  <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}::${season}`}>
+                    <Tooltip
+                      title={label}
+                      placement="right"
+                      arrow
+                      classes={{ tooltip: classes.overlapTooltip, arrow: classes.overlapTooltipArrow }}
+                    >
+                      <span className={classes.overlapTriggerWrap}>{label}</span>
+                    </Tooltip>
+                  </MenuItem>
+                )
+              })
             )}
-            <MenuItem disabled>Room Types + Seasons Overrides</MenuItem>
+            <Tooltip
+              title={
+                <>
+                  There are Min/max room types
+                  <br />
+                  overrides where there is an overlap
+                  <br />
+                  with seasons override
+                </>
+              }
+              placement="right"
+              arrow
+              classes={{ tooltip: classes.overlapTooltip, arrow: classes.overlapTooltipArrow }}
+            >
+              <span className={classes.overlapTriggerWrap}>
+                <MenuItem disabled>Override overlap</MenuItem>
+              </span>
+            </Tooltip>
             {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
-              overrides.map((rto) => (
-                <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
-                  {rto.label} ({rto.dateRange})
-                </MenuItem>
-              ))
+              overrides.map((rto) => {
+                const label = `${rto.label} (${rto.dateRange})`
+                return (
+                  <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
+                    <Tooltip
+                      title={label}
+                      placement="right"
+                      arrow
+                      classes={{ tooltip: classes.overlapTooltip, arrow: classes.overlapTooltipArrow }}
+                    >
+                      <span className={classes.overlapTriggerWrap}>{label}</span>
+                    </Tooltip>
+                  </MenuItem>
+                )
+              })
             )}
           </Select>
         </Box>
