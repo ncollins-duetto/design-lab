@@ -291,58 +291,6 @@ const MOCK_PRICES = {
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-// Parse short date like "Jun 15" into a comparable number (month * 100 + day)
-function parseDateStr(s: string): number {
-  const months: Record<string, number> = {
-    Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
-    Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12,
-  }
-  const parts = s.trim().split(' ')
-  return (months[parts[0]] || 0) * 100 + parseInt(parts[1], 10)
-}
-
-function parseRange(dateRange: string): [number, number] {
-  const [start, end] = dateRange.split(' - ')
-  return [parseDateStr(start), parseDateStr(end)]
-}
-
-function rangesOverlap(a: [number, number], b: [number, number]): boolean {
-  return a[0] <= b[1] && b[0] <= a[1]
-}
-
-type OverlapInfo = { a: { label: string; dateRange: string; type: string }; b: { label: string; dateRange: string; type: string }; overlapRange: string }
-
-function findOverlaps(
-  seasonOvs: { label: string; dateRange: string }[],
-  roomOvs: { label: string; dateRange: string }[],
-): OverlapInfo[] {
-  const all = [
-    ...seasonOvs.map((o) => ({ ...o, type: 'Season' })),
-    ...roomOvs.map((o) => ({ ...o, type: 'Room Type' })),
-  ]
-  const overlaps: OverlapInfo[] = []
-  for (let i = 0; i < all.length; i++) {
-    for (let j = i + 1; j < all.length; j++) {
-      const rA = parseRange(all[i].dateRange)
-      const rB = parseRange(all[j].dateRange)
-      if (rangesOverlap(rA, rB)) {
-        const overlapStart = Math.max(rA[0], rB[0])
-        const overlapEnd = Math.min(rA[1], rB[1])
-        // Convert back to readable
-        const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        const startStr = `${months[Math.floor(overlapStart / 100)]} ${overlapStart % 100}`
-        const endStr = `${months[Math.floor(overlapEnd / 100)]} ${overlapEnd % 100}`
-        overlaps.push({
-          a: all[i],
-          b: all[j],
-          overlapRange: `${startStr} - ${endStr}`,
-        })
-      }
-    }
-  }
-  return overlaps
-}
-
 // Season overrides: adjust min/max from base season prices
 // Each override has its own dateRange — multiple overrides can cover different periods within the same season
 type SeasonOverride = { label: string; dateRange: string; minMultiplier: number; maxMultiplier: number }
@@ -561,19 +509,6 @@ export default function MinMaxOption2Page() {
   const seasonOverrides = SEASON_OVERRIDES[selectedSeason] || []
   const roomTypeOverrides = ROOM_TYPE_OVERRIDES[selectedSeason] || []
 
-  const overlaps = useMemo(
-    () => findOverlaps(seasonOverrides, roomTypeOverrides),
-    [selectedSeason]
-  )
-
-  // Check if a specific override is involved in any overlap
-  const isOverlapping = (label: string, dateRange: string): boolean =>
-    overlaps.some(
-      (o) =>
-        (o.a.label === label && o.a.dateRange === dateRange) ||
-        (o.b.label === label && o.b.dateRange === dateRange)
-    )
-
   const overrideGrids = useMemo(() => {
     return seasonOverrides.map((so, idx) => {
       const rows: Record<string, any>[] = []
@@ -745,24 +680,8 @@ export default function MinMaxOption2Page() {
             </Box>
           </div>
 
-          {/* Overlap Warning */}
-          {overlaps.length > 0 && (
-            <div style={{ padding: '12px 24px', background: '#fff3e0', borderBottom: '1px solid #ffe0b2', display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <Typography style={{ fontSize: 13, fontWeight: 600, color: '#e65100' }}>
-                ⚠ Overlapping overrides detected
-              </Typography>
-              {overlaps.map((o, idx) => (
-                <Typography key={idx} style={{ fontSize: 12, color: '#bf360c' }}>
-                  {o.a.type}: {o.a.label} ({o.a.dateRange}) overlaps with {o.b.type}: {o.b.label} ({o.b.dateRange}) — overlap: {o.overlapRange}
-                </Typography>
-              ))}
-            </div>
-          )}
-
           {/* Season Override Accordions */}
-          {overrideGrids.length > 0 && overrideGrids.map((gridRows, idx) => {
-            const hasOverlap = isOverlapping(seasonOverrides[idx]?.label, seasonOverrides[idx]?.dateRange)
-            return (
+          {overrideGrids.length > 0 && overrideGrids.map((gridRows, idx) => (
             <Accordion
               key={`season-override-${idx}`}
               defaultExpanded={false}
@@ -770,12 +689,9 @@ export default function MinMaxOption2Page() {
             >
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
-                style={{ background: hasOverlap ? '#fff3e0' : '#f5f5f5', minHeight: 40, padding: '0 16px' }}
+                style={{ background: '#f5f5f5', minHeight: 40, padding: '0 16px' }}
               >
                 <Box display="flex" alignItems="center" gridGap={8}>
-                  {hasOverlap && (
-                    <Typography style={{ fontSize: 13, color: '#e65100' }}>⚠</Typography>
-                  )}
                   <Typography style={{ fontSize: 13, fontWeight: 600, color: '#006461' }}>
                     Season Override
                   </Typography>
@@ -804,12 +720,10 @@ export default function MinMaxOption2Page() {
                 </div>
               </AccordionDetails>
             </Accordion>
-          )})}
+          ))}
 
           {/* Room Type Override Accordions */}
-          {roomOverrideGrids.length > 0 && roomOverrideGrids.map((gridRows, idx) => {
-            const hasOverlap = isOverlapping(roomTypeOverrides[idx]?.label, roomTypeOverrides[idx]?.dateRange)
-            return (
+          {roomOverrideGrids.length > 0 && roomOverrideGrids.map((gridRows, idx) => (
             <Accordion
               key={`room-override-${idx}`}
               defaultExpanded={false}
@@ -817,12 +731,9 @@ export default function MinMaxOption2Page() {
             >
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
-                style={{ background: hasOverlap ? '#fff3e0' : '#f5f5f5', minHeight: 40, padding: '0 16px' }}
+                style={{ background: '#f5f5f5', minHeight: 40, padding: '0 16px' }}
               >
                 <Box display="flex" alignItems="center" gridGap={8}>
-                  {hasOverlap && (
-                    <Typography style={{ fontSize: 13, color: '#e65100' }}>⚠</Typography>
-                  )}
                   <Typography style={{ fontSize: 13, fontWeight: 600, color: '#006461' }}>
                     Room Type Override
                   </Typography>
@@ -851,7 +762,7 @@ export default function MinMaxOption2Page() {
                 </div>
               </AccordionDetails>
             </Accordion>
-          )})}
+          ))}
 
           {/* AG Grid Table */}
           <div className={`ag-theme-alpine ${classes.gridContainer}`}>
