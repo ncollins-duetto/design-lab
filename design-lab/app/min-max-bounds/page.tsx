@@ -8,12 +8,10 @@ import {
   makeStyles,
   MenuItem,
   Select,
-  Tooltip,
   Typography,
 } from '@material-ui/core'
 import EditIcon from '@material-ui/icons/Edit'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
-import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import { AgGridReact } from 'ag-grid-react'
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
 import 'ag-grid-community/styles/ag-grid.css'
@@ -181,7 +179,8 @@ const useStyles = makeStyles((theme) => ({
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
   seasonSelect: {
-    minWidth: 215,
+    width: 215,
+    maxWidth: 215,
     fontFamily: 'Lato, sans-serif',
     fontSize: 14,
     fontWeight: 400,
@@ -194,6 +193,9 @@ const useStyles = makeStyles((theme) => ({
       lineHeight: '20px',
       backgroundColor: '#ffffff',
       borderRadius: 4,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     },
     '& .MuiOutlinedInput-notchedOutline': {
       border: '1px solid #dde1e2',
@@ -218,6 +220,8 @@ const useStyles = makeStyles((theme) => ({
   },
   selectMenuPaper: {
     marginTop: 4,
+    width: 215,
+    maxWidth: 215,
     background: '#ffffff',
     border: '1px solid #dde1e2',
     borderRadius: 4,
@@ -231,6 +235,10 @@ const useStyles = makeStyles((theme) => ({
       color: '#1c1c1c',
       padding: '8px 12px',
       minHeight: 'unset',
+      display: 'block',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
       '&:hover': {
         backgroundColor: '#f5f5f5',
       },
@@ -667,16 +675,7 @@ export default function MinMaxBoundsPage() {
                 </MenuItem>
               ))
             )}
-            <MenuItem disabled style={{ pointerEvents: 'auto' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                Room Types Override
-                <Tooltip title="For overrides that do not fall into the seasons override" arrow placement="right">
-                  <span style={{ display: 'inline-flex', cursor: 'pointer' }}>
-                    <InfoOutlinedIcon style={{ fontSize: 14, color: '#4f5b60' }} />
-                  </span>
-                </Tooltip>
-              </span>
-            </MenuItem>
+            <MenuItem disabled>Room Types Override</MenuItem>
             {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
               overrides.map((rto) => (
                 <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
