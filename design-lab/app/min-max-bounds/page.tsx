@@ -2,9 +2,6 @@
 
 import React, { useMemo, useRef, useState } from 'react'
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Button,
   Checkbox,
@@ -552,7 +549,35 @@ export default function MinMaxBoundsPage() {
     []
   )
 
-  const hasOverrides = seasonOverrides.length > 0 || roomTypeOverrides.length > 0
+  // Determine which grid to display based on dropdown selection
+  const activeGridData = useMemo(() => {
+    if (selectedSeason.startsWith('season-override::')) {
+      const [, label, dateRange] = selectedSeason.split('::')
+      const idx = seasonOverrides.findIndex((so) => so.label === label && so.dateRange === dateRange)
+      if (idx >= 0 && overrideGrids[idx]) return overrideGrids[idx]
+    }
+    if (selectedSeason.startsWith('room-override::')) {
+      const [, label, dateRange] = selectedSeason.split('::')
+      const idx = roomTypeOverrides.findIndex((rto) => rto.label === label && rto.dateRange === dateRange)
+      if (idx >= 0 && roomOverrideGrids[idx]) return roomOverrideGrids[idx]
+    }
+    return rowData
+  }, [selectedSeason, rowData, overrideGrids, roomOverrideGrids])
+
+  // Display label for what's shown
+  const activeLabel = useMemo(() => {
+    if (selectedSeason.startsWith('season-override::')) {
+      const [, label, dateRange] = selectedSeason.split('::')
+      return `Season Override: ${label} · ${dateRange}`
+    }
+    if (selectedSeason.startsWith('room-override::')) {
+      const [, label, dateRange] = selectedSeason.split('::')
+      const rto = roomTypeOverrides.find((r) => r.label === label && r.dateRange === dateRange)
+      const overlap = rto?.overlapsSeasonOverride
+      return `Room Type Override: ${label} · ${dateRange}${overlap ? ` (↔ ${overlap})` : ''}`
+    }
+    return null
+  }, [selectedSeason, roomTypeOverrides])
 
   return (
     <AppShell
@@ -663,120 +688,40 @@ export default function MinMaxBoundsPage() {
                 </MenuItem>
                 <MenuItem disabled>Season Override</MenuItem>
                 {seasonOverrides.map((so) => (
-                  <MenuItem key={so.dateRange} disabled style={{ opacity: 0.7, fontSize: 12, paddingLeft: 24 }}>
+                  <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}`}>
                     {so.label} ({so.dateRange})
                   </MenuItem>
                 ))}
                 <MenuItem disabled>Room Types Override</MenuItem>
                 {roomTypeOverrides.map((rto) => (
-                  <MenuItem key={rto.dateRange} disabled style={{ opacity: 0.7, fontSize: 12, paddingLeft: 24 }}>
+                  <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}`}>
                     {rto.label} ({rto.dateRange})
+                    {rto.overlapsSeasonOverride && (
+                      <span style={{ marginLeft: 8, fontSize: 11, color: '#2e7d32' }}>↔ {rto.overlapsSeasonOverride}</span>
+                    )}
                   </MenuItem>
                 ))}
               </Select>
             </Box>
           </div>
 
-          {/* Override Accordions */}
-          {hasOverrides && (
-            <div style={{ overflowY: 'auto' }}>
-              {/* Season Override Accordions */}
-              {overrideGrids.map((gridRows, idx) => (
-                <Accordion
-                  key={`season-override-${idx}`}
-                  defaultExpanded={false}
-                  style={{ margin: 0, boxShadow: 'none', borderBottom: '1px solid #dde1e2' }}
-                >
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    style={{ background: '#f5f5f5', minHeight: 40, padding: '0 16px' }}
-                  >
-                    <Box display="flex" alignItems="center" gridGap={8}>
-                      <Typography style={{ fontSize: 13, fontWeight: 600, color: '#006461' }}>
-                        Season Override
-                      </Typography>
-                      <Typography style={{ fontSize: 13, color: '#4f5b60' }}>
-                        {seasonOverrides[idx]?.label} · {seasonOverrides[idx]?.dateRange}
-                      </Typography>
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails style={{ padding: 0 }}>
-                    <div className={`ag-theme-alpine ${classes.gridContainer}`} style={{ width: '100%' }}>
-                      <AgGridReact
-                        theme="legacy"
-                        rowData={gridRows}
-                        columnDefs={columnDefs}
-                        suppressColumnVirtualisation
-                        suppressRowVirtualisation
-                        suppressRowTransform
-                        domLayout="autoHeight"
-                        getRowClass={(params) => params.data?.rowClass || ''}
-                        defaultColDef={{
-                          resizable: true,
-                          sortable: false,
-                          suppressHeaderMenuButton: true,
-                        }}
-                      />
-                    </div>
-                  </AccordionDetails>
-                </Accordion>
-              ))}
-
-              {/* Room Type Override Accordions */}
-              {roomOverrideGrids.map((gridRows, idx) => (
-                <Accordion
-                  key={`room-override-${idx}`}
-                  defaultExpanded={false}
-                  style={{ margin: 0, boxShadow: 'none', borderBottom: '1px solid #dde1e2' }}
-                >
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    style={{ background: '#f5f5f5', minHeight: 40, padding: '0 16px' }}
-                  >
-                    <Box display="flex" alignItems="center" gridGap={8}>
-                      <Typography style={{ fontSize: 13, fontWeight: 600, color: '#006461' }}>
-                        Room Type Override
-                      </Typography>
-                      <Typography style={{ fontSize: 13, color: '#4f5b60' }}>
-                        {roomTypeOverrides[idx]?.label} · {roomTypeOverrides[idx]?.dateRange}
-                      </Typography>
-                      {roomTypeOverrides[idx]?.overlapsSeasonOverride && (
-                        <span className={classes.overlapChip}>
-                          ↔ overlaps {roomTypeOverrides[idx].overlapsSeasonOverride}
-                        </span>
-                      )}
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails style={{ padding: 0 }}>
-                    <div className={`ag-theme-alpine ${classes.gridContainer}`} style={{ width: '100%' }}>
-                      <AgGridReact
-                        theme="legacy"
-                        rowData={gridRows}
-                        columnDefs={columnDefs}
-                        suppressColumnVirtualisation
-                        suppressRowVirtualisation
-                        suppressRowTransform
-                        domLayout="autoHeight"
-                        getRowClass={(params) => params.data?.rowClass || ''}
-                        defaultColDef={{
-                          resizable: true,
-                          sortable: false,
-                          suppressHeaderMenuButton: true,
-                        }}
-                      />
-                    </div>
-                  </AccordionDetails>
-                </Accordion>
-              ))}
+          {/* Active view label */}
+          {activeLabel && (
+            <div style={{ padding: '8px 24px', background: '#f5f5f5', borderBottom: '1px solid #dde1e2' }}>
+              <Box display="flex" alignItems="center" gridGap={8}>
+                <Typography style={{ fontSize: 13, fontWeight: 600, color: '#006461' }}>
+                  {activeLabel}
+                </Typography>
+              </Box>
             </div>
           )}
 
-          {/* AG Grid Table */}
+          {/* AG Grid Table — shows season or selected override */}
           <div className={`ag-theme-alpine ${classes.gridContainer}`}>
             <AgGridReact
               ref={gridRef}
               theme="legacy"
-              rowData={rowData}
+              rowData={activeGridData}
               columnDefs={columnDefs}
               suppressColumnVirtualisation
               suppressRowVirtualisation
