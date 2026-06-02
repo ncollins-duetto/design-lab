@@ -289,24 +289,33 @@ const MOCK_PRICES = {
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 // Season overrides: adjust min/max from base season prices
-const SEASON_OVERRIDES: Record<string, { label: string; minMultiplier: number; maxMultiplier: number }[]> = {
+// Each override has its own dateRange — multiple overrides can cover different periods within the same season
+type SeasonOverride = { label: string; dateRange: string; minMultiplier: number; maxMultiplier: number }
+const SEASON_OVERRIDES: Record<string, SeasonOverride[]> = {
   'January 1 - April 31': [
-    { label: 'Holiday Peak (Jan 15 - Jan 31)', minMultiplier: 1.25, maxMultiplier: 1.20 },
-    { label: 'Spring Break (Mar 1 - Mar 15)', minMultiplier: 1.15, maxMultiplier: 1.10 },
+    { label: 'Holiday Peak', dateRange: 'Jan 15 - Jan 31', minMultiplier: 1.25, maxMultiplier: 1.20 },
+    { label: 'Spring Break', dateRange: 'Mar 1 - Mar 15', minMultiplier: 1.15, maxMultiplier: 1.10 },
+    { label: 'Easter Week', dateRange: 'Apr 13 - Apr 20', minMultiplier: 1.18, maxMultiplier: 1.12 },
   ],
   'May 1 - September 31': [
-    { label: 'Summer Peak (Jun 15 - Aug 15)', minMultiplier: 1.30, maxMultiplier: 1.25 },
+    { label: 'Early Summer', dateRange: 'May 15 - Jun 14', minMultiplier: 1.15, maxMultiplier: 1.10 },
+    { label: 'Peak Summer', dateRange: 'Jun 15 - Aug 15', minMultiplier: 1.30, maxMultiplier: 1.25 },
+    { label: 'Late Summer', dateRange: 'Aug 16 - Sep 15', minMultiplier: 1.20, maxMultiplier: 1.15 },
   ],
   'October 1 - December 31': [
-    { label: 'Holiday Peak (Dec 15 - Dec 25)', minMultiplier: 1.28, maxMultiplier: 1.22 },
+    { label: 'Autumn Low', dateRange: 'Oct 1 - Nov 30', minMultiplier: 0.90, maxMultiplier: 0.92 },
+    { label: 'Holiday Peak', dateRange: 'Dec 15 - Dec 25', minMultiplier: 1.28, maxMultiplier: 1.22 },
   ],
 }
 
 // Room type overrides: differential off the season override price
-const ROOM_TYPE_OVERRIDES: Record<string, { label: string; rooms: Record<string, [string, string]> }[]> = {
+// Each has its own dateRange matching or overlapping a season override
+type RoomTypeOverride = { label: string; dateRange: string; rooms: Record<string, [string, string]> }
+const ROOM_TYPE_OVERRIDES: Record<string, RoomTypeOverride[]> = {
   'January 1 - April 31': [
     {
-      label: 'Holiday Peak (Jan 15 - Jan 31)',
+      label: 'Holiday Peak Room Surcharge',
+      dateRange: 'Jan 15 - Jan 31',
       rooms: {
         'Deluxe': ['+€200.00', '+€500.00'],
         'Deluxe 2/3sin vistas': ['+€200.00', '+€500.00'],
@@ -322,10 +331,29 @@ const ROOM_TYPE_OVERRIDES: Record<string, { label: string; rooms: Record<string,
         'Double Dusal Seaview': ['+€250.00', '+€600.00'],
       },
     },
+    {
+      label: 'Easter Room Surcharge',
+      dateRange: 'Apr 13 - Apr 20',
+      rooms: {
+        'Deluxe': ['+€150.00', '+€350.00'],
+        'Deluxe 2/3sin vistas': ['+€150.00', '+€350.00'],
+        'Deluxe 2/3 vista mar': ['+€180.00', '+€420.00'],
+        'Deluxe 4p sin vistas': ['+€130.00', '+€300.00'],
+        'Deluxe 4p Vista Mar': ['+€130.00', '+€300.00'],
+        'Deluxe Accessible': ['+€130.00', '+€300.00'],
+        'Deluxe City View - C2V': ['+€150.00', '+€350.00'],
+        'Deluxe Club San Juan': ['+€170.00', '+€400.00'],
+        'Deluxe Twin': ['+€130.00', '+€300.00'],
+        'Deluxe VM 5p': ['+€130.00', '+€300.00'],
+        'Dexint': ['+€100.00', '+€250.00'],
+        'Double Dusal Seaview': ['+€180.00', '+€420.00'],
+      },
+    },
   ],
   'May 1 - September 31': [
     {
-      label: 'Summer Peak (Jun 15 - Aug 15)',
+      label: 'Peak Summer Room Surcharge',
+      dateRange: 'Jun 15 - Aug 15',
       rooms: {
         'Deluxe': ['+€300.00', '+€700.00'],
         'Deluxe 2/3sin vistas': ['+€300.00', '+€700.00'],
@@ -344,7 +372,8 @@ const ROOM_TYPE_OVERRIDES: Record<string, { label: string; rooms: Record<string,
   ],
   'October 1 - December 31': [
     {
-      label: 'Holiday Peak (Dec 15 - Dec 25)',
+      label: 'Holiday Room Surcharge',
+      dateRange: 'Dec 15 - Dec 25',
       rooms: {
         'Deluxe': ['+€250.00', '+€600.00'],
         'Deluxe 2/3sin vistas': ['+€250.00', '+€600.00'],
@@ -461,9 +490,9 @@ export default function MinMaxOption2Page() {
   const overrideGrids = useMemo(() => {
     return seasonOverrides.map((so, idx) => {
       const rows: Record<string, any>[] = []
-      // Season override header
+      // Season override header with date range
       rows.push({
-        roomType: so.label,
+        roomType: `${so.label}  ·  ${so.dateRange}`,
         isBarHeader: true,
         rowClass: 'bar-row',
       })
@@ -494,7 +523,7 @@ export default function MinMaxOption2Page() {
     return roomTypeOverrides.map((rto) => {
       const rows: Record<string, any>[] = []
       rows.push({
-        roomType: `Room Type Override: ${rto.label}`,
+        roomType: `${rto.label}  ·  ${rto.dateRange}`,
         isBarHeader: true,
         rowClass: 'bar-row',
       })
@@ -630,13 +659,15 @@ export default function MinMaxOption2Page() {
           </div>
 
           {/* Season Override Grids */}
+          {overrideGrids.length > 0 && (
+            <div style={{ padding: '16px 24px 4px', background: '#ffffff' }}>
+              <Typography variant="subtitle2" style={{ color: '#4f5b60', fontWeight: 600 }}>
+                Season Overrides ({overrideGrids.length})
+              </Typography>
+            </div>
+          )}
           {overrideGrids.map((gridRows, idx) => (
             <div key={`season-override-${idx}`}>
-              <div style={{ padding: '12px 24px 4px', background: '#ffffff' }}>
-                <Typography variant="subtitle2" style={{ color: '#4f5b60' }}>
-                  Season Override
-                </Typography>
-              </div>
               <div className={`ag-theme-alpine ${classes.gridContainer}`}>
                 <AgGridReact
                   theme="legacy"
@@ -658,13 +689,15 @@ export default function MinMaxOption2Page() {
           ))}
 
           {/* Room Type Override Grids */}
+          {roomOverrideGrids.length > 0 && (
+            <div style={{ padding: '16px 24px 4px', background: '#ffffff' }}>
+              <Typography variant="subtitle2" style={{ color: '#4f5b60', fontWeight: 600 }}>
+                Room Type Overrides ({roomOverrideGrids.length})
+              </Typography>
+            </div>
+          )}
           {roomOverrideGrids.map((gridRows, idx) => (
             <div key={`room-override-${idx}`}>
-              <div style={{ padding: '12px 24px 4px', background: '#ffffff' }}>
-                <Typography variant="subtitle2" style={{ color: '#4f5b60' }}>
-                  Room Type Override
-                </Typography>
-              </div>
               <div className={`ag-theme-alpine ${classes.gridContainer}`}>
                 <AgGridReact
                   theme="legacy"
