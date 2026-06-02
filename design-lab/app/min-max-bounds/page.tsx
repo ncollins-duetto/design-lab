@@ -549,20 +549,50 @@ export default function MinMaxBoundsPage() {
     []
   )
 
+  // Build grid rows for a specific season override
+  const buildSeasonOverrideGrid = (so: SeasonOverride) => {
+    const rows: Record<string, any>[] = []
+    rows.push({ roomType: `${so.label}  ·  ${so.dateRange}`, isBarHeader: true, rowClass: 'bar-row' })
+    filteredRooms.forEach((room) => {
+      const basePrices = MOCK_PRICES[room]
+      const baseMin = parseFloat(basePrices[0].replace(/[^0-9.]/g, ''))
+      const baseMax = parseFloat(basePrices[1].replace(/[^0-9.]/g, ''))
+      const min = `€${(baseMin * so.minMultiplier).toFixed(2)}`
+      const max = `€${(baseMax * so.maxMultiplier).toFixed(2)}`
+      rows.push({ roomType: room, sun: min, mon: min, tue: min, wed: min, thu: min, fri: min, sat: min, rowClass: 'min-row', isMinRow: true })
+      rows.push({ roomType: '', sun: max, mon: max, tue: max, wed: max, thu: max, fri: max, sat: max, rowClass: 'max-row' })
+    })
+    return rows
+  }
+
+  // Build grid rows for a specific room type override
+  const buildRoomOverrideGrid = (rto: RoomTypeOverride) => {
+    const rows: Record<string, any>[] = []
+    rows.push({ roomType: `${rto.label}  ·  ${rto.dateRange}`, isBarHeader: true, rowClass: 'bar-row' })
+    filteredRooms.forEach((room) => {
+      const diff = rto.rooms[room] || ['+€0.00', '+€0.00']
+      rows.push({ roomType: room, sun: diff[0], mon: diff[0], tue: diff[0], wed: diff[0], thu: diff[0], fri: diff[0], sat: diff[0], rowClass: 'min-row', isMinRow: true })
+      rows.push({ roomType: '', sun: diff[1], mon: diff[1], tue: diff[1], wed: diff[1], thu: diff[1], fri: diff[1], sat: diff[1], rowClass: 'max-row' })
+    })
+    return rows
+  }
+
   // Determine which grid to display based on dropdown selection
   const activeGridData = useMemo(() => {
     if (selectedSeason.startsWith('season-override::')) {
-      const [, label, dateRange] = selectedSeason.split('::')
-      const idx = seasonOverrides.findIndex((so) => so.label === label && so.dateRange === dateRange)
-      if (idx >= 0 && overrideGrids[idx]) return overrideGrids[idx]
+      const [, label, dateRange, season] = selectedSeason.split('::')
+      const overrides = SEASON_OVERRIDES[season] || []
+      const so = overrides.find((o) => o.label === label && o.dateRange === dateRange)
+      if (so) return buildSeasonOverrideGrid(so)
     }
     if (selectedSeason.startsWith('room-override::')) {
-      const [, label, dateRange] = selectedSeason.split('::')
-      const idx = roomTypeOverrides.findIndex((rto) => rto.label === label && rto.dateRange === dateRange)
-      if (idx >= 0 && roomOverrideGrids[idx]) return roomOverrideGrids[idx]
+      const [, label, dateRange, season] = selectedSeason.split('::')
+      const overrides = ROOM_TYPE_OVERRIDES[season] || []
+      const rto = overrides.find((o) => o.label === label && o.dateRange === dateRange)
+      if (rto) return buildRoomOverrideGrid(rto)
     }
     return rowData
-  }, [selectedSeason, rowData, overrideGrids, roomOverrideGrids])
+  }, [selectedSeason, rowData, filteredRooms])
 
   // Display label for what's shown
   const activeLabel = useMemo(() => {
@@ -571,13 +601,14 @@ export default function MinMaxBoundsPage() {
       return `Season Override: ${label} · ${dateRange}`
     }
     if (selectedSeason.startsWith('room-override::')) {
-      const [, label, dateRange] = selectedSeason.split('::')
-      const rto = roomTypeOverrides.find((r) => r.label === label && r.dateRange === dateRange)
+      const [, label, dateRange, season] = selectedSeason.split('::')
+      const overrides = ROOM_TYPE_OVERRIDES[season] || []
+      const rto = overrides.find((o) => o.label === label && o.dateRange === dateRange)
       const overlap = rto?.overlapsSeasonOverride
       return `Room Type Override: ${label} · ${dateRange}${overlap ? ` (↔ ${overlap})` : ''}`
     }
     return null
-  }, [selectedSeason, roomTypeOverrides])
+  }, [selectedSeason])
 
   return (
     <AppShell
@@ -681,20 +712,24 @@ export default function MinMaxBoundsPage() {
                 <MenuItem value="May 1 - September 30">May 1 - September 30</MenuItem>
                 <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
                 <MenuItem disabled>Season Override</MenuItem>
-                {seasonOverrides.map((so) => (
-                  <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}`}>
-                    {so.label} ({so.dateRange})
-                  </MenuItem>
-                ))}
+                {Object.entries(SEASON_OVERRIDES).flatMap(([season, overrides]) =>
+                  overrides.map((so) => (
+                    <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}::${season}`}>
+                      {so.label} ({so.dateRange})
+                    </MenuItem>
+                  ))
+                )}
                 <MenuItem disabled>Room Types Override</MenuItem>
-                {roomTypeOverrides.map((rto) => (
-                  <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}`}>
-                    {rto.label} ({rto.dateRange})
-                    {rto.overlapsSeasonOverride && (
-                      <span style={{ marginLeft: 8, fontSize: 11, color: '#2e7d32' }}>↔ {rto.overlapsSeasonOverride}</span>
-                    )}
-                  </MenuItem>
-                ))}
+                {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
+                  overrides.map((rto) => (
+                    <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
+                      {rto.label} ({rto.dateRange})
+                      {rto.overlapsSeasonOverride && (
+                        <span style={{ marginLeft: 8, fontSize: 11, color: '#2e7d32' }}>↔ {rto.overlapsSeasonOverride}</span>
+                      )}
+                    </MenuItem>
+                  ))
+                )}
               </Select>
             </Box>
           </div>
