@@ -288,12 +288,80 @@ const MOCK_PRICES = {
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-const MOCK_OVERRIDES = [
-  { dateRange: 'January 15 - January 31', override: 'Holiday Peak +25%' },
-  { dateRange: 'March 1 - March 15', override: 'Spring Break +15%' },
-  { dateRange: 'June 1 - August 31', override: 'Summer Season +30%' },
-  { dateRange: 'December 15 - December 25', override: 'Holiday Peak +28%' },
-]
+// Season overrides: adjust min/max from base season prices
+const SEASON_OVERRIDES: Record<string, { label: string; minMultiplier: number; maxMultiplier: number }[]> = {
+  'January 1 - April 31': [
+    { label: 'Holiday Peak (Jan 15 - Jan 31)', minMultiplier: 1.25, maxMultiplier: 1.20 },
+    { label: 'Spring Break (Mar 1 - Mar 15)', minMultiplier: 1.15, maxMultiplier: 1.10 },
+  ],
+  'May 1 - September 31': [
+    { label: 'Summer Peak (Jun 15 - Aug 15)', minMultiplier: 1.30, maxMultiplier: 1.25 },
+  ],
+  'October 1 - December 31': [
+    { label: 'Holiday Peak (Dec 15 - Dec 25)', minMultiplier: 1.28, maxMultiplier: 1.22 },
+  ],
+}
+
+// Room type overrides: differential off the season override price
+const ROOM_TYPE_OVERRIDES: Record<string, { label: string; rooms: Record<string, [string, string]> }[]> = {
+  'January 1 - April 31': [
+    {
+      label: 'Holiday Peak (Jan 15 - Jan 31)',
+      rooms: {
+        'Deluxe': ['+€200.00', '+€500.00'],
+        'Deluxe 2/3sin vistas': ['+€200.00', '+€500.00'],
+        'Deluxe 2/3 vista mar': ['+€250.00', '+€600.00'],
+        'Deluxe 4p sin vistas': ['+€180.00', '+€450.00'],
+        'Deluxe 4p Vista Mar': ['+€180.00', '+€450.00'],
+        'Deluxe Accessible': ['+€180.00', '+€450.00'],
+        'Deluxe City View - C2V': ['+€200.00', '+€500.00'],
+        'Deluxe Club San Juan': ['+€220.00', '+€550.00'],
+        'Deluxe Twin': ['+€180.00', '+€450.00'],
+        'Deluxe VM 5p': ['+€180.00', '+€450.00'],
+        'Dexint': ['+€150.00', '+€400.00'],
+        'Double Dusal Seaview': ['+€250.00', '+€600.00'],
+      },
+    },
+  ],
+  'May 1 - September 31': [
+    {
+      label: 'Summer Peak (Jun 15 - Aug 15)',
+      rooms: {
+        'Deluxe': ['+€300.00', '+€700.00'],
+        'Deluxe 2/3sin vistas': ['+€300.00', '+€700.00'],
+        'Deluxe 2/3 vista mar': ['+€350.00', '+€800.00'],
+        'Deluxe 4p sin vistas': ['+€280.00', '+€650.00'],
+        'Deluxe 4p Vista Mar': ['+€280.00', '+€650.00'],
+        'Deluxe Accessible': ['+€280.00', '+€650.00'],
+        'Deluxe City View - C2V': ['+€300.00', '+€700.00'],
+        'Deluxe Club San Juan': ['+€320.00', '+€750.00'],
+        'Deluxe Twin': ['+€280.00', '+€650.00'],
+        'Deluxe VM 5p': ['+€280.00', '+€650.00'],
+        'Dexint': ['+€250.00', '+€600.00'],
+        'Double Dusal Seaview': ['+€350.00', '+€800.00'],
+      },
+    },
+  ],
+  'October 1 - December 31': [
+    {
+      label: 'Holiday Peak (Dec 15 - Dec 25)',
+      rooms: {
+        'Deluxe': ['+€250.00', '+€600.00'],
+        'Deluxe 2/3sin vistas': ['+€250.00', '+€600.00'],
+        'Deluxe 2/3 vista mar': ['+€300.00', '+€700.00'],
+        'Deluxe 4p sin vistas': ['+€230.00', '+€550.00'],
+        'Deluxe 4p Vista Mar': ['+€230.00', '+€550.00'],
+        'Deluxe Accessible': ['+€230.00', '+€550.00'],
+        'Deluxe City View - C2V': ['+€250.00', '+€600.00'],
+        'Deluxe Club San Juan': ['+€270.00', '+€650.00'],
+        'Deluxe Twin': ['+€230.00', '+€550.00'],
+        'Deluxe VM 5p': ['+€230.00', '+€550.00'],
+        'Dexint': ['+€200.00', '+€500.00'],
+        'Double Dusal Seaview': ['+€300.00', '+€700.00'],
+      },
+    },
+  ],
+}
 
 export default function MinMaxOption2Page() {
   const classes = useStyles()
@@ -385,6 +453,68 @@ export default function MinMaxOption2Page() {
     ],
     []
   )
+
+  // Build override grids per active season
+  const seasonOverrides = SEASON_OVERRIDES[selectedSeason] || []
+  const roomTypeOverrides = ROOM_TYPE_OVERRIDES[selectedSeason] || []
+
+  const overrideGrids = useMemo(() => {
+    return seasonOverrides.map((so, idx) => {
+      const rows: Record<string, any>[] = []
+      // Season override header
+      rows.push({
+        roomType: so.label,
+        isBarHeader: true,
+        rowClass: 'bar-row',
+      })
+      // Season override prices per room
+      filteredRooms.forEach((room) => {
+        const basePrices = MOCK_PRICES[room as keyof typeof MOCK_PRICES]
+        const baseMin = parseFloat(basePrices[0].replace(/[^0-9.]/g, ''))
+        const baseMax = parseFloat(basePrices[1].replace(/[^0-9.]/g, ''))
+        const min = `€${(baseMin * so.minMultiplier).toFixed(2)}`
+        const max = `€${(baseMax * so.maxMultiplier).toFixed(2)}`
+        rows.push({
+          roomType: room,
+          sun: min, mon: min, tue: min, wed: min, thu: min, fri: min, sat: min,
+          rowClass: 'min-row',
+          isMinRow: true,
+        })
+        rows.push({
+          roomType: '',
+          sun: max, mon: max, tue: max, wed: max, thu: max, fri: max, sat: max,
+          rowClass: 'max-row',
+        })
+      })
+      return rows
+    })
+  }, [filteredRooms, selectedSeason])
+
+  const roomOverrideGrids = useMemo(() => {
+    return roomTypeOverrides.map((rto) => {
+      const rows: Record<string, any>[] = []
+      rows.push({
+        roomType: `Room Type Override: ${rto.label}`,
+        isBarHeader: true,
+        rowClass: 'bar-row',
+      })
+      filteredRooms.forEach((room) => {
+        const diff = rto.rooms[room] || ['+€0.00', '+€0.00']
+        rows.push({
+          roomType: room,
+          sun: diff[0], mon: diff[0], tue: diff[0], wed: diff[0], thu: diff[0], fri: diff[0], sat: diff[0],
+          rowClass: 'min-row',
+          isMinRow: true,
+        })
+        rows.push({
+          roomType: '',
+          sun: diff[1], mon: diff[1], tue: diff[1], wed: diff[1], thu: diff[1], fri: diff[1], sat: diff[1],
+          rowClass: 'max-row',
+        })
+      })
+      return rows
+    })
+  }, [filteredRooms, selectedSeason])
 
   return (
     <AppShell
@@ -487,46 +617,73 @@ export default function MinMaxOption2Page() {
                   January 1 - December 31
                 </MenuItem>
                 <MenuItem value="January 1 - April 31">
-                  January 1 - April 31 {MOCK_OVERRIDES.some(o => o.dateRange.includes('January') || o.dateRange.includes('March')) ? '◆' : ''}
+                  January 1 - April 31 {SEASON_OVERRIDES['January 1 - April 31'] ? '◆' : ''}
                 </MenuItem>
                 <MenuItem value="May 1 - September 31">
-                  May 1 - September 31 {MOCK_OVERRIDES.some(o => o.dateRange.includes('June') || o.dateRange.includes('August')) ? '◆' : ''}
+                  May 1 - September 31 {SEASON_OVERRIDES['May 1 - September 31'] ? '◆' : ''}
                 </MenuItem>
                 <MenuItem value="October 1 - December 31">
-                  October 1 - December 31 {MOCK_OVERRIDES.some(o => o.dateRange.includes('December')) ? '◆' : ''}
+                  October 1 - December 31 {SEASON_OVERRIDES['October 1 - December 31'] ? '◆' : ''}
                 </MenuItem>
               </Select>
             </Box>
           </div>
 
-          {/* Overrides Table */}
-          <div style={{ padding: '16px 24px', background: '#ffffff', borderBottom: '1px solid #dde1e2' }}>
-            <Typography variant="subtitle2" style={{ marginBottom: '12px', color: '#4f5b60' }}>
-              Overrides Applied
-            </Typography>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #dde1e2' }}>
-                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: '#1c1c1c' }}>
-                      Date Range
-                    </th>
-                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: '#1c1c1c' }}>
-                      Override
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {MOCK_OVERRIDES.map((override, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid #dde1e2' }}>
-                      <td style={{ padding: '8px 12px', color: '#1c1c1c' }}>{override.dateRange}</td>
-                      <td style={{ padding: '8px 12px', color: '#1c1c1c' }}>{override.override}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Season Override Grids */}
+          {overrideGrids.map((gridRows, idx) => (
+            <div key={`season-override-${idx}`}>
+              <div style={{ padding: '12px 24px 4px', background: '#ffffff' }}>
+                <Typography variant="subtitle2" style={{ color: '#4f5b60' }}>
+                  Season Override
+                </Typography>
+              </div>
+              <div className={`ag-theme-alpine ${classes.gridContainer}`}>
+                <AgGridReact
+                  theme="legacy"
+                  rowData={gridRows}
+                  columnDefs={columnDefs}
+                  suppressColumnVirtualisation
+                  suppressRowVirtualisation
+                  suppressRowTransform
+                  domLayout="autoHeight"
+                  getRowClass={(params) => params.data?.rowClass || ''}
+                  defaultColDef={{
+                    resizable: true,
+                    sortable: false,
+                    suppressHeaderMenuButton: true,
+                  }}
+                />
+              </div>
             </div>
-          </div>
+          ))}
+
+          {/* Room Type Override Grids */}
+          {roomOverrideGrids.map((gridRows, idx) => (
+            <div key={`room-override-${idx}`}>
+              <div style={{ padding: '12px 24px 4px', background: '#ffffff' }}>
+                <Typography variant="subtitle2" style={{ color: '#4f5b60' }}>
+                  Room Type Override
+                </Typography>
+              </div>
+              <div className={`ag-theme-alpine ${classes.gridContainer}`}>
+                <AgGridReact
+                  theme="legacy"
+                  rowData={gridRows}
+                  columnDefs={columnDefs}
+                  suppressColumnVirtualisation
+                  suppressRowVirtualisation
+                  suppressRowTransform
+                  domLayout="autoHeight"
+                  getRowClass={(params) => params.data?.rowClass || ''}
+                  defaultColDef={{
+                    resizable: true,
+                    sortable: false,
+                    suppressHeaderMenuButton: true,
+                  }}
+                />
+              </div>
+            </div>
+          ))}
 
           {/* AG Grid Table */}
           <div className={`ag-theme-alpine ${classes.gridContainer}`}>
