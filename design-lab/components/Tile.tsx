@@ -1,0 +1,286 @@
+'use client'
+
+import { Box } from '@material-ui/core'
+import MenuBookIcon from '@material-ui/icons/MenuBook'
+import { makeStyles } from '@material-ui/core/styles'
+
+export type TileDecoration =
+  | 'rates'
+  | 'sales-room'
+  | 'design-system'
+  | 'group'
+  | 'resorts'
+  | 'pricing'
+  | 'exploration'
+
+export interface TileProps {
+  href: string
+  caption?: string
+  heroTitle: string
+  heroSubtitle?: string
+  footerTitle: string
+  footerSub: string
+  decoration: TileDecoration
+}
+
+const useStyles = makeStyles((theme) => ({
+  link: {
+    textDecoration: 'none',
+    color: 'inherit',
+    display: 'block',
+  },
+  card: {
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: 12,
+    overflow: 'hidden',
+    background: '#fff',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+    transition: 'box-shadow 150ms ease, transform 150ms ease',
+    '&:hover': {
+      boxShadow: '0 6px 20px rgba(0,0,0,0.10)',
+      transform: 'translateY(-2px)',
+    },
+  },
+  hero: {
+    position: 'relative',
+    background: '#0e2a2c',
+    color: '#c4ff45',
+    height: 230,
+    padding: theme.spacing(3),
+    overflow: 'hidden',
+  },
+  logo: {
+    height: 22,
+    display: 'block',
+  },
+  caption: {
+    position: 'absolute',
+    left: theme.spacing(3),
+    bottom: 92,
+    fontSize: 11,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    color: '#c4ff45',
+    opacity: 0.9,
+    fontWeight: 600,
+  },
+  title: {
+    position: 'absolute',
+    left: theme.spacing(3),
+    bottom: theme.spacing(3),
+    fontWeight: 600,
+    fontSize: 28,
+    lineHeight: 1.05,
+    color: '#c4ff45',
+    maxWidth: '70%',
+  },
+  subtitle: {
+    display: 'block',
+    fontWeight: 700,
+  },
+  decorationWrap: {
+    position: 'absolute',
+    top: theme.spacing(2),
+    right: theme.spacing(2),
+    width: 160,
+    height: 160,
+    filter: 'drop-shadow(0 6px 24px rgba(196,255,69,0.25))',
+  },
+  footer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(2, 2.5),
+    borderTop: `1px solid ${theme.palette.divider}`,
+    background: '#fff',
+  },
+  footerIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    background: '#e8f0ff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  footerIcon: {
+    color: '#4a90e2',
+    fontSize: 20,
+  },
+  footerText: {
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: 0,
+  },
+  footerTitle: {
+    fontSize: 15,
+    fontWeight: 600,
+    color: theme.palette.text.primary,
+    lineHeight: 1.2,
+  },
+  footerSub: {
+    fontSize: 13,
+    color: theme.palette.text.secondary,
+    marginTop: 2,
+  },
+}))
+
+function Decoration({ kind }: { kind: TileDecoration }) {
+  if (kind === 'rates') {
+    return (
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="rg-rates" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#c4ff45" stopOpacity="0.85" />
+            <stop offset="60%" stopColor="#7fbf2e" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#0e2a2c" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="100" r="78" fill="url(#rg-rates)" />
+        <g fill="none" stroke="#c4ff45" strokeWidth="3">
+          <rect x="36" y="46" width="58" height="58" rx="10" />
+          <rect x="106" y="76" width="42" height="42" rx="8" />
+          <rect x="70" y="118" width="50" height="50" rx="9" />
+        </g>
+      </svg>
+    )
+  }
+  if (kind === 'sales-room') {
+    return (
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="rg-sr" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#c4ff45" stopOpacity="0.85" />
+            <stop offset="60%" stopColor="#7fbf2e" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#0e2a2c" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="100" r="78" fill="url(#rg-sr)" />
+        <g fill="none" stroke="#c4ff45" strokeWidth="3">
+          <circle cx="78" cy="108" r="42" />
+          <circle cx="128" cy="78" r="30" />
+          <circle cx="138" cy="124" r="18" />
+        </g>
+      </svg>
+    )
+  }
+  if (kind === 'group') {
+    return (
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="rg-grp" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#c4ff45" stopOpacity="0.85" />
+            <stop offset="60%" stopColor="#7fbf2e" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#0e2a2c" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="100" r="78" fill="url(#rg-grp)" />
+        <g fill="none" stroke="#c4ff45" strokeWidth="3">
+          <circle cx="80" cy="86" r="22" />
+          <circle cx="120" cy="86" r="22" />
+          <circle cx="100" cy="124" r="22" />
+        </g>
+      </svg>
+    )
+  }
+  if (kind === 'resorts') {
+    return (
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="rg-res" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#c4ff45" stopOpacity="0.85" />
+            <stop offset="60%" stopColor="#7fbf2e" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#0e2a2c" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="100" r="78" fill="url(#rg-res)" />
+        <g fill="none" stroke="#c4ff45" strokeWidth="3">
+          <polygon points="50,140 100,60 150,140" />
+          <polygon points="80,140 120,80 150,140" />
+          <line x1="40" y1="146" x2="160" y2="146" />
+        </g>
+      </svg>
+    )
+  }
+  if (kind === 'pricing') {
+    return (
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="rg-prc" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#c4ff45" stopOpacity="0.85" />
+            <stop offset="60%" stopColor="#7fbf2e" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#0e2a2c" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="100" r="78" fill="url(#rg-prc)" />
+        <g fill="none" stroke="#c4ff45" strokeWidth="3" strokeLinecap="round">
+          <polyline points="48,150 78,108 108,128 152,60" />
+          <polyline points="146,60 152,60 152,80" />
+        </g>
+      </svg>
+    )
+  }
+  if (kind === 'exploration') {
+    return (
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="rg-exp" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#c4ff45" stopOpacity="0.85" />
+            <stop offset="60%" stopColor="#7fbf2e" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#0e2a2c" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="100" r="78" fill="url(#rg-exp)" />
+        <g fill="none" stroke="#c4ff45" strokeWidth="3">
+          <circle cx="92" cy="92" r="32" />
+          <line x1="116" y1="116" x2="150" y2="150" strokeLinecap="round" />
+        </g>
+      </svg>
+    )
+  }
+  return (
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="rg-ds" cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stopColor="#c4ff45" stopOpacity="0.9" />
+          <stop offset="55%" stopColor="#7fbf2e" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#0e2a2c" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="100" cy="100" r="80" fill="url(#rg-ds)" />
+      <circle cx="100" cy="100" r="60" fill="none" stroke="#c4ff45" strokeWidth="2.5" />
+      <path d="M100 40 L100 160 M40 100 L160 100" stroke="#0e2a2c" strokeWidth="14" />
+    </svg>
+  )
+}
+
+export default function Tile(props: TileProps) {
+  const classes = useStyles()
+  return (
+    <a href={props.href} className={classes.link}>
+      <Box className={classes.card}>
+        <Box className={classes.hero}>
+          <img src="/duetto-logo-green.svg" alt="Duetto" className={classes.logo} />
+          <Box className={classes.decorationWrap}>
+            <Decoration kind={props.decoration} />
+          </Box>
+          {props.caption && <span className={classes.caption}>{props.caption}</span>}
+          <span className={classes.title}>
+            {props.heroTitle}
+            {props.heroSubtitle && <span className={classes.subtitle}>{props.heroSubtitle}</span>}
+          </span>
+        </Box>
+        <Box className={classes.footer}>
+          <Box className={classes.footerIconWrap}>
+            <MenuBookIcon className={classes.footerIcon} />
+          </Box>
+          <Box className={classes.footerText}>
+            <span className={classes.footerTitle}>{props.footerTitle}</span>
+            <span className={classes.footerSub}>{props.footerSub}</span>
+          </Box>
+        </Box>
+      </Box>
+    </a>
+  )
+}
