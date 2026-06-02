@@ -674,9 +674,23 @@ export default function MinMaxBoundsPage() {
               getContentAnchorEl: null,
               anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
               transformOrigin: { vertical: 'top', horizontal: 'left' },
-              PaperProps: { style: { width: 215, maxWidth: 215, minWidth: '215px', overflowX: 'hidden' } },
+              PaperProps: {
+                style: {
+                  width: 215,
+                  maxWidth: 215,
+                  minWidth: 0,
+                  overflowX: 'hidden',
+                },
+                // Override MUI inline min-width
+                ref: (el: HTMLElement | null) => {
+                  if (el) {
+                    el.style.setProperty('min-width', '215px', 'important')
+                    el.style.setProperty('max-width', '215px', 'important')
+                    el.style.setProperty('width', '215px', 'important')
+                  }
+                },
+              },
               MenuListProps: { style: { width: 215, maxWidth: 215, overflow: 'hidden', padding: 0 } },
-              PopoverClasses: { paper: classes.selectMenuPaper },
             }}
           >
             <MenuItem disabled>Season</MenuItem>
