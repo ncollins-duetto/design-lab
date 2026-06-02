@@ -5,7 +5,7 @@ export type Project = {
   heroLine2?: string
   year?: string
   edited: string
-  decoration: 'rates' | 'sales-room'
+  decoration: 'rates' | 'sales-room' | 'min-max'
 }
 
 export type Folder = {
@@ -28,6 +28,22 @@ export const FOLDERS: Folder[] = [
         heroLine2: 'Manage Rates',
         edited: 'Edited just now',
         decoration: 'rates',
+      },
+      {
+        name: 'Min/Max Bounds',
+        href: '/min-max-bounds',
+        heroTitle: 'Duetto',
+        heroLine2: 'Min/Max Bounds',
+        edited: 'Edited just now',
+        decoration: 'min-max',
+      },
+      {
+        name: 'Min/Max Option 2',
+        href: '/min-max-option-2',
+        heroTitle: 'Duetto',
+        heroLine2: 'Min/Max Option 2',
+        edited: 'Edited just now',
+        decoration: 'min-max',
       },
     ],
   },
