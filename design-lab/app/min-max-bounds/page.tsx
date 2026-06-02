@@ -220,14 +220,18 @@ const useStyles = makeStyles((theme) => ({
   },
   selectMenuPaper: {
     marginTop: 4,
-    width: 215,
-    maxWidth: 215,
+    width: '215px !important' as any,
+    maxWidth: '215px !important' as any,
+    minWidth: '0 !important' as any,
     background: '#ffffff',
     border: '1px solid #dde1e2',
     borderRadius: 4,
     boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
     '& .MuiList-root': {
       padding: '4px 0',
+      width: '100%',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
     },
     '& .MuiMenuItem-root': {
       fontFamily: 'Lato, sans-serif',
@@ -235,7 +239,10 @@ const useStyles = makeStyles((theme) => ({
       color: '#1c1c1c',
       padding: '8px 12px',
       minHeight: 'unset',
-      display: 'block',
+      display: 'block !important' as any,
+      width: '100%',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
@@ -675,7 +682,7 @@ export default function MinMaxBoundsPage() {
                 </MenuItem>
               ))
             )}
-            <MenuItem disabled>Room Types Override</MenuItem>
+            <MenuItem disabled>Room Types + Seasons Overrides</MenuItem>
             {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
               overrides.map((rto) => (
                 <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
