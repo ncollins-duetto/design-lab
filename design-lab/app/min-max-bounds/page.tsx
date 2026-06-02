@@ -635,11 +635,9 @@ export default function MinMaxBoundsPage() {
               Edit
             </Button>
           </div>
-          {activeLabel && (
-            <Typography style={{ fontSize: 13, color: '#4f5b60', marginTop: 4 }}>
-              {activeLabel}
-            </Typography>
-          )}
+          <Typography style={{ fontSize: 13, color: '#4f5b60', marginTop: 4, visibility: activeLabel ? 'visible' : 'hidden' }}>
+            {activeLabel || ' '}
+          </Typography>
         </div>
         <Box display="flex" alignItems="center" gridGap={12}>
           <Typography variant="subtitle2" style={{ color: '#4f5b60', whiteSpace: 'nowrap' }}>Seasons & Overrides</Typography>
