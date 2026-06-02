@@ -2,6 +2,9 @@
 
 import React, { useMemo, useRef, useState } from 'react'
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Checkbox,
@@ -254,6 +257,17 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
     minHeight: 400,
   },
+  overlapChip: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '2px 8px',
+    borderRadius: 12,
+    backgroundColor: '#e8f5e9',
+    color: '#2e7d32',
+    fontSize: 11,
+    fontWeight: 600,
+  },
 }))
 
 const MOCK_ROOM_TYPES = [
@@ -271,7 +285,7 @@ const MOCK_ROOM_TYPES = [
   'Double Dusal Seaview',
 ]
 
-const MOCK_PRICES = {
+const MOCK_PRICES: Record<string, [string, string]> = {
   'Deluxe': ['€1,800.00', '€5,000.00'],
   'Deluxe 2/3sin vistas': ['€1,800.00', '€5,000.00'],
   'Deluxe 2/3 vista mar': ['€2,000.00', '€5,400.00'],
@@ -287,6 +301,119 @@ const MOCK_PRICES = {
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+// --- Season multipliers ---
+const SEASON_MULTIPLIERS: Record<string, number> = {
+  'January 1 - December 31': 1,
+  'January 1 - April 30': 0.8,
+  'May 1 - September 30': 1.2,
+  'October 1 - December 31': 1.1,
+}
+
+// --- Season overrides (with year, 4-day example) ---
+type SeasonOverride = { label: string; dateRange: string; minMultiplier: number; maxMultiplier: number }
+const SEASON_OVERRIDES: Record<string, SeasonOverride[]> = {
+  'January 1 - April 30': [
+    { label: 'Holiday Peak', dateRange: 'Jan 15 2026 - Jan 31 2026', minMultiplier: 1.25, maxMultiplier: 1.20 },
+    { label: 'Spring Break', dateRange: 'Mar 1 2026 - Mar 15 2026', minMultiplier: 1.15, maxMultiplier: 1.10 },
+  ],
+  'May 1 - September 30': [
+    { label: 'Early Summer', dateRange: 'May 15 2026 - Jun 14 2026', minMultiplier: 1.15, maxMultiplier: 1.10 },
+    { label: 'Peak Summer', dateRange: 'Jun 15 2026 - Aug 15 2026', minMultiplier: 1.30, maxMultiplier: 1.25 },
+    { label: 'Festival Weekend', dateRange: 'Jul 10 2026 - Jul 13 2026', minMultiplier: 1.45, maxMultiplier: 1.40 },
+  ],
+  'October 1 - December 31': [
+    { label: 'Autumn Low', dateRange: 'Oct 1 2026 - Nov 30 2026', minMultiplier: 0.90, maxMultiplier: 0.92 },
+    { label: 'Holiday Peak', dateRange: 'Dec 15 2026 - Dec 25 2026', minMultiplier: 1.28, maxMultiplier: 1.22 },
+  ],
+}
+
+// --- Room type overrides (with year, some overlap with season overrides) ---
+type RoomTypeOverride = { label: string; dateRange: string; overlapsSeasonOverride?: string; rooms: Record<string, [string, string]> }
+const ROOM_TYPE_OVERRIDES: Record<string, RoomTypeOverride[]> = {
+  'January 1 - April 30': [
+    {
+      label: 'Holiday Peak Room Surcharge',
+      dateRange: 'Jan 15 2026 - Jan 31 2026',
+      overlapsSeasonOverride: 'Holiday Peak',
+      rooms: {
+        'Deluxe': ['+€200.00', '+€500.00'],
+        'Deluxe 2/3sin vistas': ['+€200.00', '+€500.00'],
+        'Deluxe 2/3 vista mar': ['+€250.00', '+€600.00'],
+        'Deluxe 4p sin vistas': ['+€180.00', '+€450.00'],
+        'Deluxe 4p Vista Mar': ['+€180.00', '+€450.00'],
+        'Deluxe Accessible': ['+€180.00', '+€450.00'],
+        'Deluxe City View - C2V': ['+€200.00', '+€500.00'],
+        'Deluxe Club San Juan': ['+€220.00', '+€550.00'],
+        'Deluxe Twin': ['+€180.00', '+€450.00'],
+        'Deluxe VM 5p': ['+€180.00', '+€450.00'],
+        'Dexint': ['+€150.00', '+€400.00'],
+        'Double Dusal Seaview': ['+€250.00', '+€600.00'],
+      },
+    },
+  ],
+  'May 1 - September 30': [
+    {
+      label: 'Peak Summer Room Surcharge',
+      dateRange: 'Jun 15 2026 - Aug 15 2026',
+      overlapsSeasonOverride: 'Peak Summer',
+      rooms: {
+        'Deluxe': ['+€300.00', '+€700.00'],
+        'Deluxe 2/3sin vistas': ['+€300.00', '+€700.00'],
+        'Deluxe 2/3 vista mar': ['+€350.00', '+€800.00'],
+        'Deluxe 4p sin vistas': ['+€280.00', '+€650.00'],
+        'Deluxe 4p Vista Mar': ['+€280.00', '+€650.00'],
+        'Deluxe Accessible': ['+€280.00', '+€650.00'],
+        'Deluxe City View - C2V': ['+€300.00', '+€700.00'],
+        'Deluxe Club San Juan': ['+€320.00', '+€750.00'],
+        'Deluxe Twin': ['+€280.00', '+€650.00'],
+        'Deluxe VM 5p': ['+€280.00', '+€650.00'],
+        'Dexint': ['+€250.00', '+€600.00'],
+        'Double Dusal Seaview': ['+€350.00', '+€800.00'],
+      },
+    },
+    {
+      label: 'Festival Room Surcharge',
+      dateRange: 'Jul 10 2026 - Jul 13 2026',
+      overlapsSeasonOverride: 'Festival Weekend',
+      rooms: {
+        'Deluxe': ['+€400.00', '+€900.00'],
+        'Deluxe 2/3sin vistas': ['+€400.00', '+€900.00'],
+        'Deluxe 2/3 vista mar': ['+€450.00', '+€1,000.00'],
+        'Deluxe 4p sin vistas': ['+€380.00', '+€850.00'],
+        'Deluxe 4p Vista Mar': ['+€380.00', '+€850.00'],
+        'Deluxe Accessible': ['+€380.00', '+€850.00'],
+        'Deluxe City View - C2V': ['+€400.00', '+€900.00'],
+        'Deluxe Club San Juan': ['+€420.00', '+€950.00'],
+        'Deluxe Twin': ['+€380.00', '+€850.00'],
+        'Deluxe VM 5p': ['+€380.00', '+€850.00'],
+        'Dexint': ['+€350.00', '+€800.00'],
+        'Double Dusal Seaview': ['+€450.00', '+€1,000.00'],
+      },
+    },
+  ],
+  'October 1 - December 31': [
+    {
+      label: 'Holiday Room Surcharge',
+      dateRange: 'Dec 15 2026 - Dec 25 2026',
+      overlapsSeasonOverride: 'Holiday Peak',
+      rooms: {
+        'Deluxe': ['+€250.00', '+€600.00'],
+        'Deluxe 2/3sin vistas': ['+€250.00', '+€600.00'],
+        'Deluxe 2/3 vista mar': ['+€300.00', '+€700.00'],
+        'Deluxe 4p sin vistas': ['+€230.00', '+€550.00'],
+        'Deluxe 4p Vista Mar': ['+€230.00', '+€550.00'],
+        'Deluxe Accessible': ['+€230.00', '+€550.00'],
+        'Deluxe City View - C2V': ['+€250.00', '+€600.00'],
+        'Deluxe Club San Juan': ['+€270.00', '+€650.00'],
+        'Deluxe Twin': ['+€230.00', '+€550.00'],
+        'Deluxe VM 5p': ['+€230.00', '+€550.00'],
+        'Dexint': ['+€200.00', '+€500.00'],
+        'Double Dusal Seaview': ['+€300.00', '+€700.00'],
+      },
+    },
+  ],
+}
 
 export default function MinMaxBoundsPage() {
   const classes = useStyles()
@@ -309,6 +436,11 @@ export default function MinMaxBoundsPage() {
     setSelectedRooms(newSelected)
   }
 
+  const seasonMultiplier = SEASON_MULTIPLIERS[selectedSeason] || 1
+  const seasonOverrides = SEASON_OVERRIDES[selectedSeason] || []
+  const roomTypeOverrides = ROOM_TYPE_OVERRIDES[selectedSeason] || []
+
+  // Main table data — prices change with season
   const rowData = useMemo(() => {
     const rows: Record<string, any>[] = []
     rows.push({
@@ -317,8 +449,11 @@ export default function MinMaxBoundsPage() {
       rowClass: 'bar-row',
     })
     filteredRooms.forEach((room) => {
-      const min = MOCK_PRICES[room as keyof typeof MOCK_PRICES][0]
-      const max = MOCK_PRICES[room as keyof typeof MOCK_PRICES][1]
+      const basePrices = MOCK_PRICES[room]
+      const baseMin = parseFloat(basePrices[0].replace(/[^0-9.]/g, ''))
+      const baseMax = parseFloat(basePrices[1].replace(/[^0-9.]/g, ''))
+      const min = `€${(baseMin * seasonMultiplier).toFixed(2)}`
+      const max = `€${(baseMax * seasonMultiplier).toFixed(2)}`
       rows.push({
         roomType: room,
         sun: min, mon: min, tue: min, wed: min, thu: min, fri: min, sat: min,
@@ -332,7 +467,65 @@ export default function MinMaxBoundsPage() {
       })
     })
     return rows
-  }, [filteredRooms])
+  }, [filteredRooms, selectedSeason])
+
+  // Season override grids
+  const overrideGrids = useMemo(() => {
+    return seasonOverrides.map((so) => {
+      const rows: Record<string, any>[] = []
+      rows.push({
+        roomType: `${so.label}  ·  ${so.dateRange}`,
+        isBarHeader: true,
+        rowClass: 'bar-row',
+      })
+      filteredRooms.forEach((room) => {
+        const basePrices = MOCK_PRICES[room]
+        const baseMin = parseFloat(basePrices[0].replace(/[^0-9.]/g, ''))
+        const baseMax = parseFloat(basePrices[1].replace(/[^0-9.]/g, ''))
+        const min = `€${(baseMin * so.minMultiplier).toFixed(2)}`
+        const max = `€${(baseMax * so.maxMultiplier).toFixed(2)}`
+        rows.push({
+          roomType: room,
+          sun: min, mon: min, tue: min, wed: min, thu: min, fri: min, sat: min,
+          rowClass: 'min-row',
+          isMinRow: true,
+        })
+        rows.push({
+          roomType: '',
+          sun: max, mon: max, tue: max, wed: max, thu: max, fri: max, sat: max,
+          rowClass: 'max-row',
+        })
+      })
+      return rows
+    })
+  }, [filteredRooms, selectedSeason])
+
+  // Room type override grids
+  const roomOverrideGrids = useMemo(() => {
+    return roomTypeOverrides.map((rto) => {
+      const rows: Record<string, any>[] = []
+      rows.push({
+        roomType: `${rto.label}  ·  ${rto.dateRange}`,
+        isBarHeader: true,
+        rowClass: 'bar-row',
+      })
+      filteredRooms.forEach((room) => {
+        const diff = rto.rooms[room] || ['+€0.00', '+€0.00']
+        rows.push({
+          roomType: room,
+          sun: diff[0], mon: diff[0], tue: diff[0], wed: diff[0], thu: diff[0], fri: diff[0], sat: diff[0],
+          rowClass: 'min-row',
+          isMinRow: true,
+        })
+        rows.push({
+          roomType: '',
+          sun: diff[1], mon: diff[1], tue: diff[1], wed: diff[1], thu: diff[1], fri: diff[1], sat: diff[1],
+          rowClass: 'max-row',
+        })
+      })
+      return rows
+    })
+  }, [filteredRooms, selectedSeason])
 
   const columnDefs = useMemo<any[]>(
     () => [
@@ -358,6 +551,8 @@ export default function MinMaxBoundsPage() {
     ],
     []
   )
+
+  const hasOverrides = seasonOverrides.length > 0 || roomTypeOverrides.length > 0
 
   return (
     <AppShell
@@ -457,16 +652,124 @@ export default function MinMaxBoundsPage() {
               >
                 <MenuItem disabled>Season</MenuItem>
                 <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
-                <MenuItem value="May 26 26 - Jun 25 26">May 26 26 - Jun 25 26</MenuItem>
+                <MenuItem value="January 1 - April 30">
+                  January 1 - April 30 {SEASON_OVERRIDES['January 1 - April 30'] ? '◆' : ''}
+                </MenuItem>
+                <MenuItem value="May 1 - September 30">
+                  May 1 - September 30 {SEASON_OVERRIDES['May 1 - September 30'] ? '◆' : ''}
+                </MenuItem>
+                <MenuItem value="October 1 - December 31">
+                  October 1 - December 31 {SEASON_OVERRIDES['October 1 - December 31'] ? '◆' : ''}
+                </MenuItem>
                 <MenuItem disabled>Season Override</MenuItem>
-                <MenuItem value="season-override-1">Season Override 1</MenuItem>
-                <MenuItem value="season-override-2">Season Override 2</MenuItem>
+                {seasonOverrides.map((so) => (
+                  <MenuItem key={so.dateRange} disabled style={{ opacity: 0.7, fontSize: 12, paddingLeft: 24 }}>
+                    {so.label} ({so.dateRange})
+                  </MenuItem>
+                ))}
                 <MenuItem disabled>Room Types Override</MenuItem>
-                <MenuItem value="room-types-override-1">Room Types Override 1</MenuItem>
-                <MenuItem value="room-types-override-2">Room Types Override 2</MenuItem>
+                {roomTypeOverrides.map((rto) => (
+                  <MenuItem key={rto.dateRange} disabled style={{ opacity: 0.7, fontSize: 12, paddingLeft: 24 }}>
+                    {rto.label} ({rto.dateRange})
+                  </MenuItem>
+                ))}
               </Select>
             </Box>
           </div>
+
+          {/* Override Accordions */}
+          {hasOverrides && (
+            <div style={{ overflowY: 'auto' }}>
+              {/* Season Override Accordions */}
+              {overrideGrids.map((gridRows, idx) => (
+                <Accordion
+                  key={`season-override-${idx}`}
+                  defaultExpanded={false}
+                  style={{ margin: 0, boxShadow: 'none', borderBottom: '1px solid #dde1e2' }}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    style={{ background: '#f5f5f5', minHeight: 40, padding: '0 16px' }}
+                  >
+                    <Box display="flex" alignItems="center" gridGap={8}>
+                      <Typography style={{ fontSize: 13, fontWeight: 600, color: '#006461' }}>
+                        Season Override
+                      </Typography>
+                      <Typography style={{ fontSize: 13, color: '#4f5b60' }}>
+                        {seasonOverrides[idx]?.label} · {seasonOverrides[idx]?.dateRange}
+                      </Typography>
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails style={{ padding: 0 }}>
+                    <div className={`ag-theme-alpine ${classes.gridContainer}`} style={{ width: '100%' }}>
+                      <AgGridReact
+                        theme="legacy"
+                        rowData={gridRows}
+                        columnDefs={columnDefs}
+                        suppressColumnVirtualisation
+                        suppressRowVirtualisation
+                        suppressRowTransform
+                        domLayout="autoHeight"
+                        getRowClass={(params) => params.data?.rowClass || ''}
+                        defaultColDef={{
+                          resizable: true,
+                          sortable: false,
+                          suppressHeaderMenuButton: true,
+                        }}
+                      />
+                    </div>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+
+              {/* Room Type Override Accordions */}
+              {roomOverrideGrids.map((gridRows, idx) => (
+                <Accordion
+                  key={`room-override-${idx}`}
+                  defaultExpanded={false}
+                  style={{ margin: 0, boxShadow: 'none', borderBottom: '1px solid #dde1e2' }}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    style={{ background: '#f5f5f5', minHeight: 40, padding: '0 16px' }}
+                  >
+                    <Box display="flex" alignItems="center" gridGap={8}>
+                      <Typography style={{ fontSize: 13, fontWeight: 600, color: '#006461' }}>
+                        Room Type Override
+                      </Typography>
+                      <Typography style={{ fontSize: 13, color: '#4f5b60' }}>
+                        {roomTypeOverrides[idx]?.label} · {roomTypeOverrides[idx]?.dateRange}
+                      </Typography>
+                      {roomTypeOverrides[idx]?.overlapsSeasonOverride && (
+                        <span className={classes.overlapChip}>
+                          ↔ overlaps {roomTypeOverrides[idx].overlapsSeasonOverride}
+                        </span>
+                      )}
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails style={{ padding: 0 }}>
+                    <div className={`ag-theme-alpine ${classes.gridContainer}`} style={{ width: '100%' }}>
+                      <AgGridReact
+                        theme="legacy"
+                        rowData={gridRows}
+                        columnDefs={columnDefs}
+                        suppressColumnVirtualisation
+                        suppressRowVirtualisation
+                        suppressRowTransform
+                        domLayout="autoHeight"
+                        getRowClass={(params) => params.data?.rowClass || ''}
+                        defaultColDef={{
+                          resizable: true,
+                          sortable: false,
+                          suppressHeaderMenuButton: true,
+                        }}
+                      />
+                    </div>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </div>
+          )}
 
           {/* AG Grid Table */}
           <div className={`ag-theme-alpine ${classes.gridContainer}`}>
