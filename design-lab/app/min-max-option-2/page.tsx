@@ -457,7 +457,9 @@ export default function MinMaxOption2Page() {
               >
                 <MenuItem disabled>Season</MenuItem>
                 <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
-                <MenuItem value="May 26 26 - Jun 25 26">May 26 26 - Jun 25 26</MenuItem>
+                <MenuItem value="January 1 - April 31">January 1 - April 31</MenuItem>
+                <MenuItem value="May 1 - September 31">May 1 - September 31</MenuItem>
+                <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
               </Select>
             </Box>
           </div>
