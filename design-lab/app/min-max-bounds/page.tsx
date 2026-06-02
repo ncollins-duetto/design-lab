@@ -621,16 +621,23 @@ export default function MinMaxBoundsPage() {
     >
       {/* Page Header */}
       <div className={classes.pageHeader}>
-        <div className={classes.titleRow}>
-          <Typography className={classes.pageTitle}>Min/Max Bounds</Typography>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<EditIcon fontSize="small" />}
-            className={classes.editBtn}
-          >
-            Edit
-          </Button>
+        <div>
+          <div className={classes.titleRow}>
+            <Typography className={classes.pageTitle}>Min/Max Bounds</Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<EditIcon fontSize="small" />}
+              className={classes.editBtn}
+            >
+              Edit
+            </Button>
+          </div>
+          {activeLabel && (
+            <Typography style={{ fontSize: 13, color: '#4f5b60', marginTop: 4 }}>
+              {activeLabel}
+            </Typography>
+          )}
         </div>
       </div>
 
@@ -733,17 +740,6 @@ export default function MinMaxBoundsPage() {
               </Select>
             </Box>
           </div>
-
-          {/* Active view label */}
-          {activeLabel && (
-            <div style={{ padding: '8px 24px', background: '#f5f5f5', borderBottom: '1px solid #dde1e2' }}>
-              <Box display="flex" alignItems="center" gridGap={8}>
-                <Typography style={{ fontSize: 13, fontWeight: 600, color: '#006461' }}>
-                  {activeLabel}
-                </Typography>
-              </Box>
-            </div>
-          )}
 
           {/* AG Grid Table — shows season or selected override */}
           <div className={`ag-theme-alpine ${classes.gridContainer}`}>
