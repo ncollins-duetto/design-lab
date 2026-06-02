@@ -23,11 +23,6 @@ ModuleRegistry.registerModules([AllCommunityModule])
 
 const useStyles = makeStyles((theme) => ({
   '@global': {
-    '.MuiPopover-paper.MuiMenu-paper': {
-      width: '215px !important',
-      maxWidth: '215px !important',
-      minWidth: '215px !important',
-    },
     '.ag-theme-alpine': {
       '--ag-header-background-color': '#ffffff',
       '--ag-header-foreground-color': '#4f5b60',
@@ -184,8 +179,7 @@ const useStyles = makeStyles((theme) => ({
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
   seasonSelect: {
-    width: 215,
-    maxWidth: 215,
+    minWidth: 215,
     fontFamily: 'Lato, sans-serif',
     fontSize: 14,
     fontWeight: 400,
@@ -198,9 +192,6 @@ const useStyles = makeStyles((theme) => ({
       lineHeight: '20px',
       backgroundColor: '#ffffff',
       borderRadius: 4,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
     },
     '& .MuiOutlinedInput-notchedOutline': {
       border: '1px solid #dde1e2',
@@ -224,33 +215,23 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   selectMenuPaper: {
-    marginTop: '4px !important',
-    width: '215px !important',
-    maxWidth: '215px !important',
-    minWidth: '215px !important',
-    background: '#ffffff !important',
-    border: '1px solid #dde1e2 !important',
-    borderRadius: '4px !important',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.08) !important',
+    marginTop: 4,
+    background: '#ffffff',
+    border: '1px solid #dde1e2',
+    borderRadius: 4,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
     '& .MuiList-root': {
       padding: '4px 0',
-      width: '215px !important',
-      maxWidth: '215px !important',
-      overflow: 'hidden',
     },
     '& .MuiMenuItem-root': {
       fontFamily: 'Lato, sans-serif',
-      fontSize: '14px !important',
+      fontSize: 14,
       color: '#1c1c1c',
-      padding: '8px 12px !important',
-      minHeight: 'unset !important',
-      display: 'block !important',
-      overflow: 'hidden !important',
-      textOverflow: 'ellipsis !important',
-      whiteSpace: 'nowrap !important',
-      width: '215px !important',
-      maxWidth: '215px !important',
-      boxSizing: 'border-box !important' as any,
+      padding: '8px 12px',
+      minHeight: 'unset',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
       '&:hover': {
         backgroundColor: '#f5f5f5',
       },
@@ -659,63 +640,6 @@ export default function MinMaxBoundsPage() {
             {activeLabel || ' '}
           </Typography>
         </div>
-        <Box display="flex" alignItems="center" gridGap={12}>
-          <Typography variant="subtitle2" style={{ color: '#4f5b60', whiteSpace: 'nowrap' }}>Seasons & Overrides</Typography>
-          <Select
-            value={selectedSeason}
-            onChange={(e) => setSelectedSeason(e.target.value as string)}
-            className={classes.seasonSelect}
-            variant="outlined"
-            IconComponent={ExpandMoreIcon}
-            autoWidth={false}
-            SelectDisplayProps={{ style: { width: 175 } }}
-            MenuProps={{
-              classes: { paper: classes.selectMenuPaper },
-              getContentAnchorEl: null,
-              anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
-              transformOrigin: { vertical: 'top', horizontal: 'left' },
-              PaperProps: {
-                style: {
-                  width: 215,
-                  maxWidth: 215,
-                  minWidth: 0,
-                  overflowX: 'hidden',
-                },
-                // Override MUI inline min-width
-                ref: (el: HTMLElement | null) => {
-                  if (el) {
-                    el.style.setProperty('min-width', '215px', 'important')
-                    el.style.setProperty('max-width', '215px', 'important')
-                    el.style.setProperty('width', '215px', 'important')
-                  }
-                },
-              },
-              MenuListProps: { style: { width: 215, maxWidth: 215, overflow: 'hidden', padding: 0 } },
-            }}
-          >
-            <MenuItem disabled>Season</MenuItem>
-            <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
-            <MenuItem value="January 1 - April 30">January 1 - April 30</MenuItem>
-            <MenuItem value="May 1 - September 30">May 1 - September 30</MenuItem>
-            <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
-            <MenuItem disabled>Season Override</MenuItem>
-            {Object.entries(SEASON_OVERRIDES).flatMap(([season, overrides]) =>
-              overrides.map((so) => (
-                <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}::${season}`}>
-                  {so.label} ({so.dateRange})
-                </MenuItem>
-              ))
-            )}
-            <MenuItem disabled>Room Types Override</MenuItem>
-            {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
-              overrides.map((rto) => (
-                <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
-                  {rto.label} ({rto.dateRange})
-                </MenuItem>
-              ))
-            )}
-          </Select>
-        </Box>
       </div>
 
       {/* Main Content */}
@@ -773,6 +697,48 @@ export default function MinMaxBoundsPage() {
 
         {/* Table Area */}
         <div className={classes.tableWrapper}>
+          {/* Table Header with Season Selector */}
+          <div className={classes.tableHeader}>
+            <Box display="flex" justifyContent="flex-end" alignItems="center" gridGap={12}>
+              <Typography variant="subtitle2" style={{ color: '#4f5b60', whiteSpace: 'nowrap' }}>Seasons & Overrides</Typography>
+              <Select
+                value={selectedSeason}
+                onChange={(e) => setSelectedSeason(e.target.value as string)}
+                className={classes.seasonSelect}
+                variant="outlined"
+                IconComponent={ExpandMoreIcon}
+                MenuProps={{
+                  classes: { paper: classes.selectMenuPaper },
+                  getContentAnchorEl: null,
+                  anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+                  transformOrigin: { vertical: 'top', horizontal: 'left' },
+                }}
+              >
+                <MenuItem disabled>Season</MenuItem>
+                <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
+                <MenuItem value="January 1 - April 30">January 1 - April 30</MenuItem>
+                <MenuItem value="May 1 - September 30">May 1 - September 30</MenuItem>
+                <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
+                <MenuItem disabled>Season Override</MenuItem>
+                {Object.entries(SEASON_OVERRIDES).flatMap(([season, overrides]) =>
+                  overrides.map((so) => (
+                    <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}::${season}`}>
+                      {so.label} ({so.dateRange})
+                    </MenuItem>
+                  ))
+                )}
+                <MenuItem disabled>Room Types Override</MenuItem>
+                {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
+                  overrides.map((rto) => (
+                    <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
+                      {rto.label} ({rto.dateRange})
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </Box>
+          </div>
+
           {/* AG Grid Table — shows season or selected override */}
           <div className={`ag-theme-alpine ${classes.gridContainer}`}>
             <AgGridReact
