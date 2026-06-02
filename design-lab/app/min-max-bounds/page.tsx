@@ -86,6 +86,9 @@ const useStyles = makeStyles((theme) => ({
         },
         '&.max-row': {
           background: '#eef3f5 !important',
+          '& .ag-cell.ag-cell-last-left-pinned': {
+            visibility: 'hidden !important',
+          },
         },
       },
       '& .ag-row.bar-row:hover': {
