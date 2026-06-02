@@ -288,6 +288,13 @@ const MOCK_PRICES = {
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+const MOCK_OVERRIDES = [
+  { dateRange: 'January 15 - January 31', override: 'Holiday Peak +25%' },
+  { dateRange: 'March 1 - March 15', override: 'Spring Break +15%' },
+  { dateRange: 'June 1 - August 31', override: 'Summer Season +30%' },
+  { dateRange: 'December 15 - December 25', override: 'Holiday Peak +28%' },
+]
+
 export default function MinMaxOption2Page() {
   const classes = useStyles()
   const gridRef = useRef<AgGridReact>(null)
@@ -482,6 +489,35 @@ export default function MinMaxOption2Page() {
                 <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
               </Select>
             </Box>
+          </div>
+
+          {/* Overrides Table */}
+          <div style={{ padding: '16px 24px', background: '#ffffff', borderBottom: '1px solid #dde1e2' }}>
+            <Typography variant="subtitle2" style={{ marginBottom: '12px', color: '#4f5b60' }}>
+              Overrides Applied
+            </Typography>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #dde1e2' }}>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: '#1c1c1c' }}>
+                      Date Range
+                    </th>
+                    <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: '#1c1c1c' }}>
+                      Override
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {MOCK_OVERRIDES.map((override, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #dde1e2' }}>
+                      <td style={{ padding: '8px 12px', color: '#1c1c1c' }}>{override.dateRange}</td>
+                      <td style={{ padding: '8px 12px', color: '#1c1c1c' }}>{override.override}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* AG Grid Table */}
