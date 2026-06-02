@@ -605,7 +605,7 @@ export default function MinMaxBoundsPage() {
       const overrides = ROOM_TYPE_OVERRIDES[season] || []
       const rto = overrides.find((o) => o.label === label && o.dateRange === dateRange)
       const overlap = rto?.overlapsSeasonOverride
-      return `Room Type Override: ${label} · ${dateRange}${overlap ? ` (↔ ${overlap})` : ''}`
+      return `Room Type Override: ${label} · ${dateRange}`
     }
     return null
   }, [selectedSeason])
@@ -726,14 +726,11 @@ export default function MinMaxBoundsPage() {
                     </MenuItem>
                   ))
                 )}
-                <MenuItem disabled>Room Types Override</MenuItem>
+                <MenuItem disabled>Room Types Override - for overrides that do not fall into seasons override</MenuItem>
                 {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
                   overrides.map((rto) => (
                     <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
                       {rto.label} ({rto.dateRange})
-                      {rto.overlapsSeasonOverride && (
-                        <span style={{ marginLeft: 8, fontSize: 11, color: '#2e7d32' }}>↔ {rto.overlapsSeasonOverride}</span>
-                      )}
                     </MenuItem>
                   ))
                 )}
