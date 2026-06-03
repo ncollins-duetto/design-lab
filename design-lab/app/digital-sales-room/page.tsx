@@ -434,12 +434,12 @@ const PRODUCT_COLORS: Record<string, {bg: string, text: string}> = {
 const PRODUCTS = ['GameChanger','ScoreBoard','BlockBuster','Advance','GameTime','HotStats'];
 
 const PRODUCT_DESCRIPTIONS: Record<string,string> = {
-  GameChanger: 'AI-driven revenue optimization and pricing strategy recommendations',
-  ScoreBoard: 'Real-time analytics dashboard and performance reporting',
-  BlockBuster: 'Competitor intelligence and market positioning analysis',
-  Advance: 'Advanced booking engine with conversion optimization',
-  GameTime: 'Dynamic package creation and upsell management',
-  HotStats: 'Historical data analytics and trend forecasting',
+  GameChanger: 'Dynamic pricing that tightens prices and brightens profits with real-time rate optimization',
+  ScoreBoard: 'The business brain behind performance-driven decisions with instant forecasts and unified dashboards',
+  BlockBuster: 'Find your perfect booking balance to maximize revenue from group and transient bookings',
+  Advance: 'RMS with built-in market benchmarks and AI-powered pricing to see a full year into the future',
+  GameTime: 'Streamlined revenue management for select-service chains with simplified strategies',
+  HotStats: 'Compare your P&L with 10,000+ hotels worldwide across 500+ metrics',
 };
 
 const INTEGRATIONS = [
