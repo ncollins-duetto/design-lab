@@ -2071,6 +2071,7 @@ function DigitalSalesRoomApp() {
                 <Typography style={{color:'#4F5B60',fontWeight:600,textTransform:'uppercase',letterSpacing:1,fontSize:'0.7rem',marginBottom:12,marginTop:16}}>BILLING INFORMATION</Typography>
                 <TextField label="Billing Contact Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
                 <TextField label="Billing Email" type="email" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
+                <TextField label="Contact Telephone Number" type="tel" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
                 <TextField label="Billing Address" type="text" variant="outlined" fullWidth size="small" multiline rows={3} style={{marginBottom:16}}/>
 
                 <div style={{display:'flex',justifyContent:'flex-end',gap:12,marginTop:8,paddingTop:16,borderTop:'1px solid #DDE1E2'}}>
