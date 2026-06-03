@@ -5,6 +5,18 @@ Always invoke /designer-prototype at the start of any session in this project.
 This is the shared environment for UX prototypes built by the Duetto UX Design team.
 Read this before generating any code.
 
+## Before doing anything else
+
+Run `git branch --show-current` and check the result.
+
+- If the current branch is `main`: **stop immediately**. Do not write or edit any code. Tell the designer:
+  > "You're on the main branch. Please create your own branch before we start — run this in your terminal:
+  > `git checkout -b designer/your-name/feature-name`
+  > Then let me know when you're ready."
+  Wait for them to confirm they've switched branches before proceeding.
+
+- If the current branch is a designer branch (e.g. `designer/nyle/feature-name`): confirm it to the designer and continue normally.
+
 ## What this is
 
 A Next.js 16 app that mirrors the real Duetto frontend stack as closely as possible, so
@@ -27,7 +39,7 @@ Check it when you need to understand how a real component works or what a GQL ty
 | Icons | `@material-ui/icons` | Inline SVGs, Heroicons, Lucide |
 | Tables / data grids | `ag-grid-react` | Custom table implementations |
 | Theming | `ThemeProvider` + `duettoTheme2026` from `@duetto/duetto-components` | Hardcoded color values, CSS variables |
-| Styling | MUI `makeStyles` or `sx` prop | Tailwind, CSS modules, inline `style` objects |
+| Styling | MUI `makeStyles` | Tailwind, CSS modules, inline `style` objects, `sx` prop |
 | Color tokens | `color2026` from `@duetto/duetto-components` | Hardcoded hex values |
 | State | React `useState` + Context | Redux, Zustand, or other libraries |
 | Data fetching | None — use mock data from `lib/mock/` | Real API calls, GraphQL, SWR, React Query |
@@ -167,6 +179,23 @@ When you need to understand how a real page or component works:
 
 Prototypes should match the *behaviour and data shape* of the real app, not copy its internal
 implementation. The goal is something a developer can look at and immediately map to their code.
+
+### Duetto Code Intelligence
+
+The **Duetto Code Intelligence** MCP indexes both `duetto-frontend` and `duetto-shared-javascript`.
+Use it before writing any component — it surfaces real prop interfaces, import paths, and
+architectural patterns that aren't visible in Figma or the file tree.
+
+```
+# Find real examples of the component/pattern you're building
+smart_query("show me a real page component using FormPage in duetto-frontend")
+
+# Verify props and import paths
+search_code("FormPageHeader props interface")
+```
+
+Query Code Intelligence first, then check `~/dev/duetto-frontend/src/` directly if needed.
+The `/duetto-design-system` skill formalises this workflow — invoke it for any UI component work.
 
 ---
 
