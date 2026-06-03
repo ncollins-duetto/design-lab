@@ -96,7 +96,6 @@ export type ColCategory =
   | 'otb'
   | 'adr_commit'
   | 'inventory'
-  | 'expedia'
   | 'competitors'
   | 'cancellations'
   | 'group_business'
@@ -111,7 +110,6 @@ export const CATEGORY_LABELS: Record<ColCategory, string> = {
   otb:                 'OTB',
   adr_commit:          'ADR (Commit)',
   inventory:           'Inventory',
-  expedia:             'Expedia',
   competitors:         'Competitors',
   cancellations:       'Cancellations',
   group_business:      'Group Business',
@@ -134,7 +132,6 @@ export interface ColMeta {
 export const COL_DEFS: ColMeta[] = [
   // ── Rate (no sub-label) ────────────────────────────────────────────────────
   { key: COL.CURRENT,     label: 'Current',      category: 'rate', defaultVisible: true,  alwaysVisible: true, format: 'currency', width: 110 },
-  { key: COL.PUSHED_RATE, label: 'Pushed Rate',  category: 'rate', defaultVisible: false, format: 'currency', width: 120 },
   { key: COL.RECOMMENDED, label: 'Recommended',  category: 'rate', defaultVisible: true,  format: 'currency', width: 130 },
   { key: COL.OVERRIDE,    label: 'Override',     category: 'rate', defaultVisible: true,  format: 'currency', width: 100 },
   { key: COL.PROTECT,     label: 'Protect (Min)',category: 'rate', defaultVisible: false, format: 'currency', width: 110 },
@@ -151,12 +148,11 @@ export const COL_DEFS: ColMeta[] = [
   { key: COL.DUETTO_FORECAST_REVPAR,       label: 'Duetto Forecast', subLabel: 'Room RevPAR',  category: 'duetto_forecast', defaultVisible: false, format: 'currency', width: 130 },
 
   // ── Committed Occupancy (merged with Rooms Commit) ────────────────────────
-  { key: COL.ROOMS_COMMIT_RN,        label: 'Committed Occupancy', subLabel: 'Rooms',         category: 'committed_occ', defaultVisible: true,  format: 'integer',  width: 110 },
-  { key: COL.ROOMS_COMMIT_STLY_DOW,  label: 'Committed Occupancy', subLabel: 'STLY (DOW)',    category: 'committed_occ', defaultVisible: true,  format: 'integer',  width: 120 },
-  { key: COL.ROOMS_COMMIT_STLY_TBB,  label: 'Committed Occupancy', subLabel: 'STLY (DOW) TBB',category: 'committed_occ', defaultVisible: false, format: 'integer',  width: 155 },
+  { key: COL.ROOMS_COMMIT_RN,        label: 'Committed Occupancy', subLabel: 'Rooms',         category: 'committed_occ', defaultVisible: false, format: 'integer',  width: 110 },
+  { key: COL.ROOMS_COMMIT_STLY_DOW,  label: 'Committed Occupancy', subLabel: 'STLY (DOW)',    category: 'committed_occ', defaultVisible: false, format: 'integer',  width: 120 },
   { key: COL.COMMITTED_OCC_PCT,      label: 'Committed Occupancy', subLabel: 'Physical %',    category: 'committed_occ', defaultVisible: false, format: 'percent',  width: 110 },
-  { key: COL.COMMITTED_OCC_ADJ_PCT,  label: 'Committed Occupancy', subLabel: 'Adjusted %',   category: 'committed_occ', defaultVisible: false, format: 'percent',  width: 120 },
-  { key: COL.COMMITTED_OCC_STLY,     label: 'Committed Occupancy', subLabel: 'STLY (DOW) %', category: 'committed_occ', defaultVisible: false, format: 'percent',  width: 130 },
+  { key: COL.COMMITTED_OCC_ADJ_PCT,  label: 'Committed Occupancy', subLabel: 'Adjusted %',   category: 'committed_occ', defaultVisible: true,  format: 'percent',  width: 120 },
+  { key: COL.COMMITTED_OCC_STLY,     label: 'Committed Occupancy', subLabel: 'STLY (DOW) %', category: 'committed_occ', defaultVisible: true,  format: 'percent',  width: 130 },
   { key: COL.COMMITTED_OCC_FINAL_LY, label: 'Committed Occupancy', subLabel: 'Final LY %',   category: 'committed_occ', defaultVisible: false, format: 'percent',  width: 120 },
   { key: COL.COMMITTED_OCC_ROOM_REV, label: 'Committed Occupancy', subLabel: 'Room Revenue',  category: 'committed_occ', defaultVisible: false, format: 'currency', width: 130 },
 
@@ -179,12 +175,9 @@ export const COL_DEFS: ColMeta[] = [
 
   // ── Inventory ──────────────────────────────────────────────────────────────
   { key: COL.INVENTORY_OOO,                 label: 'Inventory', subLabel: 'Out of Order Rooms',       category: 'inventory', defaultVisible: false, format: 'integer', width: 140 },
-  { key: COL.INVENTORY_REMAINING,           label: 'Inventory', subLabel: 'Remaining Rooms',          category: 'inventory', defaultVisible: true,  format: 'integer', width: 140 },
+  { key: COL.INVENTORY_REMAINING,           label: 'Inventory', subLabel: 'Remaining Rooms',          category: 'inventory', defaultVisible: false, format: 'integer', width: 140 },
   { key: COL.INVENTORY_COMPOSITE_CAP,       label: 'Inventory', subLabel: 'Composite Capacity',       category: 'inventory', defaultVisible: false, format: 'integer', width: 150 },
   { key: COL.INVENTORY_COMPOSITE_REMAINING, label: 'Inventory', subLabel: 'Composite Remaining Rooms',category: 'inventory', defaultVisible: false, format: 'integer', width: 180 },
-
-  // ── Expedia ────────────────────────────────────────────────────────────────
-  { key: COL.EXPEDIA_SHOPPED, label: 'Expedia', subLabel: 'My Shopped Rate', category: 'expedia', defaultVisible: false, format: 'currency', width: 140 },
 
   // ── Competitors ────────────────────────────────────────────────────────────
   { key: COL.COMPETITOR_LOW,  label: 'Competitors', subLabel: 'Low',  category: 'competitors', defaultVisible: false, format: 'currency', width: 120 },
@@ -214,7 +207,6 @@ export const ALL_CATEGORIES: ColCategory[] = [
   'otb',
   'adr_commit',
   'inventory',
-  'expedia',
   'competitors',
   'cancellations',
   'group_business',
