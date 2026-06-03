@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
   "buildCommand": "next build",
-  "installCommand": "npm install"
+  "installCommand": "TOKEN=\"${NPM_TOKEN:-$artifactory_npm_auth_token}\" && test -n \"$TOKEN\" || (echo 'Set NPM_TOKEN in Vercel project environment variables' >&2 && exit 1) && sed \"s/NPM_TOKEN_PLACEHOLDER/$TOKEN/g\" .npmrc.template > .npmrc && npm install"
 }

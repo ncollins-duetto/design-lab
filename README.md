@@ -19,6 +19,10 @@ npm run dev   # http://localhost:3000
 
 See [`design-lab/CLAUDE.md`](design-lab/CLAUDE.md) for full instructions — including how to add pages, use mock data, and deploy.
 
+### Vercel (required for deploys)
+
+Add `NPM_TOKEN` in the Vercel project (Production + Preview). Same variable name as local, but a **different value** — the shared Artifactory pull token for CI, not your personal token from `.zshrc`. Ask whoever manages deploy secrets to set it up.
+
 ## Branch workflow
 
 1. Create a branch: `designer/your-name/feature-name`
