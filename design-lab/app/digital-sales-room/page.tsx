@@ -2118,7 +2118,7 @@ function DigitalSalesRoomApp() {
                 {allHotelsSameProducts && (
                   <Box>
                     <Typography style={{fontSize:'0.75rem',fontWeight:600,color:'#4F5B60',marginBottom:8}}>Products applied to all hotels</Typography>
-                    <Box style={{display:'flex',flexWrap:'wrap',rowGap:4,columnGap:16}}>
+                    <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr',columnGap:32,rowGap:12}}>
                       {PRODUCTS.map(p => {
                         const on = globalProducts.includes(p)
                         return (
