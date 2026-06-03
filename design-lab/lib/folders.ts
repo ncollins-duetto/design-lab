@@ -1,13 +1,89 @@
+export type TeamSlug =
+  | 'strategy-team'
+  | 'onboarding-team'
+  | 'group'
+  | 'resorts'
+  | 'pricing'
+  | 'detection-exploration'
+
+export const ALL_TEAMS: TeamSlug[] = [
+  'strategy-team',
+  'onboarding-team',
+  'group',
+  'resorts',
+  'pricing',
+  'detection-exploration',
+]
+
+// Short labels — no "Team" suffix
+export const TEAM_LABELS: Record<TeamSlug, string> = {
+  'strategy-team': 'Strategy',
+  'onboarding-team': 'Onboarding',
+  'group': 'Group',
+  'resorts': 'Resorts',
+  'pricing': 'Pricing',
+  'detection-exploration': 'Detection',
+}
+
 export type Project = {
+  slug: string
   name: string
   href: string
-  heroTitle: string
-  heroLine2?: string
-  year?: string
-  edited: string
+  team: TeamSlug
+  description: string
+  committedAt: number   // Unix ms — used for sort order
+  committed: string     // Human-readable label
   decoration: 'rates' | 'sales-room' | 'min-max'
 }
 
+const NOW = Date.now()
+const HOURS = 3600 * 1000
+const DAYS  = 24 * HOURS
+
+export const PROJECTS: Project[] = [
+  {
+    slug: 'min-max-bounds',
+    name: 'Min/Max Bounds',
+    href: '/min-max-bounds',
+    team: 'strategy-team',
+    description: 'New approach to setting rate floor and ceiling overrides by season and room type.',
+    committedAt: NOW - 18 * HOURS,
+    committed: 'Committed 18 hours ago',
+    decoration: 'rates',
+  },
+  {
+    slug: 'min-max-option-2',
+    name: 'Min/Max Option 2',
+    href: '/min-max-option-2',
+    team: 'strategy-team',
+    description: 'Alternative bounds UI exploring dropdown-driven season and room type override selection.',
+    committedAt: NOW - 18 * HOURS,
+    committed: 'Committed 18 hours ago',
+    decoration: 'rates',
+  },
+  {
+    slug: 'digital-sales-room',
+    name: 'Digital Sales Room',
+    href: '/digital-sales-room',
+    team: 'onboarding-team',
+    description: 'Guided onboarding flow for new hotel accounts, from setup through to a shareable sales proposal.',
+    committedAt: NOW - 3 * DAYS,
+    committed: 'Committed 3 days ago',
+    decoration: 'sales-room',
+  },
+  {
+    slug: 'manage-rates-multi',
+    name: 'Multi-Property Manage Rates',
+    href: '/manage-rates/multi',
+    team: 'strategy-team',
+    description: 'Redesigned rates table across multiple properties, with grouped metrics and per-day column expansion.',
+    committedAt: NOW - 14 * DAYS,
+    committed: 'Committed 2 weeks ago',
+    decoration: 'rates',
+  },
+]
+
+// Legacy folder structure — kept for /folder/[slug] route compatibility
 export type Folder = {
   slug: string
   name: string
@@ -19,72 +95,14 @@ export const FOLDERS: Folder[] = [
   {
     slug: 'strategy-team',
     name: 'Strategy Team',
-    edited: 'Edited just now',
-    projects: [
-      {
-        name: 'Multi-Property Manage Rates',
-        href: '/manage-rates/multi',
-        heroTitle: 'Duetto',
-        heroLine2: 'Manage Rates',
-        edited: 'Edited just now',
-        decoration: 'rates',
-      },
-      {
-        name: 'Min/Max Bounds',
-        href: '/min-max-bounds',
-        heroTitle: 'Duetto',
-        heroLine2: 'Min/Max Bounds',
-        edited: 'Edited just now',
-        decoration: 'min-max',
-      },
-      {
-        name: 'Min/Max Option 2',
-        href: '/min-max-option-2',
-        heroTitle: 'Duetto',
-        heroLine2: 'Min/Max Option 2',
-        edited: 'Edited just now',
-        decoration: 'min-max',
-      },
-    ],
+    edited: 'Edited 18 hours ago',
+    projects: PROJECTS.filter((p) => p.team === 'strategy-team'),
   },
   {
     slug: 'onboarding-team',
     name: 'Onboarding Team',
-    edited: 'Edited just now',
-    projects: [
-      {
-        name: 'Digital Sales Room',
-        href: '/digital-sales-room',
-        heroTitle: 'Duetto',
-        heroLine2: 'Sales Room',
-        edited: 'Edited just now',
-        decoration: 'sales-room',
-      },
-    ],
-  },
-  {
-    slug: 'group',
-    name: 'Group',
-    edited: 'Edited just now',
-    projects: [],
-  },
-  {
-    slug: 'resorts',
-    name: 'Resorts',
-    edited: 'Edited just now',
-    projects: [],
-  },
-  {
-    slug: 'pricing',
-    name: 'Pricing',
-    edited: 'Edited just now',
-    projects: [],
-  },
-  {
-    slug: 'detection-exploration',
-    name: 'Detection/Exploration',
-    edited: 'Edited just now',
-    projects: [],
+    edited: 'Edited 3 days ago',
+    projects: PROJECTS.filter((p) => p.team === 'onboarding-team'),
   },
 ]
 
