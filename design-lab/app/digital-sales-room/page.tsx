@@ -2064,7 +2064,7 @@ function DigitalSalesRoomApp() {
               )}
 
               {/* Account form — always visible, editable before and after save */}
-              <form onSubmit={(e) => { e.preventDefault(); setAccountSaved(true) }}>
+              <form onSubmit={(e) => { e.preventDefault(); setAccountSaved(true); setActiveSection('hotels') }}>
                 <Typography style={{color:'#4F5B60',fontWeight:600,textTransform:'uppercase',letterSpacing:1,fontSize:'0.7rem',marginBottom:12}}>COMPANY INFORMATION</Typography>
                 <TextField label="Company Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
 
@@ -2077,7 +2077,7 @@ function DigitalSalesRoomApp() {
                 <div style={{display:'flex',justifyContent:'flex-end',gap:12,marginTop:8,paddingTop:16,borderTop:'1px solid #DDE1E2'}}>
                   <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
                   <Button type="submit" variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}}>
-                    {accountSaved ? 'Save Changes' : 'Save Details'}
+                    Save and Next
                   </Button>
                 </div>
               </form>
