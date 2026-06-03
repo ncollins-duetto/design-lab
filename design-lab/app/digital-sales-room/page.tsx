@@ -1670,7 +1670,78 @@ function HotelRenderer({ data }: { data: ProposalLine }) {
   )
 }
 
+const useProposalTableStyles = makeStyles((theme) => ({
+  container: {
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: 6,
+    marginBottom: 16,
+  },
+  gridWrapper: {
+    width: '100%',
+    height: 'auto',
+    '& .ag-theme-alpine': {
+      '--ag-header-background-color': theme.palette.background.default,
+      '--ag-header-foreground-color': theme.palette.text.secondary,
+      '--ag-cell-horizontal-padding': 16,
+      '--ag-cell-vertical-padding': 14,
+      '--ag-row-hover-color': theme.palette.background.default,
+      '--ag-borders-side-color': theme.palette.divider,
+      '--ag-border-color': theme.palette.divider,
+      '--ag-header-border-color': theme.palette.divider,
+    },
+    '& .ag-header-cell-text': {
+      fontSize: '0.72rem',
+      fontWeight: 700,
+      letterSpacing: 0.5,
+    },
+    '& .ag-cell': {
+      fontSize: '0.875rem',
+    },
+    '& .ag-right-aligned-header': {
+      textAlign: 'right !important',
+    },
+    '& .ag-right-aligned-cell': {
+      textAlign: 'right !important',
+    },
+    '& .ag-row:nth-child(odd)': {
+      backgroundColor: theme.palette.background.default,
+    },
+    '& .ag-row:nth-child(even)': {
+      backgroundColor: theme.palette.common.white,
+    },
+  },
+  totalsBox: {
+    display: 'flex',
+    gap: theme.spacing(5),
+    background: theme.palette.background.default,
+    borderRadius: 6,
+    padding: theme.spacing(1.5, 2),
+    marginBottom: 16,
+    borderTop: `2px solid ${theme.palette.divider}`,
+  },
+  totalsLabel: {
+    flex: 1,
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    color: theme.palette.text.secondary,
+    marginBottom: theme.spacing(0.5),
+  },
+  totalsValue: {
+    textAlign: 'right',
+    fontWeight: 700,
+    fontSize: '0.875rem',
+    whiteSpace: 'nowrap',
+  },
+  alignRight: {
+    textAlign: 'right',
+    minWidth: 150,
+  },
+}))
+
 function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, productColors: Record<string, {bg: string, text: string}> }) {
+  const classes = useProposalTableStyles()
   const fmt = (n: number) => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n)
 
   const rowData = proposal.lines.map(line => ({
@@ -1698,7 +1769,7 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
       field: 'costPerRoom',
       headerName: 'Cost / Room / Month',
       flex: 1,
-      cellRenderer: (params: any) => <Typography style={{fontWeight:600,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(params.value)}</Typography>,
+      cellRenderer: (params: any) => <Typography className={classes.totalsValue}>{fmt(params.value)}</Typography>,
       minWidth: 150,
       headerClass: 'ag-right-aligned-header',
       cellClass: 'ag-right-aligned-cell',
@@ -1707,7 +1778,7 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
       field: 'annual',
       headerName: 'Annual Subscription',
       flex: 1,
-      cellRenderer: (params: any) => <Typography style={{fontWeight:600,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(params.value)}</Typography>,
+      cellRenderer: (params: any) => <Typography className={classes.totalsValue}>{fmt(params.value)}</Typography>,
       minWidth: 150,
       headerClass: 'ag-right-aligned-header',
       cellClass: 'ag-right-aligned-cell',
@@ -1716,7 +1787,7 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
       field: 'impl',
       headerName: 'Implementation Fee',
       flex: 1,
-      cellRenderer: (params: any) => <Typography style={{fontWeight:600,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(params.value)}</Typography>,
+      cellRenderer: (params: any) => <Typography className={classes.totalsValue}>{fmt(params.value)}</Typography>,
       minWidth: 150,
       headerClass: 'ag-right-aligned-header',
       cellClass: 'ag-right-aligned-cell',
@@ -1728,42 +1799,8 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
 
   return (
     <Box>
-      <Box style={{border:'1px solid #DDE1E2',borderRadius:6,marginBottom:16}}>
-        <style>{`
-          .ag-theme-alpine {
-            --ag-header-background-color: #F8F9FD;
-            --ag-header-foreground-color: #4F5B60;
-            --ag-header-cell-text-transform: uppercase;
-            --ag-header-cell-padding: 12px 16px;
-            --ag-cell-horizontal-padding: 16px;
-            --ag-cell-vertical-padding: 14px;
-            --ag-row-hover-color: #FAFAFA;
-            --ag-borders-side-color: #DDE1E2;
-            --ag-border-color: #DDE1E2;
-            --ag-header-border-color: #DDE1E2;
-          }
-          .ag-theme-alpine .ag-header-cell-text {
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-          }
-          .ag-theme-alpine .ag-cell {
-            font-size: 0.875rem;
-          }
-          .ag-right-aligned-header {
-            text-align: right !important;
-          }
-          .ag-right-aligned-cell {
-            text-align: right !important;
-          }
-          .ag-theme-alpine .ag-row:nth-child(odd) {
-            background-color: #FAFAFA;
-          }
-          .ag-theme-alpine .ag-row:nth-child(even) {
-            background-color: white;
-          }
-        `}</style>
-        <div className="ag-theme-alpine" style={{width:'100%',height:'auto'}}>
+      <Box className={classes.container}>
+        <div className={`ag-theme-alpine ${classes.gridWrapper}`}>
           <AgGridReact
             rowData={rowData}
             columnDefs={columnDefs}
@@ -1781,15 +1818,15 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
       </Box>
 
       {/* Footer totals */}
-      <Box style={{display:'flex',gap:40,background:'#FAFAFA',borderRadius:6,padding:'12px 16px',marginBottom:16,borderTop:'2px solid #DDE1E2'}}>
+      <Box className={classes.totalsBox}>
         <Box style={{flex:1}}>
-          <Typography style={{fontSize:'0.72rem',fontWeight:700,textTransform:'uppercase',letterSpacing:0.5,color:'#4F5B60',marginBottom:4}}>Total</Typography>
+          <Typography className={classes.totalsLabel}>Total</Typography>
         </Box>
-        <Box style={{textAlign:'right'}}>
-          <Typography style={{fontWeight:700,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(totalAnnual)}</Typography>
+        <Box className={classes.alignRight}>
+          <Typography className={classes.totalsValue}>{fmt(totalAnnual)}</Typography>
         </Box>
-        <Box style={{textAlign:'right',minWidth:150}}>
-          <Typography style={{fontWeight:700,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(totalImpl)}</Typography>
+        <Box className={classes.alignRight}>
+          <Typography className={classes.totalsValue}>{fmt(totalImpl)}</Typography>
         </Box>
       </Box>
     </Box>
