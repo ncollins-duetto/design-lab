@@ -433,6 +433,15 @@ const PRODUCT_COLORS: Record<string, {bg: string, text: string}> = {
 
 const PRODUCTS = ['GameChanger','ScoreBoard','BlockBuster','Advance','GameTime','HotStats'];
 
+const PRODUCT_DESCRIPTIONS: Record<string,string> = {
+  GameChanger: 'AI-driven revenue optimization and pricing strategy recommendations',
+  ScoreBoard: 'Real-time analytics dashboard and performance reporting',
+  BlockBuster: 'Competitor intelligence and market positioning analysis',
+  Advance: 'Advanced booking engine with conversion optimization',
+  GameTime: 'Dynamic package creation and upsell management',
+  HotStats: 'Historical data analytics and trend forecasting',
+};
+
 const INTEGRATIONS = [
   { id:'opera',        label:'Opera',             group:'PMS' },
   { id:'mews',         label:'Mews',              group:'PMS' },
@@ -2142,13 +2151,24 @@ function DigitalSalesRoomApp() {
                               />
                             }
                             label={
-                              <Typography style={{
-                                fontWeight: on ? 600 : 500,
-                                fontSize: '0.85rem',
-                                color: '#1c1c1c',
-                              }}>
-                                {p}
-                              </Typography>
+                              <Box>
+                                <Typography style={{
+                                  fontWeight: on ? 600 : 500,
+                                  fontSize: '0.85rem',
+                                  color: '#1c1c1c',
+                                  lineHeight: 1.3,
+                                }}>
+                                  {p}
+                                </Typography>
+                                <Typography style={{
+                                  fontSize: '0.7rem',
+                                  color: '#4F5B60',
+                                  lineHeight: 1.3,
+                                  marginTop: 2,
+                                }}>
+                                  {PRODUCT_DESCRIPTIONS[p]}
+                                </Typography>
+                              </Box>
                             }
                           />
                         )
@@ -2552,13 +2572,24 @@ function DigitalSalesRoomApp() {
                               />
                             }
                             label={
-                              <Typography style={{
-                                fontWeight: on ? 600 : 500,
-                                fontSize: '0.85rem',
-                                color: '#1c1c1c',
-                              }}>
-                                {p}
-                              </Typography>
+                              <Box>
+                                <Typography style={{
+                                  fontWeight: on ? 600 : 500,
+                                  fontSize: '0.85rem',
+                                  color: '#1c1c1c',
+                                  lineHeight: 1.3,
+                                }}>
+                                  {p}
+                                </Typography>
+                                <Typography style={{
+                                  fontSize: '0.7rem',
+                                  color: '#4F5B60',
+                                  lineHeight: 1.3,
+                                  marginTop: 2,
+                                }}>
+                                  {PRODUCT_DESCRIPTIONS[p]}
+                                </Typography>
+                              </Box>
                             }
                           />
                         )
