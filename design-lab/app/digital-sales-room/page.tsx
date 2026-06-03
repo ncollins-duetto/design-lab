@@ -2198,7 +2198,7 @@ function DigitalSalesRoomApp() {
               )}
 
               {/* Contact Details */}
-              <Box style={{marginBottom:24,padding:'12px 16px',background:'#FAFAFA',borderRadius:8}}>
+              <Box style={{marginBottom:24}}>
                 <Typography style={{fontSize:'0.75rem',fontWeight:600,textTransform:'uppercase',color:'#4F5B60',marginBottom:12}}>PROPERTY IMPLEMENTATION CONTACT DETAILS</Typography>
                 <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
                   <TextField label="Contact Name" variant="outlined" size="small" fullWidth />
