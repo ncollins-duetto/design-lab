@@ -23,6 +23,9 @@ export default function Home() {
           <Button variant="contained" color="primary" href="/manage-rates/multi">
             Multi-Property Manage Rates
           </Button>
+          <Button variant="contained" color="primary" href="/digital-sales-room">
+            Digital Sales Room
+          </Button>
         </Box>
       </Box>
     </AppShell>
