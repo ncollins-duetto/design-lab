@@ -2026,100 +2026,27 @@ function DigitalSalesRoomApp() {
     : { section:'proposal', label:'Review Proposal' }
 
   const phaseSteps: ArrowStepConfig[] = [
-    { id: 'digital-sales-room', label: 'Digital Sales Room' },
-    { id: 'phase-2', label: 'Phase 2' },
-    { id: 'phase-3', label: 'Phase 3' },
+    { id: 'account', label: 'Enter Details' },
+    { id: 'hotels', label: 'Hotel Details' },
+    { id: 'docs', label: 'Documents' },
+    { id: 'proposal', label: 'Sales Proposal' },
   ]
+
+  const handleStepClick = (stepId: string) => {
+    if (stepId === 'hotels' && !accountSaved) return
+    setActiveSection(stepId)
+  }
 
   return (
     <Box style={{display:'flex',flexDirection:'column',minHeight:'100vh',background:'#FAFAFA'}}>
       {/* Sticky header + stepper bundle */}
       <Box style={{position:'sticky',top:0,zIndex:500,background:'#ffffff'}}>
         <ExternalHeader userName={user?.name} userEmail={user?.email} />
-        <ArrowStepperComponent steps={phaseSteps} currentStepId={activePhase} onStepClick={setActivePhase} />
+        <ArrowStepperComponent steps={phaseSteps} currentStepId={activeSection} onStepClick={handleStepClick} />
       </Box>
 
-      {activePhase !== 'digital-sales-room' && (
-        <Box style={{padding: theme.spacing(8, 4), textAlign: 'center', background: '#FAFAFA', minHeight: '60vh'}}>
-          <Typography variant="h4" style={{fontWeight: 700, color: '#212121', marginBottom: 8}}>
-            {phaseSteps.find(p => p.id === activePhase)?.label}
-          </Typography>
-          <Typography variant="body1" style={{color: '#4f5b60'}}>
-            Coming soon. Content for this phase has not been built yet.
-          </Typography>
-        </Box>
-      )}
-
-      {activePhase === 'digital-sales-room' && (
-      <div className={classes.mainContent}>
-        {/* Sidebar */}
-        <Box className={`${classes.sidebar} ${sidebarCollapsed ? 'collapsed' : ''}`} style={{width: sidebarCollapsed ? 64 : 220}}>
-          <Box style={{paddingTop: 12, paddingBottom: 12, flex: 1}}>
-            {[
-              { id:'account',  label:'Enter Details',icon:BusinessIcon },
-              { id:'hotels',   label:'Hotel Details',  icon:HotelIcon    },
-              { id:'docs',     label:'Documents',      icon:FolderIcon   },
-              { id:'proposal', label:'Sales Proposal', icon:DocumentIcon },
-            ].map(({id,label,icon:Icon})=>{
-              const isActive = activeSection === id
-              const isLocked = id === 'hotels' && !accountSaved
-              const iconColor = isLocked ? '#aeb4ba' : isActive ? '#006461' : '#8A9096'
-              const labelColor = isLocked ? '#aeb4ba' : isActive ? '#006461' : '#8A9096'
-              const row = (
-                <Box
-                  key={id}
-                  className={`${classes.navRow} ${isActive ? classes.navRowActive : ''} ${isLocked ? classes.navRowDisabled : ''}`}
-                  onClick={!isLocked ? () => setActiveSection(id) : undefined}
-                  style={{justifyContent: sidebarCollapsed ? 'center' : 'flex-start'}}
-                >
-                  <Box style={{color: iconColor, display:'flex', alignItems:'center', flexShrink: 0, transition:'color 0.2s'}}>
-                    {isLocked ? <LockIcon style={{fontSize: 24}}/> : <Icon style={{fontSize: 24}}/>}
-                  </Box>
-                  {!sidebarCollapsed && (
-                    <Typography
-                      className={classes.navLabel}
-                      style={{
-                        color: labelColor,
-                        fontWeight: isActive ? 700 : 400,
-                        fontSize: 14,
-                        lineHeight: 1.3,
-                        fontFamily: 'Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-                      }}
-                    >
-                      {label}
-                    </Typography>
-                  )}
-                </Box>
-              )
-              // Wrap locked Hotel Details row in Tooltip explaining gate
-              if (isLocked) {
-                return (
-                  <Tooltip
-                    key={id}
-                    title="Complete Enter Details first to unlock Hotel Details"
-                    placement="right"
-                    arrow
-                  >
-                    <span style={{display:'block'}}>{row}</span>
-                  </Tooltip>
-                )
-              }
-              return row
-            })}
-          </Box>
-          {/* Floating circular collapse button on right edge */}
-          <Box
-            className={classes.sidebarCollapseFab}
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            role="button"
-            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {sidebarCollapsed ? <ChevronRightIcon style={{fontSize: 18}}/> : <ChevronLeftIcon style={{fontSize: 18}}/>}
-          </Box>
-        </Box>
-
-        {/* Content — offset by sidebar width since sidebar is position:fixed */}
-        <Box className={classes.content} style={{marginLeft: sidebarCollapsed ? 64 : 220, transition: 'margin-left 0.3s ease-in-out'}}>
+      {/* Content */}
+      <Box style={{flex:1,display:'flex',flexDirection:'column',background:'#FAFAFA',padding:theme.spacing(3),maxWidth:1200,margin:'0 auto',width:'100%'}}>
           {activeSection === 'docs' && <DocumentStore />}
           {activeSection === 'account' && (
             <div style={{padding:24,maxWidth:720}}>
@@ -2755,8 +2682,6 @@ function DigitalSalesRoomApp() {
             </Box>
           )}
         </Box>
-      </div>
-      )}
 
     </Box>
   )
