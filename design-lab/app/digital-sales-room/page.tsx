@@ -550,7 +550,9 @@ function AuthShell({ title, subtitle, children }: { title: string, subtitle?: st
     <Box className={classes.authContainer}>
       <Card className={classes.authCard} elevation={3}>
         <CardContent>
-          <Typography className={classes.authLogo}>DUETTO</Typography>
+          <Box style={{display:'flex',justifyContent:'center',marginBottom:theme.spacing(2)}}>
+            <img src="/duetto-logo-green.svg" alt="Duetto" style={{height:32}} />
+          </Box>
           <Typography variant="h6" align="center" style={{marginBottom: theme.spacing(1)}}>
             {title}
           </Typography>
@@ -2020,7 +2022,7 @@ function DigitalSalesRoomApp() {
   const nextStep = proposalAccepted
     ? { section:'complete', label:'Complete!' }
     : !accountSaved
-    ? { section:'account',  label:'Complete Account Details' }
+    ? { section:'account',  label:'Complete Enter Details' }
     : { section:'proposal', label:'Review Proposal' }
 
   const phaseSteps: ArrowStepConfig[] = [
@@ -2054,7 +2056,7 @@ function DigitalSalesRoomApp() {
         <Box className={`${classes.sidebar} ${sidebarCollapsed ? 'collapsed' : ''}`} style={{width: sidebarCollapsed ? 64 : 220}}>
           <Box style={{paddingTop: 12, paddingBottom: 12, flex: 1}}>
             {[
-              { id:'account',  label:'Account Details',icon:BusinessIcon },
+              { id:'account',  label:'Enter Details',icon:BusinessIcon },
               { id:'hotels',   label:'Hotel Details',  icon:HotelIcon    },
               { id:'docs',     label:'Documents',      icon:FolderIcon   },
               { id:'proposal', label:'Sales Proposal', icon:DocumentIcon },
@@ -2094,7 +2096,7 @@ function DigitalSalesRoomApp() {
                 return (
                   <Tooltip
                     key={id}
-                    title="Complete Account Details first to unlock Hotel Details"
+                    title="Complete Enter Details first to unlock Hotel Details"
                     placement="right"
                     arrow
                   >
@@ -2121,7 +2123,7 @@ function DigitalSalesRoomApp() {
           {activeSection === 'docs' && <DocumentStore />}
           {activeSection === 'account' && (
             <div style={{padding:24,maxWidth:720}}>
-              <Typography variant="h5" style={{fontWeight:700,marginBottom:4}}>Account Details</Typography>
+              <Typography variant="h5" style={{fontWeight:700,marginBottom:4}}>Enter Details</Typography>
               <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>Provide your company and billing information for your subscription agreement.</Typography>
               <Divider style={{marginBottom:24}}/>
 
