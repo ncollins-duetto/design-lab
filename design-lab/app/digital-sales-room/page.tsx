@@ -2057,19 +2057,11 @@ function DigitalSalesRoomApp() {
       {/* Content */}
       <Box style={{flex:1,display:'flex',flexDirection:'column',background:'#FAFAFA',padding:theme.spacing(3),maxWidth:1200,margin:'0 auto',width:'100%'}}>
           {activeSection === 'docs' && (
-            <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
-              <div style={{flex:1,overflowY:'auto'}}>
-                <DocumentStore />
-              </div>
-              <div style={{position:'sticky',bottom:0,background:'#ffffff',borderTop:'1px solid #DDE1E2',padding:'16px 24px',display:'flex',justifyContent:'flex-end',gap:12,boxShadow:'0 -2px 8px rgba(0,0,0,0.08)'}}>
-                <Button variant="outlined" style={{textTransform:'none'}} onClick={()=>setActiveSection('hotels')}>Back</Button>
-                <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}} onClick={()=>setActiveSection('proposal')}>Next</Button>
-              </div>
-            </div>
+            <DocumentStore />
           )}
           {activeSection === 'account' && (
             <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
-              <div style={{padding:24,maxWidth:720,paddingBottom:100}}>
+              <div style={{padding:24,maxWidth:720,paddingBottom:24}}>
                 <Typography variant="h5" style={{fontWeight:700,marginBottom:4}}>Enter Details</Typography>
                 <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>Provide your company and billing information for your subscription agreement.</Typography>
                 <Divider style={{marginBottom:24}}/>
@@ -2095,18 +2087,12 @@ function DigitalSalesRoomApp() {
                   <TextField label="Billing Address" type="text" variant="outlined" fullWidth size="small" multiline rows={3} style={{marginBottom:16}}/>
                 </form>
               </div>
-              <div style={{position:'sticky',bottom:0,background:'#ffffff',borderTop:'1px solid #DDE1E2',padding:'16px 24px',display:'flex',justifyContent:'flex-end',gap:12,boxShadow:'0 -2px 8px rgba(0,0,0,0.08)'}}>
-                <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
-                <Button onClick={()=>{setAccountSaved(true);setActiveSection('hotels')}} variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}}>
-                  Save and Next
-                </Button>
               </div>
-            </div>
           )}
 
           {activeSection === 'hotels' && accountSaved && (
             <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
-            <Box style={{padding:24,maxWidth:1000,paddingBottom:100}}>
+            <Box style={{padding:24,maxWidth:1000,paddingBottom:24}}>
               <Typography variant="h5" style={{fontWeight:700,marginBottom:4}}>Hotel Details</Typography>
               <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>Search Duetto's hotel database or type a new property name. Assign products globally or per hotel.</Typography>
               <Divider style={{marginBottom:24}}/>
@@ -2680,16 +2666,12 @@ function DigitalSalesRoomApp() {
                 </DialogActions>
               </Dialog>
             </Box>
-            <div style={{position:'sticky',bottom:0,background:'#ffffff',borderTop:'1px solid #DDE1E2',padding:'16px 24px',display:'flex',justifyContent:'flex-end',gap:12,boxShadow:'0 -2px 8px rgba(0,0,0,0.08)'}}>
-              <Button variant="outlined" style={{textTransform:'none'}} onClick={()=>setActiveSection('account')}>Back</Button>
-              <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}} onClick={()=>setActiveSection('docs')}>Next</Button>
-            </div>
             </div>
           )}
 
           {activeSection === 'proposal' && accountSaved && (
             <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
-            <Box style={{padding:24,paddingBottom:100}}>
+            <Box style={{padding:24,paddingBottom:24}}>
               <Box style={{display:'flex',alignItems:'center',gap:12,marginBottom:4,flexWrap:'wrap'}}>
                 <Typography variant="h5" style={{fontWeight:700}}>Sales Proposal</Typography>
                 <Box style={{padding:'4px 12px',borderRadius:12,background:'#FFF8E1',color:'#774700',fontWeight:700,fontSize:'0.75rem'}}>
@@ -2719,25 +2701,41 @@ function DigitalSalesRoomApp() {
                 </Box>
               )}
             </Box>
-            <div style={{position:'sticky',bottom:0,background:'#ffffff',borderTop:'1px solid #DDE1E2',padding:'16px 24px',display:'flex',justifyContent:'flex-start',gap:12,boxShadow:'0 -2px 8px rgba(0,0,0,0.08)'}}>
-              <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600,paddingLeft:28,paddingRight:28}}
-                onClick={()=>setProposalAccepted(true)}>
-                ✓ Accept Proposal
-              </Button>
-              <Button variant="outlined" style={{textTransform:'none',fontWeight:500}}>
-                ✎ Request Changes
-              </Button>
-            </div>
             </div>
           )}
         </Box>
 
-      <Box style={{position:'sticky',bottom:0,background:'#0E2124',color:'#ffffff',padding:theme.spacing(2,3),display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px solid #1a3a40',zIndex:100}}>
-        <Box style={{display:'flex',gap:theme.spacing(3),alignItems:'center'}}>
-          <Typography style={{fontSize:'0.75rem',color:'#8fa7ab',fontWeight:600,textTransform:'uppercase',letterSpacing:0.5}}>Duetto Digital Sales Room</Typography>
-          <Typography style={{fontSize:'0.75rem',color:'#8fa7ab'}}>© 2026 Duetto Research, Inc. All rights reserved.</Typography>
-        </Box>
-        <Typography style={{fontSize:'0.75rem',color:'#8fa7ab'}}>Version 1.0</Typography>
+      <Box style={{position:'sticky',bottom:0,background:'#ffffff',borderTop:'1px solid #DDE1E2',padding:'16px 24px',display:'flex',justifyContent:'flex-end',gap:12,boxShadow:'0 -2px 8px rgba(0,0,0,0.08)',zIndex:100}}>
+        {activeSection === 'account' && (
+          <>
+            <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
+            <Button onClick={()=>{setAccountSaved(true);setActiveSection('hotels')}} variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}}>
+              Save and Next
+            </Button>
+          </>
+        )}
+        {activeSection === 'hotels' && (
+          <>
+            <Button variant="outlined" style={{textTransform:'none'}} onClick={()=>setActiveSection('account')}>Back</Button>
+            <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}} onClick={()=>setActiveSection('docs')}>Next</Button>
+          </>
+        )}
+        {activeSection === 'docs' && (
+          <>
+            <Button variant="outlined" style={{textTransform:'none'}} onClick={()=>setActiveSection('hotels')}>Back</Button>
+            <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}} onClick={()=>setActiveSection('proposal')}>Next</Button>
+          </>
+        )}
+        {activeSection === 'proposal' && (
+          <>
+            <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600,paddingLeft:28,paddingRight:28}} onClick={()=>setProposalAccepted(true)}>
+              ✓ Accept Proposal
+            </Button>
+            <Button variant="outlined" style={{textTransform:'none',fontWeight:500}}>
+              ✎ Request Changes
+            </Button>
+          </>
+        )}
       </Box>
 
     </Box>
