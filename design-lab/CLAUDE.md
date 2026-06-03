@@ -1,5 +1,7 @@
 # Duetto Design Lab — AI Instructions
 
+Always invoke /designer-prototype at the start of any session in this project.
+
 This is the shared environment for UX prototypes built by the Duetto UX Design team.
 Read this before generating any code.
 

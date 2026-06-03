@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import {
   Button,
   Checkbox,
+  Divider,
   ListItemText,
   makeStyles,
   MenuItem,
@@ -12,10 +13,14 @@ import {
   Typography,
 } from '@material-ui/core'
 import CalendarTodayIcon from '@material-ui/icons/CalendarToday'
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft'
+import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import AppShell from '@/components/AppShell'
 import TableSettingIcon from '@/components/TableSettingIcon'
-import MultiRatesTable from '@/components/manage-rates/MultiRatesTable'
+import { MRX_CELL_ACTIVE } from '@/components/manage-rates/cellRenderers'
+import dynamic from 'next/dynamic'
+const MultiRatesTable = dynamic(() => import('@/components/manage-rates/MultiRatesTable'), { ssr: false })
 import TableSettingsModal, { loadVisibleCols } from '@/components/manage-rates/TableSettingsModal'
 import {
   ColKey,
@@ -26,10 +31,19 @@ import {
 } from '@/lib/mock/rates'
 import { MOCK_PROPERTY_GROUPS } from '@/lib/mock/properties'
 
-const START_DATE = '2025-07-17'
-const DATES = getWeekDates(START_DATE, 7)
-const DATE_LABEL = '07/17/2025 – 07/23/2025'
+const INITIAL_START = '2025-07-17'
 const MAX_PROPERTIES = 10
+
+function fmtShort(iso: string) {
+  const [y, m, d] = iso.split('-')
+  return `${m}/${d}/${y}`
+}
+
+function shiftIso(iso: string, days: number) {
+  const d = new Date(iso + 'T00:00:00')
+  d.setDate(d.getDate() + days)
+  return d.toISOString().slice(0, 10)
+}
 
 const useStyles = makeStyles((theme) => ({
   pageHeader: {
@@ -65,6 +79,9 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   subHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: theme.spacing(1.5, 3),
     background: theme.palette.background.default,
     borderBottom: `1px solid ${theme.palette.divider}`,
@@ -74,16 +91,20 @@ const useStyles = makeStyles((theme) => ({
     fontSize: 14,
     background: theme.palette.background.paper,
     borderRadius: 4,
-    '& .MuiSelect-root': {
-      paddingTop: 8,
-      paddingBottom: 8,
-    },
     '& .MuiOutlinedInput-notchedOutline': {
       borderColor: theme.palette.grey[300],
     },
     '&:hover .MuiOutlinedInput-notchedOutline': {
       borderColor: theme.palette.grey[400],
     },
+  },
+  controlsDivider: {
+    height: 18,
+    margin: theme.spacing(0, 1),
+  },
+  navButton: {
+    fontSize: 13,
+    '&:hover': { backgroundColor: 'transparent' },
   },
   tableContainer: {
     flex: 1,
@@ -113,6 +134,30 @@ export default function ManageRatesMultiPage() {
 
   const [visibleCols, setVisibleCols] = useState<Set<ColKey>>(DEFAULT_VISIBLE_COLS)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [activeCells, setActiveCells] = useState<Set<string>>(new Set())
+  const [startDate, setStartDate]     = useState(INITIAL_START)
+  const [collapsed, setCollapsed]     = useState(true)
+
+  const dates    = useMemo(() => getWeekDates(startDate, 7), [startDate])
+  const dateLabel = useMemo(() => {
+    const end = dates[dates.length - 1]
+    return `${fmtShort(startDate)} – ${fmtShort(end)}`
+  }, [startDate, dates])
+
+  // Track which cells are "active" (accepted recommendation or filled override)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { cellId, active } = (e as CustomEvent<{ cellId: string; active: boolean }>).detail
+      setActiveCells((prev) => {
+        const next = new Set(prev)
+        if (active) next.add(cellId)
+        else next.delete(cellId)
+        return next
+      })
+    }
+    window.addEventListener(MRX_CELL_ACTIVE, handler)
+    return () => window.removeEventListener(MRX_CELL_ACTIVE, handler)
+  }, [])
   const [selectedPropertyName, setSelectedPropertyName] = useState<string>('All Properties')
   const [selectedHotelIds, setSelectedHotelIds] = useState<string[]>(
     MOCK_PROPERTIES.slice(0, 10).map((p) => p.id)
@@ -124,8 +169,8 @@ export default function ManageRatesMultiPage() {
   }, [])
 
   const rowData = useMemo(
-    () => generateRowData(DATES).filter((r) => selectedHotelIds.includes(r.hotelId as string)),
-    [selectedHotelIds]
+    () => generateRowData(dates).filter((r) => selectedHotelIds.includes(r.hotelId as string)),
+    [dates, selectedHotelIds]
   )
 
   const selectedCount = selectedHotelIds.length
@@ -160,7 +205,7 @@ export default function ManageRatesMultiPage() {
           </Typography>
         </div>
         <div className={classes.actions}>
-          <Button variant="contained" color="primary">
+          <Button variant="contained" color="primary" disabled={activeCells.size === 0}>
             Review &amp; Publish
           </Button>
           <Button variant="text" startIcon={<TableSettingIcon />} onClick={() => setSettingsOpen(true)}>
@@ -171,12 +216,12 @@ export default function ManageRatesMultiPage() {
             endIcon={<CalendarTodayIcon fontSize="small" />}
             className={classes.dateBtn}
           >
-            {DATE_LABEL}
+            {dateLabel}
           </Button>
         </div>
       </div>
 
-      {/* Property picker row */}
+      {/* Property picker + table controls row */}
       <div className={classes.subHeader}>
         <Select
           multiple
@@ -184,6 +229,7 @@ export default function ManageRatesMultiPage() {
           className={classes.propertySelect}
           variant="outlined"
           IconComponent={ExpandMoreIcon}
+          SelectDisplayProps={{ style: { paddingTop: 8, paddingBottom: 8, fontSize: 14 } }}
           renderValue={(selected) => {
             const ids = selected as string[]
             return `${ids.length} ${ids.length === 1 ? 'property' : 'properties'} selected`
@@ -229,14 +275,46 @@ export default function ManageRatesMultiPage() {
             </MenuItem>
           )}
         </Select>
+
+        {/* Table navigation controls */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Button
+            size="small"
+            color="primary"
+            className={classes.navButton}
+            onClick={() => setCollapsed((c) => !c)}
+          >
+            {collapsed ? 'Expand all days' : 'Collapse all days'}
+          </Button>
+          <Divider orientation="vertical" className={classes.controlsDivider} />
+          <Button
+            size="small"
+            color="primary"
+            className={classes.navButton}
+            startIcon={<ChevronLeftIcon fontSize="small" />}
+            onClick={() => setStartDate((d) => shiftIso(d, -7))}
+          >
+            Previous 7 days
+          </Button>
+          <Button
+            size="small"
+            color="primary"
+            className={classes.navButton}
+            endIcon={<ChevronRightIcon fontSize="small" />}
+            onClick={() => setStartDate((d) => shiftIso(d, 7))}
+          >
+            Next 7 days
+          </Button>
+        </div>
       </div>
 
       {/* AG Grid table */}
       <div className={classes.tableContainer}>
         <MultiRatesTable
-          dates={DATES}
+          dates={dates}
           rowData={rowData}
           visibleCols={visibleCols}
+          collapsed={collapsed}
         />
       </div>
 
