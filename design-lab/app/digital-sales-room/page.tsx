@@ -2732,6 +2732,14 @@ function DigitalSalesRoomApp() {
           )}
         </Box>
 
+      <Box style={{position:'sticky',bottom:0,background:'#0E2124',color:'#ffffff',padding:theme.spacing(2,3),display:'flex',justifyContent:'space-between',alignItems:'center',borderTop:'1px solid #1a3a40',zIndex:100}}>
+        <Box style={{display:'flex',gap:theme.spacing(3),alignItems:'center'}}>
+          <Typography style={{fontSize:'0.75rem',color:'#8fa7ab',fontWeight:600,textTransform:'uppercase',letterSpacing:0.5}}>Duetto Digital Sales Room</Typography>
+          <Typography style={{fontSize:'0.75rem',color:'#8fa7ab'}}>© 2026 Duetto Research, Inc. All rights reserved.</Typography>
+        </Box>
+        <Typography style={{fontSize:'0.75rem',color:'#8fa7ab'}}>Version 1.0</Typography>
+      </Box>
+
     </Box>
   )
 }
