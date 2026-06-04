@@ -2,7 +2,6 @@
 
 import React, { useMemo, useRef, useState } from 'react'
 import {
-  Autocomplete,
   Box,
   Button,
   Checkbox,
@@ -13,6 +12,7 @@ import {
   Tooltip,
   Typography,
 } from '@material-ui/core'
+import Autocomplete from '@material-ui/lab/Autocomplete'
 import EditIcon from '@material-ui/icons/Edit'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import { AgGridReact } from 'ag-grid-react'
