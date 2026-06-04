@@ -785,11 +785,12 @@ export default function MinMaxBoundsPage() {
           </Typography>
         </div>
         <Box display="flex" alignItems="center" gridGap={24} flexWrap="wrap">
-          <Box style={{ minWidth: 400 }}>
-            <Typography style={{ fontWeight: 700, fontSize: 13, color: '#1c1c1c', marginBottom: 6 }}>
+          <Box display="flex" alignItems="center" gridGap={12} style={{ minWidth: 500 }}>
+            <Typography style={{ fontWeight: 700, fontSize: 13, color: '#1c1c1c', whiteSpace: 'nowrap' }}>
               Select Seasons & Overrides
             </Typography>
             <Autocomplete
+              style={{ flex: 1 }}
               options={SEASON_OPTIONS}
               getOptionLabel={(option) => option.name}
               value={SEASON_OPTIONS.find((opt) => opt.value === selectedSeason) || null}
