@@ -1,3 +1,5 @@
-//duetto.jfrog.io/artifactory/api/npm/duetto-js/:always-auth=true
-//duetto.jfrog.io/artifactory/api/npm/duetto-js/:_authToken=NPM_TOKEN_PLACEHOLDER
+@duetto:registry=https://duetto.jfrog.io/duetto/api/npm/duetto-js/
+registry=https://duetto.jfrog.io/duetto/api/npm/duetto-js/
+always-auth=true
+//duetto.jfrog.io/duetto/api/npm/:_authToken=NPM_TOKEN_PLACEHOLDER
 legacy-peer-deps=true
