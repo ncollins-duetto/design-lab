@@ -505,6 +505,60 @@ const EXTERNAL_GROUP_QUOTATIONS = [
   },
 ]
 
+const buildSeasonOptions = () => {
+  const options: any[] = []
+
+  // Add seasons
+  const seasons = [
+    'January 1 - December 31',
+    'January 1 - April 30',
+    'May 1 - September 30',
+    'October 1 - December 31',
+  ]
+
+  seasons.forEach((season) => {
+    options.push({
+      id: `season::${season}`,
+      type: 'season',
+      name: season,
+      group: 'Season',
+      value: season,
+    })
+  })
+
+  // Add season overrides
+  Object.entries(SEASON_OVERRIDES).forEach(([season, overrides]) => {
+    overrides.forEach((so) => {
+      options.push({
+        id: `season-override::${so.label}::${so.dateRange}::${season}`,
+        type: 'season-override',
+        name: `${so.label} (${so.dateRange})`,
+        group: 'Season Override',
+        value: `season-override::${so.label}::${so.dateRange}::${season}`,
+        description: so.dateRange,
+      })
+    })
+  })
+
+  // Add room type overrides
+  Object.entries(ROOM_TYPE_OVERRIDES).forEach(([season, overrides]) => {
+    overrides.forEach((rto) => {
+      options.push({
+        id: `room-override::${rto.label}::${rto.dateRange}::${season}`,
+        type: 'room-override',
+        name: `${rto.label} (${rto.dateRange})`,
+        group: 'Override overlap',
+        value: `room-override::${rto.label}::${rto.dateRange}::${season}`,
+        description: rto.dateRange,
+      })
+    })
+  })
+
+  return options
+}
+
+const SEASON_OPTIONS = buildSeasonOptions()
+
 export default function MinMaxBoundsPage() {
   const classes = useStyles()
   const gridRef = useRef<AgGridReact>(null)
@@ -774,79 +828,37 @@ export default function MinMaxBoundsPage() {
               }}
             />
           </Box>
-          <Typography variant="subtitle2" style={{ color: '#4f5b60', whiteSpace: 'nowrap' }}>Seasons & Overrides</Typography>
-          <Select
-            value={selectedSeason}
-            onChange={(e) => setSelectedSeason(e.target.value as string)}
-            className={classes.seasonSelect}
-            variant="outlined"
-            IconComponent={ExpandMoreIcon}
-            MenuProps={{
-              classes: { paper: classes.selectMenuPaper },
-              getContentAnchorEl: null,
-              anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
-              transformOrigin: { vertical: 'top', horizontal: 'left' },
-            }}
-          >
-            <MenuItem disabled>Season</MenuItem>
-            <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
-            <MenuItem value="January 1 - April 30">January 1 - April 30</MenuItem>
-            <MenuItem value="May 1 - September 30">May 1 - September 30</MenuItem>
-            <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
-            <MenuItem disabled>Season Override</MenuItem>
-            {Object.entries(SEASON_OVERRIDES).flatMap(([season, overrides]) =>
-              overrides.map((so) => {
-                const label = `${so.label} (${so.dateRange})`
-                return (
-                  <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}::${season}`}>
-                    <Tooltip
-                      title={label}
-                      placement="right"
-                      arrow
-                      classes={{ tooltip: classes.overlapTooltip, arrow: classes.overlapTooltipArrow }}
-                    >
-                      <span className={classes.overlapTriggerWrap}>{label}</span>
-                    </Tooltip>
-                  </MenuItem>
-                )
-              })
-            )}
-            <Tooltip
-              title={
-                <>
-                  There are Min/max room types
-                  <br />
-                  overrides where there is an overlap
-                  <br />
-                  with seasons override
-                </>
-              }
-              placement="right"
-              arrow
-              classes={{ tooltip: classes.overlapTooltip, arrow: classes.overlapTooltipArrow }}
-            >
-              <span className={classes.overlapTriggerWrap}>
-                <MenuItem disabled>Override overlap</MenuItem>
-              </span>
-            </Tooltip>
-            {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
-              overrides.map((rto) => {
-                const label = `${rto.label} (${rto.dateRange})`
-                return (
-                  <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
-                    <Tooltip
-                      title={label}
-                      placement="right"
-                      arrow
-                      classes={{ tooltip: classes.overlapTooltip, arrow: classes.overlapTooltipArrow }}
-                    >
-                      <span className={classes.overlapTriggerWrap}>{label}</span>
-                    </Tooltip>
-                  </MenuItem>
-                )
-              })
-            )}
-          </Select>
+          <Box style={{ minWidth: 300 }}>
+            <Autocomplete
+              options={SEASON_OPTIONS}
+              getOptionLabel={(option) => option.name}
+              value={SEASON_OPTIONS.find((opt) => opt.value === selectedSeason) || null}
+              onChange={(_, newValue) => {
+                if (newValue) setSelectedSeason(newValue.value)
+              }}
+              groupBy={(option) => option.group}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Seasons & Overrides"
+                  variant="outlined"
+                  size="small"
+                />
+              )}
+              renderOption={(props, option) => (
+                <div {...props} style={{ fontSize: 13, padding: '12px 16px' }}>
+                  <Typography style={{ fontWeight: 600, fontSize: 13, color: '#1c1c1c' }}>
+                    {option.name}
+                  </Typography>
+                  {option.description && (
+                    <Typography style={{ fontSize: 12, color: '#4f5b60' }}>
+                      {option.description}
+                    </Typography>
+                  )}
+                </div>
+              )}
+            />
+          </Box>
         </Box>
       </div>
 
