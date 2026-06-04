@@ -785,7 +785,10 @@ export default function MinMaxBoundsPage() {
           </Typography>
         </div>
         <Box display="flex" alignItems="center" gridGap={24} flexWrap="wrap">
-          <Box style={{ minWidth: 300 }}>
+          <Box style={{ minWidth: 400 }}>
+            <Typography style={{ fontWeight: 700, fontSize: 13, color: '#1c1c1c', marginBottom: 6 }}>
+              Select Seasons & Overrides
+            </Typography>
             <Autocomplete
               options={SEASON_OPTIONS}
               getOptionLabel={(option) => option.name}
@@ -797,7 +800,7 @@ export default function MinMaxBoundsPage() {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Seasons & Overrides"
+                  placeholder="Search by season, override, or date range..."
                   variant="outlined"
                   size="small"
                 />
