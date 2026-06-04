@@ -831,7 +831,11 @@ export default function MinMaxBoundsPage() {
                   size="small"
                   InputProps={{
                     ...params.InputProps,
-                    style: { padding: '0 8px', height: 32, fontSize: 13 },
+                    style: { padding: '0 8px', height: 32, fontSize: 13, display: 'flex', alignItems: 'center' },
+                  }}
+                  inputProps={{
+                    ...params.inputProps,
+                    style: { padding: 0, height: '100%', lineHeight: '32px', boxSizing: 'border-box' },
                   }}
                 />
               )}
