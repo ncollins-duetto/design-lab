@@ -8,9 +8,11 @@ import {
   makeStyles,
   MenuItem,
   Select,
+  TextField,
   Tooltip,
   Typography,
 } from '@material-ui/core'
+import Autocomplete from '@material-ui/lab/Autocomplete'
 import EditIcon from '@material-ui/icons/Edit'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import { AgGridReact } from 'ag-grid-react'
@@ -465,6 +467,123 @@ const ROOM_TYPE_OVERRIDES: Record<string, RoomTypeOverride[]> = {
   ],
 }
 
+const EXTERNAL_GROUP_QUOTATIONS = [
+  {
+    id: 'egq-001',
+    name: '17th Annual Duetto Family Reunion',
+    externalId: 'a054545000003msvoq23q523450000000445345',
+    hotel: 'Demo Hotel De Vincent',
+    lastModified: 'W, 6/18/25 at 12:12 PM',
+  },
+  {
+    id: 'egq-002',
+    name: 'Spring Corporate Retreat 2025',
+    externalId: 'b1234567890abcdef1234567890123456789012',
+    hotel: 'Luxury Beach Resort',
+    lastModified: 'T, 5/20/25 at 9:30 AM',
+  },
+  {
+    id: 'egq-003',
+    name: 'International Medical Conference',
+    externalId: 'c9876543210yxyxyxyxyxyxyxyxyxyxyxyxy',
+    hotel: 'Downtown Convention Center Hotel',
+    lastModified: 'T, 7/15/25 at 2:45 PM',
+  },
+  {
+    id: 'egq-004',
+    name: 'Wedding Reception - Smith & Johnson',
+    externalId: 'd5555555555555555555555555555555555555',
+    hotel: 'Grand Ballroom Hotel',
+    lastModified: 'F, 8/22/25 at 10:00 AM',
+  },
+  {
+    id: 'egq-005',
+    name: 'Executive Summit 2026',
+    externalId: 'e1234567890abcdef1234567890123456789abc',
+    hotel: 'Premium Business Resort',
+    lastModified: 'M, 9/10/25 at 3:15 PM',
+  },
+]
+
+type SeasonOptionLine = { type: 'Segment Override' | 'Room Type Overrides'; name: string; value: string }
+type SeasonOption = {
+  id: string
+  group: 'Season' | 'Override'
+  name: string
+  value: string
+  primary: string
+  lines: SeasonOptionLine[]
+}
+
+const buildSeasonOptions = (): SeasonOption[] => {
+  const options: SeasonOption[] = []
+
+  // Add base seasons
+  const seasons = [
+    'January 1 - December 31',
+    'January 1 - April 30',
+    'May 1 - September 30',
+    'October 1 - December 31',
+  ]
+
+  seasons.forEach((season) => {
+    options.push({
+      id: `season::${season}`,
+      group: 'Season',
+      name: season,
+      value: season,
+      primary: season,
+      lines: [],
+    })
+  })
+
+  // Group overrides by dateRange
+  const overrideByDate: Record<string, { season?: string; so?: { label: string; season: string }; rto?: { label: string; season: string } }> = {}
+
+  Object.entries(SEASON_OVERRIDES).forEach(([season, overrides]) => {
+    overrides.forEach((so) => {
+      if (!overrideByDate[so.dateRange]) overrideByDate[so.dateRange] = {}
+      overrideByDate[so.dateRange].so = { label: so.label, season }
+    })
+  })
+
+  Object.entries(ROOM_TYPE_OVERRIDES).forEach(([season, overrides]) => {
+    overrides.forEach((rto) => {
+      if (!overrideByDate[rto.dateRange]) overrideByDate[rto.dateRange] = {}
+      overrideByDate[rto.dateRange].rto = { label: rto.label, season }
+    })
+  })
+
+  Object.entries(overrideByDate).forEach(([dateRange, entry]) => {
+    const lines: SeasonOptionLine[] = []
+    let primaryValue = ''
+
+    if (entry.so) {
+      const v = `season-override::${entry.so.label}::${dateRange}::${entry.so.season}`
+      lines.push({ type: 'Segment Override', name: entry.so.label, value: v })
+      primaryValue = v
+    }
+    if (entry.rto) {
+      const v = `room-override::${entry.rto.label}::${dateRange}::${entry.rto.season}`
+      lines.push({ type: 'Room Type Overrides', name: entry.rto.label, value: v })
+      if (!primaryValue) primaryValue = v
+    }
+
+    options.push({
+      id: `override::${dateRange}`,
+      group: 'Override',
+      name: dateRange,
+      value: primaryValue,
+      primary: dateRange,
+      lines,
+    })
+  })
+
+  return options
+}
+
+const SEASON_OPTIONS = buildSeasonOptions()
+
 export default function MinMaxBoundsPage() {
   const classes = useStyles()
   const gridRef = useRef<AgGridReact>(null)
@@ -690,80 +809,46 @@ export default function MinMaxBoundsPage() {
             {activeLabel || ' '}
           </Typography>
         </div>
-        <Box display="flex" alignItems="center" gridGap={12}>
-          <Typography variant="subtitle2" style={{ color: '#4f5b60', whiteSpace: 'nowrap' }}>Seasons & Overrides</Typography>
-          <Select
-            value={selectedSeason}
-            onChange={(e) => setSelectedSeason(e.target.value as string)}
-            className={classes.seasonSelect}
-            variant="outlined"
-            IconComponent={ExpandMoreIcon}
-            MenuProps={{
-              classes: { paper: classes.selectMenuPaper },
-              getContentAnchorEl: null,
-              anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
-              transformOrigin: { vertical: 'top', horizontal: 'left' },
-            }}
-          >
-            <MenuItem disabled>Season</MenuItem>
-            <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
-            <MenuItem value="January 1 - April 30">January 1 - April 30</MenuItem>
-            <MenuItem value="May 1 - September 30">May 1 - September 30</MenuItem>
-            <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
-            <MenuItem disabled>Season Override</MenuItem>
-            {Object.entries(SEASON_OVERRIDES).flatMap(([season, overrides]) =>
-              overrides.map((so) => {
-                const label = `${so.label} (${so.dateRange})`
-                return (
-                  <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}::${season}`}>
-                    <Tooltip
-                      title={label}
-                      placement="right"
-                      arrow
-                      classes={{ tooltip: classes.overlapTooltip, arrow: classes.overlapTooltipArrow }}
-                    >
-                      <span className={classes.overlapTriggerWrap}>{label}</span>
-                    </Tooltip>
-                  </MenuItem>
-                )
-              })
-            )}
-            <Tooltip
-              title={
-                <>
-                  There are Min/max room types
-                  <br />
-                  overrides where there is an overlap
-                  <br />
-                  with seasons override
-                </>
-              }
-              placement="right"
-              arrow
-              classes={{ tooltip: classes.overlapTooltip, arrow: classes.overlapTooltipArrow }}
-            >
-              <span className={classes.overlapTriggerWrap}>
-                <MenuItem disabled>Override overlap</MenuItem>
-              </span>
-            </Tooltip>
-            {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
-              overrides.map((rto) => {
-                const label = `${rto.label} (${rto.dateRange})`
-                return (
-                  <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
-                    <Tooltip
-                      title={label}
-                      placement="right"
-                      arrow
-                      classes={{ tooltip: classes.overlapTooltip, arrow: classes.overlapTooltipArrow }}
-                    >
-                      <span className={classes.overlapTriggerWrap}>{label}</span>
-                    </Tooltip>
-                  </MenuItem>
-                )
-              })
-            )}
-          </Select>
+        <Box display="flex" alignItems="center" gridGap={24} flexWrap="wrap">
+          <Box display="flex" alignItems="center" gridGap={12} style={{ minWidth: 500 }}>
+            <Typography style={{ fontWeight: 700, fontSize: 13, color: '#1c1c1c', whiteSpace: 'nowrap' }}>
+              Select Seasons & Overrides
+            </Typography>
+            <Autocomplete
+              style={{ flex: 1 }}
+              options={SEASON_OPTIONS}
+              getOptionLabel={(option) => option.name}
+              value={SEASON_OPTIONS.find((opt) => opt.value === selectedSeason) || null}
+              onChange={(_, newValue) => {
+                if (newValue) setSelectedSeason(newValue.value)
+              }}
+              groupBy={(option) => option.group}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Search by season, override, or date range..."
+                  variant="outlined"
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    style: { padding: '0 8px', height: 32, fontSize: 13 },
+                  }}
+                />
+              )}
+              renderOption={(option) => (
+                <Box style={{ padding: '8px 4px', width: '100%' }}>
+                  <Typography style={{ fontWeight: 700, fontSize: 14, color: '#1c1c1c', marginBottom: option.lines.length > 0 ? 4 : 0 }}>
+                    {option.primary}
+                  </Typography>
+                  {option.lines.map((line: SeasonOptionLine, idx: number) => (
+                    <Typography key={idx} style={{ fontSize: 13, color: '#4f5b60', lineHeight: 1.5 }}>
+                      {line.type} – {line.name}
+                    </Typography>
+                  ))}
+                </Box>
+              )}
+            />
+          </Box>
         </Box>
       </div>
 
