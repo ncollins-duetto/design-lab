@@ -21,7 +21,7 @@ See [`design-lab/CLAUDE.md`](design-lab/CLAUDE.md) for full instructions — inc
 
 ### Vercel (required for deploys)
 
-Add `NPM_TOKEN` in the Vercel project (Production + Preview). Same variable name as local, but a **different value** — the shared Artifactory pull token for CI, not your personal token from `.zshrc`. Ask whoever manages deploy secrets to set it up.
+Vercel uses `ARTIFACTORY_NPM_AUTH_TOKEN` (Production + Preview) with the shared CI pull token — not your personal `artifactory_npm_auth_token` from `.zshrc`.
 
 ## Branch workflow
 
