@@ -2,12 +2,14 @@
 
 import React, { useMemo, useRef, useState } from 'react'
 import {
+  Autocomplete,
   Box,
   Button,
   Checkbox,
   makeStyles,
   MenuItem,
   Select,
+  TextField,
   Tooltip,
   Typography,
 } from '@material-ui/core'
@@ -465,11 +467,50 @@ const ROOM_TYPE_OVERRIDES: Record<string, RoomTypeOverride[]> = {
   ],
 }
 
+const EXTERNAL_GROUP_QUOTATIONS = [
+  {
+    id: 'egq-001',
+    name: '17th Annual Duetto Family Reunion',
+    externalId: 'a054545000003msvoq23q523450000000445345',
+    hotel: 'Demo Hotel De Vincent',
+    lastModified: 'W, 6/18/25 at 12:12 PM',
+  },
+  {
+    id: 'egq-002',
+    name: 'Spring Corporate Retreat 2025',
+    externalId: 'b1234567890abcdef1234567890123456789012',
+    hotel: 'Luxury Beach Resort',
+    lastModified: 'T, 5/20/25 at 9:30 AM',
+  },
+  {
+    id: 'egq-003',
+    name: 'International Medical Conference',
+    externalId: 'c9876543210yxyxyxyxyxyxyxyxyxyxyxyxy',
+    hotel: 'Downtown Convention Center Hotel',
+    lastModified: 'T, 7/15/25 at 2:45 PM',
+  },
+  {
+    id: 'egq-004',
+    name: 'Wedding Reception - Smith & Johnson',
+    externalId: 'd5555555555555555555555555555555555555',
+    hotel: 'Grand Ballroom Hotel',
+    lastModified: 'F, 8/22/25 at 10:00 AM',
+  },
+  {
+    id: 'egq-005',
+    name: 'Executive Summit 2026',
+    externalId: 'e1234567890abcdef1234567890123456789abc',
+    hotel: 'Premium Business Resort',
+    lastModified: 'M, 9/10/25 at 3:15 PM',
+  },
+]
+
 export default function MinMaxBoundsPage() {
   const classes = useStyles()
   const gridRef = useRef<AgGridReact>(null)
   const [selectedRooms, setSelectedRooms] = useState<Set<string>>(new Set(MOCK_ROOM_TYPES))
   const [selectedSeason, setSelectedSeason] = useState('January 1 - December 31')
+  const [selectedQuotation, setSelectedQuotation] = useState<typeof EXTERNAL_GROUP_QUOTATIONS[0] | null>(null)
 
   const filteredRooms = useMemo(
     () => MOCK_ROOM_TYPES.filter((r) => selectedRooms.has(r)),
@@ -690,7 +731,49 @@ export default function MinMaxBoundsPage() {
             {activeLabel || ' '}
           </Typography>
         </div>
-        <Box display="flex" alignItems="center" gridGap={12}>
+        <Box display="flex" alignItems="center" gridGap={24} flexWrap="wrap">
+          <Box style={{ flex: 1, minWidth: 300 }}>
+            <Autocomplete
+              options={EXTERNAL_GROUP_QUOTATIONS}
+              getOptionLabel={(option) => option.name}
+              value={selectedQuotation}
+              onChange={(_, newValue) => setSelectedQuotation(newValue)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select External Group Quotation"
+                  placeholder="Search by name, external ID, or hotel..."
+                  variant="outlined"
+                  size="small"
+                />
+              )}
+              renderOption={(props, option) => (
+                <div {...props} style={{ fontSize: 13, padding: '12px 16px' }}>
+                  <Typography style={{ fontWeight: 600, fontSize: 13, color: '#1c1c1c' }}>
+                    {option.name}
+                  </Typography>
+                  <Typography style={{ fontSize: 12, color: '#4f5b60' }}>
+                    External ID: {option.externalId}
+                  </Typography>
+                  <Typography style={{ fontSize: 12, color: '#4f5b60' }}>
+                    Hotel: {option.hotel}
+                  </Typography>
+                  <Typography style={{ fontSize: 12, color: '#8fa7ab' }}>
+                    Last Modified: {option.lastModified}
+                  </Typography>
+                </div>
+              )}
+              filterOptions={(options, state) => {
+                const input = state.inputValue.toLowerCase()
+                return options.filter(
+                  (option) =>
+                    option.name.toLowerCase().includes(input) ||
+                    option.externalId.toLowerCase().includes(input) ||
+                    option.hotel.toLowerCase().includes(input)
+                )
+              }}
+            />
+          </Box>
           <Typography variant="subtitle2" style={{ color: '#4f5b60', whiteSpace: 'nowrap' }}>Seasons & Overrides</Typography>
           <Select
             value={selectedSeason}
