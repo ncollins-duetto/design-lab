@@ -564,7 +564,6 @@ export default function MinMaxBoundsPage() {
   const gridRef = useRef<AgGridReact>(null)
   const [selectedRooms, setSelectedRooms] = useState<Set<string>>(new Set(MOCK_ROOM_TYPES))
   const [selectedSeason, setSelectedSeason] = useState('January 1 - December 31')
-  const [selectedQuotation, setSelectedQuotation] = useState<typeof EXTERNAL_GROUP_QUOTATIONS[0] | null>(null)
 
   const filteredRooms = useMemo(
     () => MOCK_ROOM_TYPES.filter((r) => selectedRooms.has(r)),
@@ -786,48 +785,6 @@ export default function MinMaxBoundsPage() {
           </Typography>
         </div>
         <Box display="flex" alignItems="center" gridGap={24} flexWrap="wrap">
-          <Box style={{ flex: 1, minWidth: 300 }}>
-            <Autocomplete
-              options={EXTERNAL_GROUP_QUOTATIONS}
-              getOptionLabel={(option) => option.name}
-              value={selectedQuotation}
-              onChange={(_, newValue) => setSelectedQuotation(newValue)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Select External Group Quotation"
-                  placeholder="Search by name, external ID, or hotel..."
-                  variant="outlined"
-                  size="small"
-                />
-              )}
-              renderOption={(option) => (
-                <Box style={{ padding: '8px 4px', width: '100%' }}>
-                  <Typography style={{ fontWeight: 700, fontSize: 14, color: '#1c1c1c', marginBottom: 4 }}>
-                    {option.name}
-                  </Typography>
-                  <Typography style={{ fontSize: 13, color: '#4f5b60', lineHeight: 1.5 }}>
-                    External ID: {option.externalId}
-                  </Typography>
-                  <Typography style={{ fontSize: 13, color: '#4f5b60', lineHeight: 1.5 }}>
-                    Hotel: {option.hotel}
-                  </Typography>
-                  <Typography style={{ fontSize: 13, color: '#4f5b60', lineHeight: 1.5 }}>
-                    Last Modified: {option.lastModified}
-                  </Typography>
-                </Box>
-              )}
-              filterOptions={(options, state) => {
-                const input = state.inputValue.toLowerCase()
-                return options.filter(
-                  (option) =>
-                    option.name.toLowerCase().includes(input) ||
-                    option.externalId.toLowerCase().includes(input) ||
-                    option.hotel.toLowerCase().includes(input)
-                )
-              }}
-            />
-          </Box>
           <Box style={{ minWidth: 300 }}>
             <Autocomplete
               options={SEASON_OPTIONS}
