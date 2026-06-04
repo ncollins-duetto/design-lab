@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "preinstall": "sed \"s/NPM_TOKEN_PLACEHOLDER/$NPM_TOKEN/g\" .npmrc.template > .npmrc",
+    "preinstall": "sh scripts/setup-npmrc.sh",
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
