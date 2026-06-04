@@ -803,6 +803,10 @@ export default function MinMaxBoundsPage() {
                   placeholder="Search by season, override, or date range..."
                   variant="outlined"
                   size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    style: { padding: '0 8px', height: 32, fontSize: 13 },
+                  }}
                 />
               )}
               renderOption={(option) => (
