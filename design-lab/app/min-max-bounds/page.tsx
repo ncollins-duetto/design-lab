@@ -533,21 +533,21 @@ const buildSeasonOptions = () => {
         id: `season-override::${so.label}::${so.dateRange}::${season}`,
         type: 'season-override',
         name: `${so.label} (${so.dateRange})`,
-        group: 'Season Override',
+        group: 'Override',
         value: `season-override::${so.label}::${so.dateRange}::${season}`,
         description: so.dateRange,
       })
     })
   })
 
-  // Add room type overrides
+  // Add room type overrides (merged into Override group)
   Object.entries(ROOM_TYPE_OVERRIDES).forEach(([season, overrides]) => {
     overrides.forEach((rto) => {
       options.push({
         id: `room-override::${rto.label}::${rto.dateRange}::${season}`,
         type: 'room-override',
         name: `${rto.label} (${rto.dateRange})`,
-        group: 'Override overlap',
+        group: 'Override',
         value: `room-override::${rto.label}::${rto.dateRange}::${season}`,
         description: rto.dateRange,
       })
