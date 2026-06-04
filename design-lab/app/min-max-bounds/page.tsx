@@ -505,10 +505,20 @@ const EXTERNAL_GROUP_QUOTATIONS = [
   },
 ]
 
-const buildSeasonOptions = () => {
-  const options: any[] = []
+type SeasonOptionLine = { type: 'Segment Override' | 'Room Type Overrides'; name: string; value: string }
+type SeasonOption = {
+  id: string
+  group: 'Season' | 'Override'
+  name: string
+  value: string
+  primary: string
+  lines: SeasonOptionLine[]
+}
 
-  // Add seasons
+const buildSeasonOptions = (): SeasonOption[] => {
+  const options: SeasonOption[] = []
+
+  // Add base seasons
   const seasons = [
     'January 1 - December 31',
     'January 1 - April 30',
@@ -519,38 +529,53 @@ const buildSeasonOptions = () => {
   seasons.forEach((season) => {
     options.push({
       id: `season::${season}`,
-      type: 'season',
-      name: season,
       group: 'Season',
+      name: season,
       value: season,
+      primary: season,
+      lines: [],
     })
   })
 
-  // Add season overrides
+  // Group overrides by dateRange
+  const overrideByDate: Record<string, { season?: string; so?: { label: string; season: string }; rto?: { label: string; season: string } }> = {}
+
   Object.entries(SEASON_OVERRIDES).forEach(([season, overrides]) => {
     overrides.forEach((so) => {
-      options.push({
-        id: `season-override::${so.label}::${so.dateRange}::${season}`,
-        type: 'season-override',
-        name: `${so.label} (${so.dateRange})`,
-        group: 'Override',
-        value: `season-override::${so.label}::${so.dateRange}::${season}`,
-        description: so.dateRange,
-      })
+      if (!overrideByDate[so.dateRange]) overrideByDate[so.dateRange] = {}
+      overrideByDate[so.dateRange].so = { label: so.label, season }
     })
   })
 
-  // Add room type overrides (merged into Override group)
   Object.entries(ROOM_TYPE_OVERRIDES).forEach(([season, overrides]) => {
     overrides.forEach((rto) => {
-      options.push({
-        id: `room-override::${rto.label}::${rto.dateRange}::${season}`,
-        type: 'room-override',
-        name: `${rto.label} (${rto.dateRange})`,
-        group: 'Override',
-        value: `room-override::${rto.label}::${rto.dateRange}::${season}`,
-        description: rto.dateRange,
-      })
+      if (!overrideByDate[rto.dateRange]) overrideByDate[rto.dateRange] = {}
+      overrideByDate[rto.dateRange].rto = { label: rto.label, season }
+    })
+  })
+
+  Object.entries(overrideByDate).forEach(([dateRange, entry]) => {
+    const lines: SeasonOptionLine[] = []
+    let primaryValue = ''
+
+    if (entry.so) {
+      const v = `season-override::${entry.so.label}::${dateRange}::${entry.so.season}`
+      lines.push({ type: 'Segment Override', name: entry.so.label, value: v })
+      primaryValue = v
+    }
+    if (entry.rto) {
+      const v = `room-override::${entry.rto.label}::${dateRange}::${entry.rto.season}`
+      lines.push({ type: 'Room Type Overrides', name: entry.rto.label, value: v })
+      if (!primaryValue) primaryValue = v
+    }
+
+    options.push({
+      id: `override::${dateRange}`,
+      group: 'Override',
+      name: dateRange,
+      value: primaryValue,
+      primary: dateRange,
+      lines,
     })
   })
 
@@ -812,14 +837,14 @@ export default function MinMaxBoundsPage() {
               )}
               renderOption={(option) => (
                 <Box style={{ padding: '8px 4px', width: '100%' }}>
-                  <Typography style={{ fontWeight: 700, fontSize: 14, color: '#1c1c1c', marginBottom: option.description ? 4 : 0 }}>
-                    {option.name}
+                  <Typography style={{ fontWeight: 700, fontSize: 14, color: '#1c1c1c', marginBottom: option.lines.length > 0 ? 4 : 0 }}>
+                    {option.primary}
                   </Typography>
-                  {option.description && (
-                    <Typography style={{ fontSize: 13, color: '#4f5b60', lineHeight: 1.5 }}>
-                      {option.description}
+                  {option.lines.map((line: SeasonOptionLine, idx: number) => (
+                    <Typography key={idx} style={{ fontSize: 13, color: '#4f5b60', lineHeight: 1.5 }}>
+                      {line.type} – {line.name}
                     </Typography>
-                  )}
+                  ))}
                 </Box>
               )}
             />
