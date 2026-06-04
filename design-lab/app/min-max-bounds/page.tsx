@@ -801,21 +801,21 @@ export default function MinMaxBoundsPage() {
                   size="small"
                 />
               )}
-              renderOption={(props, option) => (
-                <div {...props} style={{ fontSize: 13, padding: '12px 16px' }}>
-                  <Typography style={{ fontWeight: 600, fontSize: 13, color: '#1c1c1c' }}>
+              renderOption={(option) => (
+                <Box style={{ padding: '8px 4px', width: '100%' }}>
+                  <Typography style={{ fontWeight: 700, fontSize: 14, color: '#1c1c1c', marginBottom: 4 }}>
                     {option.name}
                   </Typography>
-                  <Typography style={{ fontSize: 12, color: '#4f5b60' }}>
+                  <Typography style={{ fontSize: 13, color: '#4f5b60', lineHeight: 1.5 }}>
                     External ID: {option.externalId}
                   </Typography>
-                  <Typography style={{ fontSize: 12, color: '#4f5b60' }}>
+                  <Typography style={{ fontSize: 13, color: '#4f5b60', lineHeight: 1.5 }}>
                     Hotel: {option.hotel}
                   </Typography>
-                  <Typography style={{ fontSize: 12, color: '#8fa7ab' }}>
+                  <Typography style={{ fontSize: 13, color: '#4f5b60', lineHeight: 1.5 }}>
                     Last Modified: {option.lastModified}
                   </Typography>
-                </div>
+                </Box>
               )}
               filterOptions={(options, state) => {
                 const input = state.inputValue.toLowerCase()
@@ -845,17 +845,17 @@ export default function MinMaxBoundsPage() {
                   size="small"
                 />
               )}
-              renderOption={(props, option) => (
-                <div {...props} style={{ fontSize: 13, padding: '12px 16px' }}>
-                  <Typography style={{ fontWeight: 600, fontSize: 13, color: '#1c1c1c' }}>
+              renderOption={(option) => (
+                <Box style={{ padding: '8px 4px', width: '100%' }}>
+                  <Typography style={{ fontWeight: 700, fontSize: 14, color: '#1c1c1c', marginBottom: option.description ? 4 : 0 }}>
                     {option.name}
                   </Typography>
                   {option.description && (
-                    <Typography style={{ fontSize: 12, color: '#4f5b60' }}>
+                    <Typography style={{ fontSize: 13, color: '#4f5b60', lineHeight: 1.5 }}>
                       {option.description}
                     </Typography>
                   )}
-                </div>
+                </Box>
               )}
             />
           </Box>
