@@ -12,6 +12,7 @@ export type TileDecoration =
   | 'resorts'
   | 'pricing'
   | 'exploration'
+  | 'tour-operator'
 
 export interface TileProps {
   href: string
@@ -228,6 +229,48 @@ function Decoration({ kind }: { kind: TileDecoration }) {
       </svg>
     )
   }
+<<<<<<< HEAD
+  if (kind === 'tour-operator') {
+    return (
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="rg-to" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#c4ff45" stopOpacity="0.85" />
+            <stop offset="60%" stopColor="#7fbf2e" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#0e2a2c" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="100" r="78" fill="url(#rg-to)" />
+        <g fill="none" stroke="#c4ff45" strokeWidth="2.5">
+          {/* Hotel building */}
+          <rect x="50" y="70" width="70" height="70" rx="4" />
+          {/* Door */}
+          <rect x="78" y="128" width="12" height="12" rx="1" />
+          {/* Windows - row 1 */}
+          <rect x="58" y="80" width="10" height="10" rx="1" />
+          <rect x="75" y="80" width="10" height="10" rx="1" />
+          <rect x="92" y="80" width="10" height="10" rx="1" />
+          {/* Windows - row 2 */}
+          <rect x="58" y="98" width="10" height="10" rx="1" />
+          <rect x="75" y="98" width="10" height="10" rx="1" />
+          <rect x="92" y="98" width="10" height="10" rx="1" />
+          {/* Windows - row 3 */}
+          <rect x="58" y="116" width="10" height="10" rx="1" />
+          <rect x="92" y="116" width="10" height="10" rx="1" />
+          {/* Roof peak */}
+          <polyline points="50,70 85,50 120,70" />
+          {/* Palm tree */}
+          <line x1="125" y1="130" x2="125" y2="100" strokeLinecap="round" />
+          <path d="M 125 100 Q 115 92 110 95" />
+          <path d="M 125 100 Q 135 92 140 95" />
+          <path d="M 125 105 Q 115 100 110 105" />
+          <path d="M 125 105 Q 135 100 140 105" />
+        </g>
+      </svg>
+    )
+  }
+=======
+>>>>>>> origin/main
   if (kind === 'exploration') {
     return (
       <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">

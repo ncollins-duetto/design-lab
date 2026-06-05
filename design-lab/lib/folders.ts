@@ -5,6 +5,7 @@ export type TeamSlug =
   | 'resorts'
   | 'pricing'
   | 'detection-exploration'
+  | 'special-projects'
 
 export const ALL_TEAMS: TeamSlug[] = [
   'strategy-team',
@@ -13,6 +14,10 @@ export const ALL_TEAMS: TeamSlug[] = [
   'resorts',
   'pricing',
   'detection-exploration',
+<<<<<<< HEAD
+  'special-projects',
+=======
+>>>>>>> origin/main
 ]
 
 // Short labels — no "Team" suffix
@@ -23,6 +28,10 @@ export const TEAM_LABELS: Record<TeamSlug, string> = {
   'resorts': 'Resorts',
   'pricing': 'Pricing',
   'detection-exploration': 'Detection',
+<<<<<<< HEAD
+  'special-projects': 'Special Projects',
+=======
+>>>>>>> origin/main
 }
 
 export type Project = {
@@ -33,7 +42,7 @@ export type Project = {
   description: string
   committedAt: number   // Unix ms — used for sort order
   committed: string     // Human-readable label
-  decoration: 'rates' | 'sales-room' | 'min-max'
+  decoration: 'rates' | 'sales-room' | 'min-max' | 'tour-operator'
 }
 
 const NOW = Date.now()
@@ -70,6 +79,16 @@ export const PROJECTS: Project[] = [
     committedAt: NOW - 3 * DAYS,
     committed: 'Committed 3 days ago',
     decoration: 'sales-room',
+  },
+  {
+    slug: 'tour-operator',
+    name: 'Tour Operator',
+    href: '/tour-operator',
+    team: 'special-projects',
+    description: 'Tour operator demand calendar — monthly and weekly views with metrics, segments, heatmap, and close-out flows.',
+    committedAt: NOW - 1 * HOURS,
+    committed: 'Committed 1 hour ago',
+    decoration: 'tour-operator',
   },
   {
     slug: 'manage-rates-multi',
