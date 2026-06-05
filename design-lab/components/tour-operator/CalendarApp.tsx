@@ -5,6 +5,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
 import { IconButton, Button } from '@material-ui/core';
 import Paper from '@mui/material/Paper';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -276,6 +277,28 @@ export function CalendarApp() {
     </Button>
   );
 
+  const weekDatePicker = (
+    <TextField
+      type="date"
+      size="small"
+      variant="outlined"
+      defaultValue={`2026-${String(weekAnchor.month).padStart(2, '0')}-${String(weekAnchor.day).padStart(2, '0')}`}
+      onChange={(e) => {
+        const [year, month, day] = e.target.value.split('-').map(Number);
+        if (year && month && day) {
+          shiftWeekAnchor(month, day);
+        }
+      }}
+      sx={{
+        width: 140,
+        '& input': {
+          fontSize: 14,
+          padding: '8px 12px',
+        },
+      }}
+    />
+  );
+
   const dateShuffler = viewMode === 'monthly' ? (
     <Box className="wv-date-shuffler">
       <IconButton
@@ -301,7 +324,7 @@ export function CalendarApp() {
       <IconButton className="wv-nav-btn" onClick={() => shiftWeek(-1)} aria-label="Previous day" size="small">
         <ChevronLeftIcon />
       </IconButton>
-      {datePickerTrigger}
+      {weekDatePicker}
       <IconButton className="wv-nav-btn" onClick={() => shiftWeek(1)} aria-label="Next day" size="small">
         <ChevronRightIcon />
       </IconButton>
