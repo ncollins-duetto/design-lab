@@ -76,6 +76,38 @@ const useSideNavStyles = makeStyles((theme) => ({
     minWidth: 0,
     overflow: 'auto',
   },
+  pageHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing(2, 3, 1),
+    background: theme.palette.background.default,
+  },
+  pageTitle: {
+    fontSize: '1.125rem',
+    fontWeight: 600,
+    lineHeight: 1.4,
+    color: (theme.palette as any).text?.secondary ?? '#4f5b60',
+  },
+  contentWrapper: {
+    padding: theme.spacing(3, 3, 2),
+    background: theme.palette.background.default,
+    flex: 1,
+    minWidth: 0,
+    overflow: 'auto',
+  },
+  calendarCard: {
+    background: '#ffffff',
+    borderRadius: 4,
+    border: `1px solid ${theme.palette.divider}`,
+  },
+  pageFooter: {
+    padding: theme.spacing(2, 3),
+    borderTop: `1px solid ${theme.palette.divider}`,
+    background: theme.palette.background.default,
+    fontSize: 12,
+    color: theme.palette.text.secondary,
+  },
 }))
 
 export default function TourOperatorPage() {
@@ -84,7 +116,7 @@ export default function TourOperatorPage() {
 
   return (
     <AppShell
-      activeNav="pricing-strategy"
+      activeNav="tour-operator"
       breadcrumbs={[
         { label: 'Special Projects', href: '/' },
         { label: 'Tour Operator' },
@@ -108,25 +140,39 @@ export default function TourOperatorPage() {
         </aside>
 
         <main className={classes.main}>
-          <MuiV5ThemeProvider theme={appTheme}>
-            <CssBaseline />
-            <CalendarProvider>
-              <Box
-                component="div"
-                className="calendar-page"
-                sx={{ minHeight: '100%', p: '24px' }}
-                id="calendar-root"
-              >
-                {active === 'dashboard' ? (
-                  <CalendarApp />
-                ) : (
-                  <Box sx={{ p: 6, color: 'text.secondary' }}>
-                    {SIDE_NAV.find((n) => n.key === active)?.label} — coming soon.
-                  </Box>
-                )}
-              </Box>
-            </CalendarProvider>
-          </MuiV5ThemeProvider>
+          {active === 'dashboard' ? (
+            <>
+              <div className={classes.pageHeader}>
+                <h2 className={classes.pageTitle}>Tour Operator Calendar</h2>
+              </div>
+
+              <div className={classes.contentWrapper}>
+                <div className={classes.calendarCard}>
+                  <MuiV5ThemeProvider theme={appTheme}>
+                    <CssBaseline />
+                    <CalendarProvider>
+                      <Box
+                        component="div"
+                        className="calendar-page"
+                        sx={{ minHeight: '100%', p: '24px' }}
+                        id="calendar-root"
+                      >
+                        <CalendarApp />
+                      </Box>
+                    </CalendarProvider>
+                  </MuiV5ThemeProvider>
+                </div>
+              </div>
+
+              <div className={classes.pageFooter}>
+                Legend: Green = available, Red = sold out, Gray = closed for sales
+              </div>
+            </>
+          ) : (
+            <Box sx={{ p: 6, color: 'text.secondary' }}>
+              {SIDE_NAV.find((n) => n.key === active)?.label} — coming soon.
+            </Box>
+          )}
         </main>
       </div>
     </AppShell>
