@@ -42,6 +42,16 @@ const DAYS  = 24 * HOURS
 
 export const PROJECTS: Project[] = [
   {
+    slug: 'quote-summary',
+    name: 'Group Quote Summary',
+    href: '/quote-summary',
+    team: 'group',
+    description: 'Summary view for group quotes, with an interactive step flow between Booking Details and Summary.',
+    committedAt: NOW - 1 * HOURS,
+    committed: 'Committed 1 hour ago',
+    decoration: 'sales-room',
+  },
+  {
     slug: 'min-max-bounds',
     name: 'Min/Max Bounds',
     href: '/min-max-bounds',
