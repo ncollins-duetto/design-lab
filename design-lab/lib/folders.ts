@@ -14,7 +14,10 @@ export const ALL_TEAMS: TeamSlug[] = [
   'resorts',
   'pricing',
   'detection-exploration',
+<<<<<<< HEAD
   'special-projects',
+=======
+>>>>>>> origin/main
 ]
 
 // Short labels — no "Team" suffix
@@ -25,7 +28,10 @@ export const TEAM_LABELS: Record<TeamSlug, string> = {
   'resorts': 'Resorts',
   'pricing': 'Pricing',
   'detection-exploration': 'Detection',
+<<<<<<< HEAD
   'special-projects': 'Special Projects',
+=======
+>>>>>>> origin/main
 }
 
 export type Project = {

@@ -229,6 +229,7 @@ function Decoration({ kind }: { kind: TileDecoration }) {
       </svg>
     )
   }
+<<<<<<< HEAD
   if (kind === 'tour-operator') {
     return (
       <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
@@ -268,6 +269,8 @@ function Decoration({ kind }: { kind: TileDecoration }) {
       </svg>
     )
   }
+=======
+>>>>>>> origin/main
   if (kind === 'exploration') {
     return (
       <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
