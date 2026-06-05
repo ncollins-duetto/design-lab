@@ -240,16 +240,30 @@ function Decoration({ kind }: { kind: TileDecoration }) {
           </radialGradient>
         </defs>
         <circle cx="100" cy="100" r="78" fill="url(#rg-to)" />
-        <g fill="none" stroke="#c4ff45" strokeWidth="3">
-          <rect x="44" y="58" width="112" height="92" rx="8" />
-          <line x1="44" y1="84" x2="156" y2="84" />
-          <line x1="72" y1="46" x2="72" y2="70" strokeLinecap="round" />
-          <line x1="128" y1="46" x2="128" y2="70" strokeLinecap="round" />
-          <circle cx="74" cy="108" r="4" fill="#c4ff45" />
-          <circle cx="100" cy="108" r="4" fill="#c4ff45" />
-          <circle cx="126" cy="108" r="4" fill="#c4ff45" />
-          <circle cx="74" cy="130" r="4" fill="#c4ff45" />
-          <circle cx="100" cy="130" r="4" fill="#c4ff45" />
+        <g fill="none" stroke="#c4ff45" strokeWidth="2.5">
+          {/* Hotel building */}
+          <rect x="50" y="70" width="70" height="70" rx="4" />
+          {/* Door */}
+          <rect x="78" y="128" width="12" height="12" rx="1" />
+          {/* Windows - row 1 */}
+          <rect x="58" y="80" width="10" height="10" rx="1" />
+          <rect x="75" y="80" width="10" height="10" rx="1" />
+          <rect x="92" y="80" width="10" height="10" rx="1" />
+          {/* Windows - row 2 */}
+          <rect x="58" y="98" width="10" height="10" rx="1" />
+          <rect x="75" y="98" width="10" height="10" rx="1" />
+          <rect x="92" y="98" width="10" height="10" rx="1" />
+          {/* Windows - row 3 */}
+          <rect x="58" y="116" width="10" height="10" rx="1" />
+          <rect x="92" y="116" width="10" height="10" rx="1" />
+          {/* Roof peak */}
+          <polyline points="50,70 85,50 120,70" />
+          {/* Palm tree */}
+          <line x1="125" y1="130" x2="125" y2="100" strokeLinecap="round" />
+          <path d="M 125 100 Q 115 92 110 95" />
+          <path d="M 125 100 Q 135 92 140 95" />
+          <path d="M 125 105 Q 115 100 110 105" />
+          <path d="M 125 105 Q 135 100 140 105" />
         </g>
       </svg>
     )
