@@ -12,6 +12,7 @@ export type TileDecoration =
   | 'resorts'
   | 'pricing'
   | 'exploration'
+  | 'tour-operator'
 
 export interface TileProps {
   href: string
@@ -224,6 +225,31 @@ function Decoration({ kind }: { kind: TileDecoration }) {
           <circle cx="80" cy="100" r="8" fill="#c4ff45" />
           <circle cx="120" cy="100" r="8" fill="#c4ff45" />
           <line x1="88" y1="100" x2="112" y2="100" />
+        </g>
+      </svg>
+    )
+  }
+  if (kind === 'tour-operator') {
+    return (
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="rg-to" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#c4ff45" stopOpacity="0.85" />
+            <stop offset="60%" stopColor="#7fbf2e" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#0e2a2c" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="100" r="78" fill="url(#rg-to)" />
+        <g fill="none" stroke="#c4ff45" strokeWidth="3">
+          <rect x="44" y="58" width="112" height="92" rx="8" />
+          <line x1="44" y1="84" x2="156" y2="84" />
+          <line x1="72" y1="46" x2="72" y2="70" strokeLinecap="round" />
+          <line x1="128" y1="46" x2="128" y2="70" strokeLinecap="round" />
+          <circle cx="74" cy="108" r="4" fill="#c4ff45" />
+          <circle cx="100" cy="108" r="4" fill="#c4ff45" />
+          <circle cx="126" cy="108" r="4" fill="#c4ff45" />
+          <circle cx="74" cy="130" r="4" fill="#c4ff45" />
+          <circle cx="100" cy="130" r="4" fill="#c4ff45" />
         </g>
       </svg>
     )
