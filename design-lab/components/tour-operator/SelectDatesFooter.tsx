@@ -1,8 +1,8 @@
 'use client';
 
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import { Button } from '@material-ui/core';
 
 type Props = {
   visible: boolean;
@@ -26,13 +26,20 @@ export function SelectDatesFooter({ visible, selectedCount, onCancel, onConfirm 
           {label}
         </Typography>
         <Box className="mo-sel-footer-actions">
-          <Button className="mo-sel-footer-cancel" color="primary" onClick={onCancel}>
+          <Button
+            className="mo-sel-footer-cancel"
+            variant="outlined"
+            color="primary"
+            size="medium"
+            onClick={onCancel}
+          >
             Cancel
           </Button>
           <Button
             className="mo-sel-footer-action"
             variant="contained"
             color="primary"
+            size="medium"
             disabled={selectedCount === 0}
             onClick={onConfirm}
           >

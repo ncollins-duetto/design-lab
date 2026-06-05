@@ -5,6 +5,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import SearchIcon from '@mui/icons-material/Search';
 import Popover from '@mui/material/Popover';
+import { Button } from '@material-ui/core';
 import { FILTER_SECTIONS, type FilterGroupId, type FilterState } from '@/lib/tour-operator/data/filterOptions';
 import { DuettoCheckbox, type DuettoCheckboxState } from '@/components/tour-operator/ui/DuettoCheckbox';
 
@@ -246,41 +247,27 @@ export function FiltersDropdown({
           background: '#fff',
         }}
       >
-        <button
+        <Button
           type="button"
+          variant="text"
+          color="primary"
+          size="medium"
           onClick={onReset}
-          style={{
-            height: 32,
-            padding: '0 12px',
-            border: 'none',
-            background: 'transparent',
-            color: '#006461',
-            fontSize: 12,
-            fontFamily: 'inherit',
-            cursor: 'pointer',
-            borderRadius: 4,
-          }}
         >
           Reset
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="contained"
+          color="primary"
+          size="medium"
           onClick={onApply}
           style={{
-            height: 32,
             minWidth: 110,
-            padding: '0 12px',
-            border: 'none',
-            borderRadius: 4,
-            background: '#006461',
-            color: '#fff',
-            fontSize: 12,
-            fontFamily: 'inherit',
-            cursor: 'pointer',
           }}
         >
           Apply
-        </button>
+        </Button>
       </div>
     </Popover>
   );

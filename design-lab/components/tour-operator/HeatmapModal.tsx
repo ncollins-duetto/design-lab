@@ -8,7 +8,7 @@ import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
+import { Button as DuettoButton, IconButton as DuettoIconButton } from '@material-ui/core';
 import Checkbox from '@mui/material/Checkbox';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -17,7 +17,6 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
@@ -202,9 +201,9 @@ export function HeatmapModal({ open, draft, onChange, onClose, onReset: _onReset
         }}
       >
         Heatmap
-        <IconButton aria-label="Close" onClick={onClose} size="small" sx={{ p: 0, color: '#1c1c1c' }}>
-          <CloseIcon sx={{ fontSize: 24 }} />
-        </IconButton>
+        <DuettoIconButton aria-label="Close" onClick={onClose} size="small" style={{ padding: 0, color: '#1c1c1c' }}>
+          <CloseIcon style={{ fontSize: 24 }} />
+        </DuettoIconButton>
       </DialogTitle>
 
       <DialogContent sx={{ p: 3, pt: 0, mt: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -415,40 +414,23 @@ export function HeatmapModal({ open, draft, onChange, onClose, onReset: _onReset
       <DialogActions sx={{ flexDirection: 'column', alignItems: 'stretch', gap: 3, p: 3, pt: 0 }}>
         <Divider sx={{ borderColor: '#dde1e2' }} />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button
+          <DuettoButton
+            variant="outlined"
+            color="primary"
+            size="medium"
             onClick={onClose}
-            sx={{
-              height: 36,
-              px: 2,
-              color: '#006461',
-              fontSize: 14,
-              textTransform: 'none',
-              fontWeight: 400,
-              borderRadius: '4px',
-              '&:hover': { bgcolor: '#f0fdf9' },
-            }}
           >
             Cancel
-          </Button>
-          <Button
+          </DuettoButton>
+          <DuettoButton
             variant="contained"
+            color="primary"
+            size="medium"
             disabled={!draft.type}
             onClick={onApply}
-            sx={{
-              height: 36,
-              px: 2,
-              bgcolor: '#006461',
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 400,
-              textTransform: 'none',
-              borderRadius: '4px',
-              boxShadow: 'none',
-              '&:hover': { bgcolor: '#004d4a', boxShadow: 'none' },
-            }}
           >
             Confirm
-          </Button>
+          </DuettoButton>
         </Box>
       </DialogActions>
     </Dialog>

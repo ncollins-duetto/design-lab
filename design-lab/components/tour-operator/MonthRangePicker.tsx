@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
+import { IconButton, Button } from '@material-ui/core';
 import Popover from '@mui/material/Popover';
 import Typography from '@mui/material/Typography';
 import { ALL_MONTHS } from '@/lib/tour-operator/data/calendarData';
@@ -365,9 +365,9 @@ export function MonthRangePicker({
                 size="small"
                 onClick={() => setLeftYear((y) => y - 1)}
                 aria-label="Previous year"
-                sx={{ width: 24, height: 24, color: '#585858' }}
+                style={{ width: 24, height: 24, color: '#585858' }}
               >
-                <ChevronLeftIcon sx={{ fontSize: 18 }} />
+                <ChevronLeftIcon style={{ fontSize: 18 }} />
               </IconButton>
               <Typography
                 sx={{
@@ -424,9 +424,9 @@ export function MonthRangePicker({
                 size="small"
                 onClick={() => setLeftYear((y) => y + 1)}
                 aria-label="Next year"
-                sx={{ width: 24, height: 24, color: '#585858' }}
+                style={{ width: 24, height: 24, color: '#585858' }}
               >
-                <ChevronRightIcon sx={{ fontSize: 18 }} />
+                <ChevronRightIcon style={{ fontSize: 18 }} />
               </IconButton>
             </Box>
             <YearMonthGrid
@@ -495,51 +495,28 @@ export function MonthRangePicker({
             {footerLabel}
           </Typography>
           <Box sx={{ display: 'flex', gap: '8px' }}>
-            <Box
-              component="button"
+            <Button
               type="button"
+              variant="outlined"
+              color="primary"
+              size="medium"
               onClick={onCancel}
-              sx={{
-                height: 32,
-                px: '17px',
-                border: '1px solid #dde1e2',
-                borderRadius: '4px',
-                bgcolor: '#fff',
-                color: '#4f5b60',
-                fontSize: 13,
-                lineHeight: '22.75px',
-                fontFamily: 'Lato, sans-serif',
-                cursor: 'pointer',
-                '&:hover': { bgcolor: '#f5f5f5' },
-              }}
             >
               Cancel
-            </Box>
-            <Box
-              component="button"
+            </Button>
+            <Button
               type="button"
+              variant="contained"
+              color="primary"
+              size="medium"
               disabled={!ready}
               onClick={() => {
                 if (!ready || startIdx === null || endIdx === null) return;
                 onApply(Math.min(startIdx, endIdx), Math.max(startIdx, endIdx));
               }}
-              sx={{
-                height: 32,
-                px: '16px',
-                border: 'none',
-                borderRadius: '4px',
-                bgcolor: '#006461',
-                color: '#fff',
-                fontSize: 13,
-                lineHeight: '22.75px',
-                fontFamily: 'Lato, sans-serif',
-                cursor: ready ? 'pointer' : 'not-allowed',
-                opacity: ready ? 1 : 0.5,
-                '&:hover': { bgcolor: '#004d4a' },
-              }}
             >
               Apply
-            </Box>
+            </Button>
           </Box>
         </Box>
       </Box>

@@ -11,6 +11,7 @@ import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { createPortal } from 'react-dom';
 import { useCalendar } from '@/lib/tour-operator/context/CalendarContext';
 import { dayKey } from '@/lib/tour-operator/calendar/metrics';
+import { Button, IconButton } from '@material-ui/core';
 
 type CloseType = 'full' | 'los' | 'reopen';
 
@@ -244,9 +245,9 @@ export function CloseOutModal({ open, selectedDays, onClose, onComplete }: Props
           <span className="co2-title" id={titleId}>
             Close or re-open sales
           </span>
-          <button type="button" className="co2-close" onClick={onClose} aria-label="Close">
-            <CloseIcon sx={{ fontSize: 20 }} />
-          </button>
+          <IconButton type="button" size="small" className="co2-close" onClick={onClose} aria-label="Close">
+            <CloseIcon style={{ fontSize: 20 }} />
+          </IconButton>
         </div>
 
         <div className="co2-body">
@@ -458,12 +459,26 @@ export function CloseOutModal({ open, selectedDays, onClose, onComplete }: Props
         <div className="co2-footer">
           <div className="co2-footer-divider" />
           <div className="co2-footer-btns">
-            <button type="button" className="co2-btn-cancel" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outlined"
+              color="primary"
+              size="medium"
+              className="co2-btn-cancel"
+              onClick={onClose}
+            >
               Cancel
-            </button>
-            <button type="button" className="co2-btn-confirm" onClick={handleConfirm}>
+            </Button>
+            <Button
+              type="button"
+              variant="contained"
+              color="primary"
+              size="medium"
+              className="co2-btn-confirm"
+              onClick={handleConfirm}
+            >
               Confirm
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -7,7 +7,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import TodayIcon from '@mui/icons-material/Today';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Checkbox from '@mui/material/Checkbox';
-import IconButton from '@mui/material/IconButton';
+import { IconButton } from '@material-ui/core';
 import { useCalendar } from '@/lib/tour-operator/context/CalendarContext';
 import {
   buildCellMetrics,
@@ -152,7 +152,7 @@ export function CalendarDay({
               }}
               aria-label="Quick view"
             >
-              <VisibilityIcon sx={{ fontSize: 14 }} />
+              <VisibilityIcon style={{ fontSize: 14 }} />
             </IconButton>
           </span>
         </div>

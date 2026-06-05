@@ -5,7 +5,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
+import { IconButton, Button } from '@material-ui/core';
 import Paper from '@mui/material/Paper';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CompareMode } from '@/lib/tour-operator/calendar/metrics';
@@ -260,34 +260,20 @@ export function CalendarApp() {
   const weekNavLabel = weekRangeLabel(getWeekDays(2026, weekAnchor.month, weekAnchor.day));
 
   const datePickerTrigger = (
-    <Box
-      component="button"
-      type="button"
-      ref={setDateAnchor}
+    <Button
+      ref={setDateAnchor as any}
+      variant="text"
+      color="primary"
+      size="small"
+      className="wv-date-trigger-btn"
+      startIcon={<DateRangeIcon style={{ fontSize: 18, color: '#4f5b60' }} />}
       onClick={(e) => {
         e.stopPropagation();
         setDatePickerOpen((o) => !o);
       }}
-      sx={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 1,
-        height: 32,
-        px: 1.5,
-        bgcolor: 'transparent',
-        border: 'none',
-        borderRadius: '4px',
-        fontFamily: 'inherit',
-        fontSize: 14,
-        color: '#1c1c1c',
-        cursor: 'pointer',
-        whiteSpace: 'nowrap',
-        '&:hover': { bgcolor: '#f5f5f5' },
-      }}
     >
-      <DateRangeIcon sx={{ fontSize: 18, color: '#4f5b60' }} />
-      <span>{viewMode === 'monthly' ? dateLabel : weekNavLabel}</span>
-    </Box>
+      {viewMode === 'monthly' ? dateLabel : weekNavLabel}
+    </Button>
   );
 
   const dateShuffler = viewMode === 'monthly' ? (
@@ -327,22 +313,28 @@ export function CalendarApp() {
       <Box className="ds-tab-bar__trailing-inner">
         {dateShuffler}
         <div className="wv-date-acc-controls">
-          <button
+          <Button
             type="button"
+            variant="text"
+            color="primary"
+            size="small"
             className="wv-acc-action-btn"
+            startIcon={<UnfoldLessIcon style={{ fontSize: 18 }} aria-hidden />}
             onClick={() => setWbCollapsed(wbSetAllCollapsed(wbRows, true))}
           >
-            <UnfoldLessIcon sx={{ fontSize: 18 }} aria-hidden />
             Close All
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="text"
+            color="primary"
+            size="small"
             className="wv-acc-action-btn"
+            startIcon={<UnfoldMoreIcon style={{ fontSize: 18 }} aria-hidden />}
             onClick={() => setWbCollapsed(wbSetAllCollapsed(wbRows, false))}
           >
-            <UnfoldMoreIcon sx={{ fontSize: 18 }} aria-hidden />
             Open All
-          </button>
+          </Button>
         </div>
       </Box>
     ) : (

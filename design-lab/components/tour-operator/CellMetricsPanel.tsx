@@ -3,6 +3,7 @@
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SearchIcon from '@mui/icons-material/Search';
 import Popover from '@mui/material/Popover';
+import { Button } from '@material-ui/core';
 import { useEffect, useMemo, useState } from 'react';
 import {
   METRIC_TREE,
@@ -242,12 +243,26 @@ export function CellMetricsPanel({
         </section>
 
         <footer className="cal-filters-footer cal-metrics-footer">
-          <button type="button" className="cal-metrics-reset" onClick={onReset}>
+          <Button
+            type="button"
+            variant="text"
+            color="primary"
+            size="medium"
+            className="cal-metrics-reset"
+            onClick={onReset}
+          >
             Reset
-          </button>
-          <button type="button" className="cal-filter-apply" onClick={onApply}>
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            color="primary"
+            size="medium"
+            className="cal-filter-apply"
+            onClick={onApply}
+          >
             Apply
-          </button>
+          </Button>
         </footer>
       </div>
     </Popover>

@@ -8,8 +8,8 @@ import LockIcon from '@mui/icons-material/Lock';
 import TuneIcon from '@mui/icons-material/Tune';
 import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import { Button } from '@material-ui/core';
 import { CellMetricsPanel } from './CellMetricsPanel';
 import { ComparePanel } from './ComparePanel';
 import { FiltersDropdown } from './FiltersDropdown';
@@ -109,7 +109,9 @@ export function CalendarHeader({
         <Button
           className={`mo-select-dates-btn${selectMode ? ' active' : ''}`}
           onClick={onToggleSelectMode}
-          color="inherit"
+          variant="outlined"
+          color="primary"
+          size="medium"
           disabled={selectMode}
         >
           {selectMode ? `Selecting (${selectedCount})` : 'Select Dates'}
@@ -119,7 +121,8 @@ export function CalendarHeader({
           className="wv-closeout-primary"
           variant="contained"
           color="primary"
-          startIcon={<LockIcon sx={{ fontSize: 16 }} />}
+          size="medium"
+          startIcon={<LockIcon style={{ fontSize: 16 }} />}
           onClick={onOpenCloseOut}
         >
           Close/Re-Open
@@ -128,9 +131,11 @@ export function CalendarHeader({
         <Button
           ref={metricsRef}
           className={`wv-topbar-text-btn${metricsOpen ? ' active' : ''}`}
-          color="inherit"
-          startIcon={<TuneIcon sx={{ fontSize: 16 }} />}
-          endIcon={<ExpandMoreIcon sx={{ fontSize: 14, opacity: 0.65 }} />}
+          variant="text"
+          color="primary"
+          size="medium"
+          startIcon={<TuneIcon style={{ fontSize: 16 }} />}
+          endIcon={<ExpandMoreIcon style={{ fontSize: 14, opacity: 0.65 }} />}
           onClick={() => onMetricsOpen(!metricsOpen)}
         >
           Cell Metrics
@@ -150,8 +155,10 @@ export function CalendarHeader({
         <Button
           ref={compareRef}
           className={`wv-topbar-text-btn${compareOpen ? ' active' : ''}`}
-          color="inherit"
-          endIcon={<ExpandMoreIcon sx={{ fontSize: 14, opacity: 0.65 }} />}
+          variant="text"
+          color="primary"
+          size="medium"
+          endIcon={<ExpandMoreIcon style={{ fontSize: 14, opacity: 0.65 }} />}
           onClick={() => setCompareOpen((o) => !o)}
         >
           {compareButtonLabel}
@@ -173,9 +180,11 @@ export function CalendarHeader({
           <Button
             ref={filtersRef}
             className={`wv-topbar-text-btn${filtersOpen || activeFilterCount > 0 ? ' active' : ''}`}
-            color="inherit"
-            startIcon={<FilterListIcon sx={{ fontSize: 16 }} />}
-            endIcon={<ExpandMoreIcon sx={{ fontSize: 14, opacity: 0.65 }} />}
+            variant="text"
+            color="primary"
+            size="medium"
+            startIcon={<FilterListIcon style={{ fontSize: 16 }} />}
+            endIcon={<ExpandMoreIcon style={{ fontSize: 14, opacity: 0.65 }} />}
             onClick={() => onFiltersOpen(!filtersOpen)}
           >
             Filters
@@ -195,8 +204,10 @@ export function CalendarHeader({
 
         <Button
           className={`wv-topbar-text-btn${heatmapOpen || heatmapActive ? ' active' : ''}`}
-          color="inherit"
-          startIcon={<GridViewIcon sx={{ fontSize: 16 }} />}
+          variant="text"
+          color="primary"
+          size="medium"
+          startIcon={<GridViewIcon style={{ fontSize: 16 }} />}
           onClick={onHeatmapOpen}
         >
           {heatmapActive && heatmapType ? heatmapTypeLabel(heatmapType) : 'Heatmap'}

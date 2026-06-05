@@ -114,7 +114,7 @@ export default function TourOperatorPage() {
               <Box
                 component="div"
                 className="calendar-page"
-                sx={{ minHeight: '100%', p: 0 }}
+                sx={{ minHeight: '100%', p: '24px' }}
                 id="calendar-root"
               >
                 {active === 'dashboard' ? (

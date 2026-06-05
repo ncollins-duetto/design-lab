@@ -5,7 +5,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import LockIcon from '@mui/icons-material/Lock';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
-import IconButton from '@mui/material/IconButton';
+import { IconButton } from '@material-ui/core';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 import { useCalendar } from '@/lib/tour-operator/context/CalendarContext';
@@ -194,7 +194,7 @@ export function DayDetailModal({ open, dateLabel, metrics, onClose }: Props) {
         >
           <Typography sx={{ fontSize: 16, fontWeight: 700, color: '#1c1c1c' }}>{dateLabel}</Typography>
           <IconButton onClick={onClose} size="small" aria-label="Close">
-            <CloseIcon sx={{ fontSize: 20, color: '#1c1c1c' }} />
+            <CloseIcon style={{ fontSize: 20, color: '#1c1c1c' }} />
           </IconButton>
         </Box>
 
