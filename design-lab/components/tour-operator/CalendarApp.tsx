@@ -5,9 +5,9 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
 import { IconButton, Button } from '@material-ui/core';
 import Paper from '@mui/material/Paper';
+import { WeekRangePicker } from './WeekRangePicker';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CompareMode } from '@/lib/tour-operator/calendar/metrics';
 import { ALL_MONTHS, type MetricKey } from '@/lib/tour-operator/data/calendarData';
@@ -277,26 +277,31 @@ export function CalendarApp() {
     </Button>
   );
 
+  const [weekPickerOpen, setWeekPickerOpen] = useState(false);
+  const [weekPickerAnchor, setWeekPickerAnchor] = useState<HTMLElement | null>(null);
+
+  const weekStartDate = useMemo(
+    () => new Date(2026, (weekAnchor.month || 1) - 1, weekAnchor.day || 1),
+    [weekAnchor.month, weekAnchor.day],
+  );
+  const weekEndDate = useMemo(() => {
+    const d = new Date(weekStartDate);
+    d.setDate(d.getDate() + 6);
+    return d;
+  }, [weekStartDate]);
+
   const weekDatePicker = (
-    <TextField
-      type="date"
+    <Button
+      ref={setWeekPickerAnchor as any}
+      variant="text"
+      color="primary"
       size="small"
-      variant="outlined"
-      defaultValue={`2026-${String(weekAnchor.month).padStart(2, '0')}-${String(weekAnchor.day).padStart(2, '0')}`}
-      onChange={(e) => {
-        const [year, month, day] = e.target.value.split('-').map(Number);
-        if (year && month && day) {
-          shiftWeekAnchor(month, day);
-        }
-      }}
-      sx={{
-        width: 140,
-        '& input': {
-          fontSize: 14,
-          padding: '8px 12px',
-        },
-      }}
-    />
+      className="wv-date-trigger-btn"
+      startIcon={<DateRangeIcon style={{ fontSize: 18, color: '#4f5b60' }} />}
+      onClick={() => setWeekPickerOpen((o) => !o)}
+    >
+      {weekNavLabel}
+    </Button>
   );
 
   const dateShuffler = viewMode === 'monthly' ? (
@@ -518,6 +523,19 @@ export function CalendarApp() {
         onApply={() => {
           applyHeatmap();
           setHeatmapModalOpen(false);
+        }}
+      />
+
+      <WeekRangePicker
+        open={weekPickerOpen}
+        anchorEl={weekPickerAnchor}
+        startDate={weekStartDate}
+        endDate={weekEndDate}
+        onClose={() => setWeekPickerOpen(false)}
+        onCancel={() => setWeekPickerOpen(false)}
+        onApply={(s) => {
+          setWeekAnchor({ month: s.getMonth() + 1, day: s.getDate() });
+          setWeekPickerOpen(false);
         }}
       />
     </>

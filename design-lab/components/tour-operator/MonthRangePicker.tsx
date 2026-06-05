@@ -394,8 +394,6 @@ export function MonthRangePicker({
             />
           </Box>
 
-          {/* Vertical divider */}
-          <Box sx={{ width: '1px', bgcolor: '#dde1e2', my: '16px' }} />
 
           {/* Right year */}
           <Box sx={{ flex: 1, py: '16px', pt: '20px', px: '20px', display: 'flex', flexDirection: 'column' }}>
