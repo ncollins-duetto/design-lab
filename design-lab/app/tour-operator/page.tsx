@@ -5,7 +5,7 @@ import { ThemeProvider as MuiV5ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import Box from '@mui/material/Box'
 import { makeStyles } from '@material-ui/core/styles'
-import { List, ListItem, ListItemIcon, ListItemText } from '@material-ui/core'
+import { List, ListItem, ListItemIcon, ListItemText, Typography } from '@material-ui/core'
 import DashboardIcon from '@material-ui/icons/Dashboard'
 import PeopleIcon from '@material-ui/icons/People'
 import ChatIcon from '@material-ui/icons/Chat'
@@ -84,10 +84,9 @@ const useSideNavStyles = makeStyles((theme) => ({
     background: theme.palette.background.default,
   },
   pageTitle: {
-    fontSize: '1.125rem',
     fontWeight: 600,
     lineHeight: 1.4,
-    color: (theme.palette as any).text?.secondary ?? '#4f5b60',
+    color: theme.palette.text.secondary,
   },
   contentWrapper: {
     padding: theme.spacing(3, 3, 2),
@@ -143,7 +142,9 @@ export default function TourOperatorPage() {
           {active === 'dashboard' ? (
             <>
               <div className={classes.pageHeader}>
-                <h2 className={classes.pageTitle}>Tour Operator Calendar</h2>
+                <Typography variant="h6" className={classes.pageTitle}>
+                  Tour Operator Calendar
+                </Typography>
               </div>
 
               <div className={classes.contentWrapper}>
