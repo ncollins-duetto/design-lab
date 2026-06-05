@@ -24,6 +24,7 @@ const NAV_ITEMS = [
   { id: 'forecasts-budgets', label: 'Forecasts & Budgets', hasDropdown: true },
   { id: 'reports', label: 'Reports', hasDropdown: true },
   { id: 'groups', label: 'Groups', hasDropdown: true },
+  { id: 'tour-operator', label: 'Tour Operator', hasDropdown: false },
   { id: 'onboarding', label: 'Onboarding', hasDropdown: false },
 ]
 
