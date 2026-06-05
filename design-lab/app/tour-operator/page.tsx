@@ -89,7 +89,7 @@ const useSideNavStyles = makeStyles((theme) => ({
     color: theme.palette.text.secondary,
   },
   contentWrapper: {
-    padding: theme.spacing(3, 3, 2),
+    padding: theme.spacing(3),
     background: theme.palette.background.default,
     flex: 1,
     minWidth: 0,
@@ -99,6 +99,8 @@ const useSideNavStyles = makeStyles((theme) => ({
     background: '#ffffff',
     borderRadius: 4,
     border: `1px solid ${theme.palette.divider}`,
+    display: 'flex',
+    flexDirection: 'column',
   },
   pageFooter: {
     padding: theme.spacing(2, 3),
@@ -155,7 +157,7 @@ export default function TourOperatorPage() {
                       <Box
                         component="div"
                         className="calendar-page"
-                        sx={{ minHeight: '100%', p: '24px' }}
+                        sx={{ minHeight: '100%', p: 3 }}
                         id="calendar-root"
                       >
                         <CalendarApp />
