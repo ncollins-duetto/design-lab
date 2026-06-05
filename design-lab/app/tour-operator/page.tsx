@@ -80,6 +80,7 @@ const useSideNavStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    padding: theme.spacing(2, 3, 1),
     background: theme.palette.background.default,
   },
   pageTitle: {
@@ -88,6 +89,7 @@ const useSideNavStyles = makeStyles((theme) => ({
     color: theme.palette.text.secondary,
   },
   contentWrapper: {
+    padding: theme.spacing(3),
     background: theme.palette.background.default,
     flex: 1,
     minWidth: 0,
@@ -96,11 +98,11 @@ const useSideNavStyles = makeStyles((theme) => ({
   calendarCard: {
     background: '#ffffff',
     borderRadius: 4,
-    border: `1px solid ${theme.palette.divider}`,
     display: 'flex',
     flexDirection: 'column',
   },
   pageFooter: {
+    padding: theme.spacing(2, 3),
     borderTop: `1px solid ${theme.palette.divider}`,
     background: theme.palette.background.default,
     fontSize: 12,
