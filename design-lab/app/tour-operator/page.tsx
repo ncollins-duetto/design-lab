@@ -98,6 +98,7 @@ const useSideNavStyles = makeStyles((theme) => ({
   calendarCard: {
     background: '#ffffff',
     borderRadius: 4,
+    border: `1px solid ${theme.palette.divider}`,
     display: 'flex',
     flexDirection: 'column',
   },
