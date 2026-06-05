@@ -134,7 +134,7 @@ export function FiltersDropdown({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
-                  padding: '4px 8px',
+                  padding: '0px 8px',
                   cursor: 'pointer',
                 }}
               >
