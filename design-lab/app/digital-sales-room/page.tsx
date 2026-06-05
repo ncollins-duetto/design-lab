@@ -2406,9 +2406,8 @@ function DigitalSalesRoomApp() {
                 <Button
                   variant="contained"
                   color="primary"
-                  size="large"
                   startIcon={<AddIcon/>}
-                  style={{textTransform:'none',fontWeight:600,minWidth:160,fontSize:'1rem'}}
+                  style={{textTransform:'none',fontWeight:600,minWidth:160}}
                   onClick={() => openNewHotelModal('')}
                 >
                   Add Hotel
@@ -2430,7 +2429,7 @@ function DigitalSalesRoomApp() {
                     <Button variant="outlined" color="primary" style={{textTransform:'none'}} onClick={() => excelInputRef.current?.click()}>
                       Upload from Excel
                     </Button>
-                    <Button variant="contained" color="primary" size="large" startIcon={<AddIcon/>} style={{textTransform:'none',fontWeight:600,minWidth:160,fontSize:'1rem'}} onClick={() => openNewHotelModal('')}>
+                    <Button variant="contained" color="primary" startIcon={<AddIcon/>} style={{textTransform:'none',fontWeight:600,minWidth:160}} onClick={() => openNewHotelModal('')}>
                       Add Hotel
                     </Button>
                   </Box>
@@ -3209,8 +3208,7 @@ function DigitalSalesRoomApp() {
                   form="company-details-form"
                   variant="contained"
                   color="primary"
-                  size="large"
-                  style={{textTransform:'none',fontWeight:600,minWidth:180,fontSize:'1rem'}}
+                  style={{textTransform:'none',fontWeight:600,minWidth:180}}
                 >
                   Save &amp; Next
                 </Button>
@@ -3230,8 +3228,7 @@ function DigitalSalesRoomApp() {
                 <Button
                   variant="contained"
                   color="primary"
-                  size="large"
-                  style={{textTransform:'none',fontWeight:600,minWidth:200,fontSize:'1rem'}}
+                  style={{textTransform:'none',fontWeight:600,minWidth:200}}
                   onClick={() => { setDefaultsSaved(true); goToSection('hotels') }}
                 >
                   Save Defaults &amp; Next
@@ -3244,9 +3241,8 @@ function DigitalSalesRoomApp() {
                 <Button
                   variant="contained"
                   color="primary"
-                  size="large"
                   disabled={hotels.length === 0}
-                  style={{textTransform:'none',fontWeight:700,minWidth:220,fontSize:'1rem'}}
+                  style={{textTransform:'none',fontWeight:700,minWidth:220}}
                   onClick={() => goToSection('proposal')}
                 >
                   ✓ All Hotels Added
@@ -3261,8 +3257,7 @@ function DigitalSalesRoomApp() {
                 <Button
                   variant="contained"
                   color="primary"
-                  size="large"
-                  style={{textTransform:'none',fontWeight:600,paddingLeft:28,paddingRight:28,fontSize:'1rem'}}
+                  style={{textTransform:'none',fontWeight:600,paddingLeft:28,paddingRight:28}}
                   onClick={() => setProposalAccepted(true)}
                 >
                   ✓ Accept Proposal
