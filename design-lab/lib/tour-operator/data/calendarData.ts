@@ -20,6 +20,18 @@ export const ALL_MONTHS: MonthMeta[] = [
   { name: 'October 2026', year: 2026, month: 10, days: 31, firstDay: 4, lockedCount: 3 },
   { name: 'November 2026', year: 2026, month: 11, days: 30, firstDay: 0, lockedCount: 2 },
   { name: 'December 2026', year: 2026, month: 12, days: 31, firstDay: 2, lockedCount: 5 },
+  { name: 'January 2027', year: 2027, month: 1, days: 31, firstDay: 5, lockedCount: 0 },
+  { name: 'February 2027', year: 2027, month: 2, days: 28, firstDay: 1, lockedCount: 0 },
+  { name: 'March 2027', year: 2027, month: 3, days: 31, firstDay: 1, lockedCount: 0 },
+  { name: 'April 2027', year: 2027, month: 4, days: 30, firstDay: 4, lockedCount: 0 },
+  { name: 'May 2027', year: 2027, month: 5, days: 31, firstDay: 6, lockedCount: 0 },
+  { name: 'June 2027', year: 2027, month: 6, days: 30, firstDay: 2, lockedCount: 0 },
+  { name: 'July 2027', year: 2027, month: 7, days: 31, firstDay: 4, lockedCount: 0 },
+  { name: 'August 2027', year: 2027, month: 8, days: 31, firstDay: 0, lockedCount: 0 },
+  { name: 'September 2027', year: 2027, month: 9, days: 30, firstDay: 3, lockedCount: 0 },
+  { name: 'October 2027', year: 2027, month: 10, days: 31, firstDay: 5, lockedCount: 0 },
+  { name: 'November 2027', year: 2027, month: 11, days: 30, firstDay: 1, lockedCount: 0 },
+  { name: 'December 2027', year: 2027, month: 12, days: 31, firstDay: 3, lockedCount: 0 },
 ];
 
 export const HOTEL_CAPACITY = 210;
