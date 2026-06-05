@@ -267,7 +267,7 @@ export function CalendarApp() {
       color="primary"
       size="small"
       className="wv-date-trigger-btn"
-      startIcon={<DateRangeIcon style={{ fontSize: 18, color: '#4f5b60' }} />}
+      startIcon={<DateRangeIcon style={{ fontSize: 14, color: '#4f5b60' }} />}
       onClick={(e) => {
         e.stopPropagation();
         setDatePickerOpen((o) => !o);
@@ -297,7 +297,7 @@ export function CalendarApp() {
       color="primary"
       size="small"
       className="wv-date-trigger-btn"
-      startIcon={<DateRangeIcon style={{ fontSize: 18, color: '#4f5b60' }} />}
+      startIcon={<DateRangeIcon style={{ fontSize: 14, color: '#4f5b60' }} />}
       onClick={() => setWeekPickerOpen((o) => !o)}
     >
       {weekNavLabel}
@@ -339,7 +339,6 @@ export function CalendarApp() {
   const tabBarTrailing =
     viewMode === 'weekly' ? (
       <Box className="ds-tab-bar__trailing-inner">
-        {dateShuffler}
         <div className="wv-date-acc-controls">
           <Button
             type="button"
@@ -364,6 +363,7 @@ export function CalendarApp() {
             Open All
           </Button>
         </div>
+        {dateShuffler}
       </Box>
     ) : (
       dateShuffler
