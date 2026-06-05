@@ -1872,6 +1872,62 @@ function DigitalSalesRoomApp() {
   const [modalHotelPicked, setModalHotelPicked] = useState(false)
   // Whether the user has expanded the advanced override section in the modal
   const [modalShowAdvanced, setModalShowAdvanced] = useState(false)
+  // Bulk-edit selection + dialog state
+  const [selectedHotelIds, setSelectedHotelIds] = useState<Set<string>>(new Set())
+  const [bulkEditOpen, setBulkEditOpen] = useState(false)
+  const [bulkReplaceProducts, setBulkReplaceProducts] = useState(false)
+  const [bulkProducts, setBulkProducts] = useState<string[]>([])
+  const [bulkReplaceBilling, setBulkReplaceBilling] = useState(false)
+  const [bulkBillingContactName, setBulkBillingContactName] = useState('')
+  const [bulkBillingEmail, setBulkBillingEmail] = useState('')
+  const [bulkBillingEntityName, setBulkBillingEntityName] = useState('')
+  const [bulkBillingAddress, setBulkBillingAddress] = useState('')
+  const [bulkLegalEntityName, setBulkLegalEntityName] = useState('')
+
+  const toggleHotelSelected = (id: string) =>
+    setSelectedHotelIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  const toggleSelectAllHotels = () =>
+    setSelectedHotelIds(prev => prev.size === hotels.length ? new Set() : new Set(hotels.map(h => h.id)))
+  const openBulkEdit = () => {
+    setBulkReplaceProducts(false)
+    setBulkProducts([])
+    setBulkReplaceBilling(false)
+    setBulkBillingContactName('')
+    setBulkBillingEmail('')
+    setBulkBillingEntityName('')
+    setBulkBillingAddress('')
+    setBulkLegalEntityName('')
+    setBulkEditOpen(true)
+  }
+  const applyBulkEdit = () => {
+    if (!bulkReplaceProducts && !bulkReplaceBilling) {
+      setBulkEditOpen(false)
+      return
+    }
+    setHotels(prev => prev.map(h => {
+      if (!selectedHotelIds.has(h.id)) return h
+      const next: AddedHotel = { ...h }
+      if (bulkReplaceProducts) {
+        next.products = [...bulkProducts]
+        next.useCustomProducts = true
+      }
+      if (bulkReplaceBilling) {
+        next.overrideBilling = true
+        next.billingContactName = bulkBillingContactName.trim()
+        next.billingEmail = bulkBillingEmail.trim()
+        next.billingEntityName = bulkBillingEntityName.trim()
+        next.billingAddress = bulkBillingAddress.trim()
+        next.legalEntityName = bulkLegalEntityName.trim()
+      }
+      return next
+    }))
+    setBulkEditOpen(false)
+    setSelectedHotelIds(new Set())
+  }
   // Hotel card expansion state
   const [expandedHotels, setExpandedHotels] = useState<Set<string>>(new Set())
   const toggleHotelExpanded = (id: string) =>
@@ -2184,16 +2240,9 @@ function DigitalSalesRoomApp() {
               <Divider style={{marginBottom:24}}/>
 
               {/* Company form — billing moved to Set Defaults step */}
-              <form onSubmit={(e) => { e.preventDefault(); setAccountSaved(true); goToSection('defaults') }}>
+              <form id="company-details-form" onSubmit={(e) => { e.preventDefault(); setAccountSaved(true); goToSection('defaults') }}>
                 <Typography style={{color:'#4F5B60',fontWeight:600,textTransform:'uppercase',letterSpacing:1,fontSize:'0.7rem',marginBottom:12}}>COMPANY INFORMATION</Typography>
                 <TextField label="Company Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
-
-                <div style={{display:'flex',justifyContent:'flex-end',gap:12,marginTop:8,paddingTop:16,borderTop:'1px solid #DDE1E2'}}>
-                  <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
-                  <Button type="submit" variant="contained" color="primary" size="large" style={{textTransform:'none',fontWeight:600,minWidth:180,fontSize:'1rem'}}>
-                    Save &amp; Continue
-                  </Button>
-                </div>
               </form>
             </div>
           )}
@@ -2321,25 +2370,6 @@ function DigitalSalesRoomApp() {
                 </>
               )}
 
-              <Box style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,paddingTop:16,borderTop:'1px solid #DDE1E2'}}>
-                <Button
-                  variant="text"
-                  color="primary"
-                  style={{textTransform:'none',fontWeight:600}}
-                  onClick={() => { setDefaultsSaved(false); goToSection('hotels') }}
-                >
-                  I'll do this later
-                </Button>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  style={{textTransform:'none',fontWeight:600,minWidth:200,fontSize:'1rem'}}
-                  onClick={() => { setDefaultsSaved(true); goToSection('hotels') }}
-                >
-                  Save Defaults &amp; Continue
-                </Button>
-              </Box>
             </Box>
           )}
 
@@ -2406,17 +2436,48 @@ function DigitalSalesRoomApp() {
                   </Box>
                 </Box>
               ) : (
+                <>
+                <Box style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,padding:'10px 12px',background:'#ffffff',border:'1px solid #DDE1E2',borderRadius:6}}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        size="small"
+                        color="primary"
+                        checked={hotels.length > 0 && selectedHotelIds.size === hotels.length}
+                        indeterminate={selectedHotelIds.size > 0 && selectedHotelIds.size < hotels.length}
+                        onChange={toggleSelectAllHotels}
+                      />
+                    }
+                    label={
+                      <Typography style={{fontSize:'0.85rem',fontWeight:600,color:'#1c1c1c'}}>
+                        {selectedHotelIds.size > 0 ? `${selectedHotelIds.size} selected` : 'Select hotels for bulk edit'}
+                      </Typography>
+                    }
+                  />
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    disabled={selectedHotelIds.size === 0}
+                    style={{textTransform:'none',fontWeight:600}}
+                    onClick={openBulkEdit}
+                  >
+                    Bulk edit ({selectedHotelIds.size})
+                  </Button>
+                </Box>
                 <Box style={{display:'flex',flexDirection:'column',gap:10}}>
                   {hotels.map((h) => {
                     const isOpen = expandedHotels.has(h.id)
+                    const isSelected = selectedHotelIds.has(h.id)
                     return (
                       <Box
                         key={h.id}
                         style={{
                           background:'#ffffff',
-                          border:'1px solid #DDE1E2',
+                          border: isSelected ? '1px solid #006461' : '1px solid #DDE1E2',
                           borderRadius:6,
                           overflow:'hidden',
+                          boxShadow: isSelected ? '0 0 0 1px #006461' : 'none',
                         }}
                       >
                         {/* Header row */}
@@ -2430,6 +2491,14 @@ function DigitalSalesRoomApp() {
                             cursor:'pointer',
                           }}
                         >
+                          <Checkbox
+                            size="small"
+                            color="primary"
+                            checked={isSelected}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={() => toggleHotelSelected(h.id)}
+                            style={{padding:4}}
+                          />
                           <HotelIcon style={{color:'#006461',fontSize:22,flexShrink:0}}/>
                           <Box style={{flex:1,minWidth:0,display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                             <Typography style={{fontWeight:700,fontSize:'0.95rem',color:'#1c1c1c'}}>{h.name}</Typography>
@@ -2640,21 +2709,111 @@ function DigitalSalesRoomApp() {
                     )
                   })}
                 </Box>
+                </>
               )}
 
-              {hotels.length > 0 && (
-                <Box style={{display:'flex',justifyContent:'flex-end',marginTop:32,paddingTop:24,borderTop:'1px solid #DDE1E2'}}>
+              {/* Bulk Edit Dialog */}
+              <Dialog
+                open={bulkEditOpen}
+                onClose={() => setBulkEditOpen(false)}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{ style: { borderRadius: 10 } }}
+              >
+                <DialogTitle disableTypography style={{padding:'20px 24px',borderBottom:'1px solid #EBEDEF'}}>
+                  <Typography style={{fontSize:'1.05rem',fontWeight:700}}>
+                    Bulk edit {selectedHotelIds.size} hotel{selectedHotelIds.size === 1 ? '' : 's'}
+                  </Typography>
+                  <Typography style={{fontSize:'0.82rem',color:'#4F5B60',marginTop:2}}>
+                    Choose which fields to replace. Unchecked sections leave existing values untouched.
+                  </Typography>
+                </DialogTitle>
+                <DialogContent style={{padding:'24px',display:'flex',flexDirection:'column',gap:20}}>
+                  {/* Products */}
+                  <Box style={{padding:'14px 16px',border:'1px solid #EBEDEF',borderRadius:6}}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          color="primary"
+                          checked={bulkReplaceProducts}
+                          onChange={(_, checked) => setBulkReplaceProducts(checked)}
+                        />
+                      }
+                      label={
+                        <Typography style={{fontSize:'0.9rem',fontWeight:700,color:'#1c1c1c'}}>Replace products</Typography>
+                      }
+                    />
+                    {bulkReplaceProducts && (
+                      <Box style={{display:'flex',flexWrap:'wrap',columnGap:16,marginTop:8,paddingLeft:8}}>
+                        {PRODUCTS.map(p => {
+                          const on = bulkProducts.includes(p)
+                          return (
+                            <FormControlLabel
+                              key={p}
+                              control={
+                                <Checkbox
+                                  size="small"
+                                  color="primary"
+                                  checked={on}
+                                  onChange={() => setBulkProducts(prev => on ? prev.filter(x => x !== p) : [...prev, p])}
+                                />
+                              }
+                              label={
+                                <Typography style={{fontWeight: on ? 600 : 500, fontSize:'0.85rem', color:'#1c1c1c'}}>{p}</Typography>
+                              }
+                            />
+                          )
+                        })}
+                      </Box>
+                    )}
+                  </Box>
+
+                  {/* Billing */}
+                  <Box style={{padding:'14px 16px',border:'1px solid #EBEDEF',borderRadius:6}}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          color="primary"
+                          checked={bulkReplaceBilling}
+                          onChange={(_, checked) => setBulkReplaceBilling(checked)}
+                        />
+                      }
+                      label={
+                        <Typography style={{fontSize:'0.9rem',fontWeight:700,color:'#1c1c1c'}}>Replace billing information</Typography>
+                      }
+                    />
+                    {bulkReplaceBilling && (
+                      <Box style={{display:'flex',flexDirection:'column',gap:12,marginTop:12,paddingLeft:8}}>
+                        <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                          <TextField label="Billing Contact Name" variant="outlined" size="small" fullWidth value={bulkBillingContactName} onChange={(e) => setBulkBillingContactName(e.target.value)} />
+                          <TextField label="Billing Email" type="email" variant="outlined" size="small" fullWidth value={bulkBillingEmail} onChange={(e) => setBulkBillingEmail(e.target.value)} />
+                          <TextField label="Billing Entity Name" variant="outlined" size="small" fullWidth value={bulkBillingEntityName} onChange={(e) => setBulkBillingEntityName(e.target.value)} />
+                          <TextField label="Legal Entity Name" variant="outlined" size="small" fullWidth value={bulkLegalEntityName} onChange={(e) => setBulkLegalEntityName(e.target.value)} />
+                        </Box>
+                        <TextField label="Billing Address" variant="outlined" size="small" fullWidth multiline rows={2} value={bulkBillingAddress} onChange={(e) => setBulkBillingAddress(e.target.value)} />
+                      </Box>
+                    )}
+                  </Box>
+                </DialogContent>
+                <DialogActions style={{padding:'16px 24px',borderTop:'1px solid #EBEDEF',gap:8}}>
+                  <Button
+                    variant="text"
+                    onClick={() => setBulkEditOpen(false)}
+                    style={{textTransform:'none',color:'#1c1c1c',fontWeight:600}}
+                  >
+                    Cancel
+                  </Button>
                   <Button
                     variant="contained"
                     color="primary"
-                    size="large"
-                    style={{textTransform:'none',fontWeight:700,minWidth:240,fontSize:'1.05rem',padding:'10px 24px'}}
-                    onClick={() => goToSection('proposal')}
+                    onClick={applyBulkEdit}
+                    disabled={!bulkReplaceProducts && !bulkReplaceBilling}
+                    style={{textTransform:'none',fontWeight:600,paddingLeft:20,paddingRight:20}}
                   >
-                    ✓ All Hotels Added
+                    Apply to {selectedHotelIds.size} hotel{selectedHotelIds.size === 1 ? '' : 's'}
                   </Button>
-                </Box>
-              )}
+                </DialogActions>
+              </Dialog>
 
               <Snackbar
                 open={!!excelToast}
@@ -3022,16 +3181,6 @@ function DigitalSalesRoomApp() {
               <SalesProposalTable proposal={MOCK_PROPOSAL} productColors={PRODUCT_COLORS} />
 
               {/* Actions */}
-              <Box style={{display:'flex',gap:12,marginTop:20,paddingTop:20,borderTop:'1px solid #DDE1E2'}}>
-                <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600,paddingLeft:28,paddingRight:28}}
-                  onClick={()=>setProposalAccepted(true)}>
-                  ✓ Accept Proposal
-                </Button>
-                <Button variant="outlined" style={{textTransform:'none',fontWeight:500}}>
-                  ✎ Request Changes
-                </Button>
-              </Box>
-
               {proposalAccepted && (
                 <Box style={{display:'flex',alignItems:'center',gap:10,background:'#E8F5E9',borderRadius:6,padding:'14px 18px',marginTop:20}}>
                   <span style={{color:'#388C3F'}}><CheckCircleIcon/></span>
@@ -3042,6 +3191,86 @@ function DigitalSalesRoomApp() {
           )}
         </Box>
       </div>
+      )}
+
+      {/* Sticky form footer — contextual CTAs per onboarding step */}
+      {onboardingSections.includes(activeSection) && (
+        <Box style={{position:'sticky',bottom:0,background:'#ffffff',borderTop:'1px solid #DDE1E2',padding:'14px 24px',display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,boxShadow:'0 -2px 8px rgba(0,0,0,0.08)',zIndex:100}}>
+          <Box style={{display:'flex',alignItems:'center',gap:16}}>
+            <img src="/duetto-logo-green.svg" alt="Duetto" style={{height:18,width:'auto',display:'block',opacity:0.85}}/>
+            <Typography style={{fontSize:'0.72rem',color:'#8A9096'}}>© {new Date().getFullYear()} Duetto Research</Typography>
+          </Box>
+          <Box style={{display:'flex',gap:12,alignItems:'center'}}>
+            {activeSection === 'account' && (
+              <>
+                <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
+                <Button
+                  type="submit"
+                  form="company-details-form"
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  style={{textTransform:'none',fontWeight:600,minWidth:180,fontSize:'1rem'}}
+                >
+                  Save &amp; Next
+                </Button>
+              </>
+            )}
+            {activeSection === 'defaults' && (
+              <>
+                <Button
+                  variant="text"
+                  color="primary"
+                  style={{textTransform:'none',fontWeight:600}}
+                  onClick={() => { setDefaultsSaved(false); goToSection('hotels') }}
+                >
+                  I'll do this later
+                </Button>
+                <Button variant="outlined" style={{textTransform:'none'}} onClick={() => goToSection('account')}>Back</Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  style={{textTransform:'none',fontWeight:600,minWidth:200,fontSize:'1rem'}}
+                  onClick={() => { setDefaultsSaved(true); goToSection('hotels') }}
+                >
+                  Save Defaults &amp; Next
+                </Button>
+              </>
+            )}
+            {activeSection === 'hotels' && (
+              <>
+                <Button variant="outlined" style={{textTransform:'none'}} onClick={() => goToSection('defaults')}>Back</Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  disabled={hotels.length === 0}
+                  style={{textTransform:'none',fontWeight:700,minWidth:220,fontSize:'1rem'}}
+                  onClick={() => goToSection('proposal')}
+                >
+                  ✓ All Hotels Added
+                </Button>
+              </>
+            )}
+            {activeSection === 'proposal' && (
+              <>
+                <Button variant="outlined" style={{textTransform:'none',fontWeight:500}}>
+                  ✎ Request Changes
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  style={{textTransform:'none',fontWeight:600,paddingLeft:28,paddingRight:28,fontSize:'1rem'}}
+                  onClick={() => setProposalAccepted(true)}
+                >
+                  ✓ Accept Proposal
+                </Button>
+              </>
+            )}
+          </Box>
+        </Box>
       )}
     </Box>
   )
