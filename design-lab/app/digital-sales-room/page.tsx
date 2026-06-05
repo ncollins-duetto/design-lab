@@ -433,6 +433,15 @@ const PRODUCT_COLORS: Record<string, {bg: string, text: string}> = {
 
 const PRODUCTS = ['GameChanger','ScoreBoard','BlockBuster','Advance','GameTime','HotStats'];
 
+const PRODUCT_DESCRIPTIONS: Record<string,string> = {
+  GameChanger: 'Dynamic pricing that tightens prices and brightens profits with real-time rate optimization',
+  ScoreBoard: 'The business brain behind performance-driven decisions with instant forecasts and unified dashboards',
+  BlockBuster: 'Find your perfect booking balance to maximize revenue from group and transient bookings',
+  Advance: 'RMS with built-in market benchmarks and AI-powered pricing to see a full year into the future',
+  GameTime: 'Streamlined revenue management for select-service chains with simplified strategies',
+  HotStats: 'Compare your P&L with 10,000+ hotels worldwide across 500+ metrics',
+};
+
 const INTEGRATIONS = [
   { id:'opera',        label:'Opera',             group:'PMS' },
   { id:'mews',         label:'Mews',              group:'PMS' },
@@ -550,7 +559,9 @@ function AuthShell({ title, subtitle, children }: { title: string, subtitle?: st
     <Box className={classes.authContainer}>
       <Card className={classes.authCard} elevation={3}>
         <CardContent>
-          <Typography className={classes.authLogo}>DUETTO</Typography>
+          <Box style={{display:'flex',justifyContent:'center',marginBottom:theme.spacing(2)}}>
+            <img src="/duetto-logo-green.svg" alt="Duetto" style={{height:32}} />
+          </Box>
           <Typography variant="h6" align="center" style={{marginBottom: theme.spacing(1)}}>
             {title}
           </Typography>
@@ -1659,7 +1670,78 @@ function HotelRenderer({ data }: { data: ProposalLine }) {
   )
 }
 
+const useProposalTableStyles = makeStyles((theme) => ({
+  container: {
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: 6,
+    marginBottom: 16,
+  },
+  gridWrapper: {
+    width: '100%',
+    height: 'auto',
+    '& .ag-theme-alpine': {
+      '--ag-header-background-color': theme.palette.background.default,
+      '--ag-header-foreground-color': theme.palette.text.secondary,
+      '--ag-cell-horizontal-padding': 16,
+      '--ag-cell-vertical-padding': 14,
+      '--ag-row-hover-color': theme.palette.background.default,
+      '--ag-borders-side-color': theme.palette.divider,
+      '--ag-border-color': theme.palette.divider,
+      '--ag-header-border-color': theme.palette.divider,
+    },
+    '& .ag-header-cell-text': {
+      fontSize: '0.72rem',
+      fontWeight: 700,
+      letterSpacing: 0.5,
+    },
+    '& .ag-cell': {
+      fontSize: '0.875rem',
+    },
+    '& .ag-right-aligned-header': {
+      textAlign: 'right !important',
+    },
+    '& .ag-right-aligned-cell': {
+      textAlign: 'right !important',
+    },
+    '& .ag-row:nth-child(odd)': {
+      backgroundColor: theme.palette.background.default,
+    },
+    '& .ag-row:nth-child(even)': {
+      backgroundColor: theme.palette.common.white,
+    },
+  },
+  totalsBox: {
+    display: 'flex',
+    gap: theme.spacing(5),
+    background: theme.palette.background.default,
+    borderRadius: 6,
+    padding: theme.spacing(1.5, 2),
+    marginBottom: 16,
+    borderTop: `2px solid ${theme.palette.divider}`,
+  },
+  totalsLabel: {
+    flex: 1,
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    color: theme.palette.text.secondary,
+    marginBottom: theme.spacing(0.5),
+  },
+  totalsValue: {
+    textAlign: 'right',
+    fontWeight: 700,
+    fontSize: '0.875rem',
+    whiteSpace: 'nowrap',
+  },
+  alignRight: {
+    textAlign: 'right',
+    minWidth: 150,
+  },
+}))
+
 function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, productColors: Record<string, {bg: string, text: string}> }) {
+  const classes = useProposalTableStyles()
   const fmt = (n: number) => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n)
 
   const rowData = proposal.lines.map(line => ({
@@ -1687,7 +1769,7 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
       field: 'costPerRoom',
       headerName: 'Cost / Room / Month',
       flex: 1,
-      cellRenderer: (params: any) => <Typography style={{fontWeight:600,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(params.value)}</Typography>,
+      cellRenderer: (params: any) => <Typography className={classes.totalsValue}>{fmt(params.value)}</Typography>,
       minWidth: 150,
       headerClass: 'ag-right-aligned-header',
       cellClass: 'ag-right-aligned-cell',
@@ -1696,7 +1778,7 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
       field: 'annual',
       headerName: 'Annual Subscription',
       flex: 1,
-      cellRenderer: (params: any) => <Typography style={{fontWeight:600,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(params.value)}</Typography>,
+      cellRenderer: (params: any) => <Typography className={classes.totalsValue}>{fmt(params.value)}</Typography>,
       minWidth: 150,
       headerClass: 'ag-right-aligned-header',
       cellClass: 'ag-right-aligned-cell',
@@ -1705,7 +1787,7 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
       field: 'impl',
       headerName: 'Implementation Fee',
       flex: 1,
-      cellRenderer: (params: any) => <Typography style={{fontWeight:600,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(params.value)}</Typography>,
+      cellRenderer: (params: any) => <Typography className={classes.totalsValue}>{fmt(params.value)}</Typography>,
       minWidth: 150,
       headerClass: 'ag-right-aligned-header',
       cellClass: 'ag-right-aligned-cell',
@@ -1717,42 +1799,8 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
 
   return (
     <Box>
-      <Box style={{border:'1px solid #DDE1E2',borderRadius:6,marginBottom:16}}>
-        <style>{`
-          .ag-theme-alpine {
-            --ag-header-background-color: #F8F9FD;
-            --ag-header-foreground-color: #4F5B60;
-            --ag-header-cell-text-transform: uppercase;
-            --ag-header-cell-padding: 12px 16px;
-            --ag-cell-horizontal-padding: 16px;
-            --ag-cell-vertical-padding: 14px;
-            --ag-row-hover-color: #FAFAFA;
-            --ag-borders-side-color: #DDE1E2;
-            --ag-border-color: #DDE1E2;
-            --ag-header-border-color: #DDE1E2;
-          }
-          .ag-theme-alpine .ag-header-cell-text {
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-          }
-          .ag-theme-alpine .ag-cell {
-            font-size: 0.875rem;
-          }
-          .ag-right-aligned-header {
-            text-align: right !important;
-          }
-          .ag-right-aligned-cell {
-            text-align: right !important;
-          }
-          .ag-theme-alpine .ag-row:nth-child(odd) {
-            background-color: #FAFAFA;
-          }
-          .ag-theme-alpine .ag-row:nth-child(even) {
-            background-color: white;
-          }
-        `}</style>
-        <div className="ag-theme-alpine" style={{width:'100%',height:'auto'}}>
+      <Box className={classes.container}>
+        <div className={`ag-theme-alpine ${classes.gridWrapper}`}>
           <AgGridReact
             rowData={rowData}
             columnDefs={columnDefs}
@@ -1770,15 +1818,15 @@ function SalesProposalTable({ proposal, productColors }: { proposal: Proposal, p
       </Box>
 
       {/* Footer totals */}
-      <Box style={{display:'flex',gap:40,background:'#FAFAFA',borderRadius:6,padding:'12px 16px',marginBottom:16,borderTop:'2px solid #DDE1E2'}}>
+      <Box className={classes.totalsBox}>
         <Box style={{flex:1}}>
-          <Typography style={{fontSize:'0.72rem',fontWeight:700,textTransform:'uppercase',letterSpacing:0.5,color:'#4F5B60',marginBottom:4}}>Total</Typography>
+          <Typography className={classes.totalsLabel}>Total</Typography>
         </Box>
-        <Box style={{textAlign:'right'}}>
-          <Typography style={{fontWeight:700,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(totalAnnual)}</Typography>
+        <Box className={classes.alignRight}>
+          <Typography className={classes.totalsValue}>{fmt(totalAnnual)}</Typography>
         </Box>
-        <Box style={{textAlign:'right',minWidth:150}}>
-          <Typography style={{fontWeight:700,fontSize:'0.875rem',whiteSpace:'nowrap'}}>{fmt(totalImpl)}</Typography>
+        <Box className={classes.alignRight}>
+          <Typography className={classes.totalsValue}>{fmt(totalImpl)}</Typography>
         </Box>
       </Box>
     </Box>
@@ -2020,143 +2068,68 @@ function DigitalSalesRoomApp() {
   const nextStep = proposalAccepted
     ? { section:'complete', label:'Complete!' }
     : !accountSaved
-    ? { section:'account',  label:'Complete Account Details' }
+    ? { section:'account',  label:'Complete Enter Details' }
     : { section:'proposal', label:'Review Proposal' }
 
   const phaseSteps: ArrowStepConfig[] = [
-    { id: 'digital-sales-room', label: 'Digital Sales Room' },
-    { id: 'phase-2', label: 'Phase 2' },
-    { id: 'phase-3', label: 'Phase 3' },
+    { id: 'account', label: 'Enter Details' },
+    { id: 'hotels', label: 'Hotel Details' },
+    { id: 'docs', label: 'Documents' },
+    { id: 'proposal', label: 'Sales Proposal' },
   ]
+
+  const handleStepClick = (stepId: string) => {
+    if (stepId === 'hotels' && !accountSaved) return
+    setActiveSection(stepId)
+  }
 
   return (
     <Box style={{display:'flex',flexDirection:'column',minHeight:'100vh',background:'#FAFAFA'}}>
       {/* Sticky header + stepper bundle */}
       <Box style={{position:'sticky',top:0,zIndex:500,background:'#ffffff'}}>
         <ExternalHeader userName={user?.name} userEmail={user?.email} />
-        <ArrowStepperComponent steps={phaseSteps} currentStepId={activePhase} onStepClick={setActivePhase} />
+        <ArrowStepperComponent steps={phaseSteps} currentStepId={activeSection} onStepClick={handleStepClick} />
       </Box>
 
-      {activePhase !== 'digital-sales-room' && (
-        <Box style={{padding: theme.spacing(8, 4), textAlign: 'center', background: '#FAFAFA', minHeight: '60vh'}}>
-          <Typography variant="h4" style={{fontWeight: 700, color: '#212121', marginBottom: 8}}>
-            {phaseSteps.find(p => p.id === activePhase)?.label}
-          </Typography>
-          <Typography variant="body1" style={{color: '#4f5b60'}}>
-            Coming soon. Content for this phase has not been built yet.
-          </Typography>
-        </Box>
-      )}
-
-      {activePhase === 'digital-sales-room' && (
-      <div className={classes.mainContent}>
-        {/* Sidebar */}
-        <Box className={`${classes.sidebar} ${sidebarCollapsed ? 'collapsed' : ''}`} style={{width: sidebarCollapsed ? 64 : 220}}>
-          <Box style={{paddingTop: 12, paddingBottom: 12, flex: 1}}>
-            {[
-              { id:'account',  label:'Account Details',icon:BusinessIcon },
-              { id:'hotels',   label:'Hotel Details',  icon:HotelIcon    },
-              { id:'docs',     label:'Documents',      icon:FolderIcon   },
-              { id:'proposal', label:'Sales Proposal', icon:DocumentIcon },
-            ].map(({id,label,icon:Icon})=>{
-              const isActive = activeSection === id
-              const isLocked = id === 'hotels' && !accountSaved
-              const iconColor = isLocked ? '#aeb4ba' : isActive ? '#006461' : '#8A9096'
-              const labelColor = isLocked ? '#aeb4ba' : isActive ? '#006461' : '#8A9096'
-              const row = (
-                <Box
-                  key={id}
-                  className={`${classes.navRow} ${isActive ? classes.navRowActive : ''} ${isLocked ? classes.navRowDisabled : ''}`}
-                  onClick={!isLocked ? () => setActiveSection(id) : undefined}
-                  style={{justifyContent: sidebarCollapsed ? 'center' : 'flex-start'}}
-                >
-                  <Box style={{color: iconColor, display:'flex', alignItems:'center', flexShrink: 0, transition:'color 0.2s'}}>
-                    {isLocked ? <LockIcon style={{fontSize: 24}}/> : <Icon style={{fontSize: 24}}/>}
-                  </Box>
-                  {!sidebarCollapsed && (
-                    <Typography
-                      className={classes.navLabel}
-                      style={{
-                        color: labelColor,
-                        fontWeight: isActive ? 700 : 400,
-                        fontSize: 14,
-                        lineHeight: 1.3,
-                        fontFamily: 'Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-                      }}
-                    >
-                      {label}
-                    </Typography>
-                  )}
-                </Box>
-              )
-              // Wrap locked Hotel Details row in Tooltip explaining gate
-              if (isLocked) {
-                return (
-                  <Tooltip
-                    key={id}
-                    title="Complete Account Details first to unlock Hotel Details"
-                    placement="right"
-                    arrow
-                  >
-                    <span style={{display:'block'}}>{row}</span>
-                  </Tooltip>
-                )
-              }
-              return row
-            })}
-          </Box>
-          {/* Floating circular collapse button on right edge */}
-          <Box
-            className={classes.sidebarCollapseFab}
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            role="button"
-            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {sidebarCollapsed ? <ChevronRightIcon style={{fontSize: 18}}/> : <ChevronLeftIcon style={{fontSize: 18}}/>}
-          </Box>
-        </Box>
-
-        {/* Content — offset by sidebar width since sidebar is position:fixed */}
-        <Box className={classes.content} style={{marginLeft: sidebarCollapsed ? 64 : 220, transition: 'margin-left 0.3s ease-in-out'}}>
-          {activeSection === 'docs' && <DocumentStore />}
+      {/* Content */}
+      <Box style={{flex:1,display:'flex',flexDirection:'column',background:'#FAFAFA',padding:theme.spacing(3),maxWidth:1200,margin:'0 auto',width:'100%'}}>
+          {activeSection === 'docs' && (
+            <DocumentStore />
+          )}
           {activeSection === 'account' && (
-            <div style={{padding:24,maxWidth:720}}>
-              <Typography variant="h5" style={{fontWeight:700,marginBottom:4}}>Account Details</Typography>
-              <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>Provide your company and billing information for your subscription agreement.</Typography>
-              <Divider style={{marginBottom:24}}/>
+            <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
+              <div style={{padding:24,maxWidth:720,paddingBottom:24}}>
+                <Typography variant="h5" style={{fontWeight:700,marginBottom:4}}>Enter Details</Typography>
+                <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>Provide your company and billing information for your subscription agreement.</Typography>
+                <Divider style={{marginBottom:24}}/>
 
-              {accountSaved && (
-                <Box style={{display:'flex',alignItems:'flex-start',gap:10,background:'#E8F5E9',border:'1px solid #A5D6A7',borderRadius:6,padding:'12px 16px',marginBottom:20}}>
-                  <CheckCircleIcon style={{fontSize:'1.1rem',marginTop:1,color:'#388C3F'}}/>
-                  <Typography style={{fontSize:'0.875rem',color:'#28592C'}}>
-                    <strong>Account details saved.</strong> Hotel Details unlocked — edit any field below and re-save to update.
-                  </Typography>
-                </Box>
-              )}
+                {accountSaved && (
+                  <Box style={{display:'flex',alignItems:'flex-start',gap:10,background:'#E8F5E9',border:'1px solid #A5D6A7',borderRadius:6,padding:'12px 16px',marginBottom:20}}>
+                    <CheckCircleIcon style={{fontSize:'1.1rem',marginTop:1,color:'#388C3F'}}/>
+                    <Typography style={{fontSize:'0.875rem',color:'#28592C'}}>
+                      <strong>Account details saved.</strong> Hotel Details unlocked — edit any field below and re-save to update.
+                    </Typography>
+                  </Box>
+                )}
 
-              {/* Account form — always visible, editable before and after save */}
-              <form onSubmit={(e) => { e.preventDefault(); setAccountSaved(true) }}>
-                <Typography style={{color:'#4F5B60',fontWeight:600,textTransform:'uppercase',letterSpacing:1,fontSize:'0.7rem',marginBottom:12}}>COMPANY INFORMATION</Typography>
-                <TextField label="Company Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
+                {/* Account form — always visible, editable before and after save */}
+                <form onSubmit={(e) => { e.preventDefault(); setAccountSaved(true); setActiveSection('hotels') }}>
+                  <Typography style={{color:'#4F5B60',fontWeight:600,textTransform:'uppercase',letterSpacing:1,fontSize:'0.7rem',marginBottom:12}}>COMPANY INFORMATION</Typography>
+                  <TextField label="Company Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
 
-                <Typography style={{color:'#4F5B60',fontWeight:600,textTransform:'uppercase',letterSpacing:1,fontSize:'0.7rem',marginBottom:12,marginTop:16}}>BILLING INFORMATION</Typography>
-                <TextField label="Billing Contact Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
-                <TextField label="Billing Email" type="email" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
-                <TextField label="Billing Entity Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
-                <TextField label="Billing Address" type="text" variant="outlined" fullWidth size="small" multiline rows={3} style={{marginBottom:16}}/>
-
-                <div style={{display:'flex',justifyContent:'flex-end',gap:12,marginTop:8,paddingTop:16,borderTop:'1px solid #DDE1E2'}}>
-                  <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
-                  <Button type="submit" variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}}>
-                    {accountSaved ? 'Save Changes' : 'Save Details'}
-                  </Button>
-                </div>
-              </form>
-            </div>
+                  <Typography style={{color:'#4F5B60',fontWeight:600,textTransform:'uppercase',letterSpacing:1,fontSize:'0.7rem',marginBottom:12,marginTop:16}}>BILLING INFORMATION</Typography>
+                  <TextField label="Billing Contact Name" type="text" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
+                  <TextField label="Billing Email" type="email" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
+                  <TextField label="Contact Telephone Number" type="tel" variant="outlined" fullWidth size="small" style={{marginBottom:16}}/>
+                  <TextField label="Billing Address" type="text" variant="outlined" fullWidth size="small" multiline rows={3} style={{marginBottom:16}}/>
+                </form>
+              </div>
+              </div>
           )}
 
           {activeSection === 'hotels' && accountSaved && (
-            <Box style={{padding:24,maxWidth:1000}}>
+            <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
+            <Box style={{padding:24,maxWidth:1000,paddingBottom:24}}>
               <Typography variant="h5" style={{fontWeight:700,marginBottom:4}}>Hotel Details</Typography>
               <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>Search Duetto's hotel database or type a new property name. Assign products globally or per hotel.</Typography>
               <Divider style={{marginBottom:24}}/>
@@ -2182,7 +2155,7 @@ function DigitalSalesRoomApp() {
                 {allHotelsSameProducts && (
                   <Box>
                     <Typography style={{fontSize:'0.75rem',fontWeight:600,color:'#4F5B60',marginBottom:8}}>Products applied to all hotels</Typography>
-                    <Box style={{display:'flex',flexWrap:'wrap',rowGap:4,columnGap:16}}>
+                    <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr',columnGap:32,rowGap:12}}>
                       {PRODUCTS.map(p => {
                         const on = globalProducts.includes(p)
                         return (
@@ -2201,13 +2174,24 @@ function DigitalSalesRoomApp() {
                               />
                             }
                             label={
-                              <Typography style={{
-                                fontWeight: on ? 600 : 500,
-                                fontSize: '0.85rem',
-                                color: '#1c1c1c',
-                              }}>
-                                {p}
-                              </Typography>
+                              <Box>
+                                <Typography style={{
+                                  fontWeight: on ? 600 : 500,
+                                  fontSize: '0.85rem',
+                                  color: '#1c1c1c',
+                                  lineHeight: 1.3,
+                                }}>
+                                  {p}
+                                </Typography>
+                                <Typography style={{
+                                  fontSize: '0.7rem',
+                                  color: '#4F5B60',
+                                  lineHeight: 1.3,
+                                  marginTop: 2,
+                                }}>
+                                  {PRODUCT_DESCRIPTIONS[p]}
+                                </Typography>
+                              </Box>
                             }
                           />
                         )
@@ -2251,7 +2235,7 @@ function DigitalSalesRoomApp() {
               )}
 
               {/* Contact Details */}
-              <Box style={{marginBottom:24,padding:'12px 16px',background:'#FAFAFA',borderRadius:8}}>
+              <Box style={{marginBottom:24}}>
                 <Typography style={{fontSize:'0.75rem',fontWeight:600,textTransform:'uppercase',color:'#4F5B60',marginBottom:12}}>PROPERTY IMPLEMENTATION CONTACT DETAILS</Typography>
                 <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
                   <TextField label="Contact Name" variant="outlined" size="small" fullWidth />
@@ -2611,13 +2595,24 @@ function DigitalSalesRoomApp() {
                               />
                             }
                             label={
-                              <Typography style={{
-                                fontWeight: on ? 600 : 500,
-                                fontSize: '0.85rem',
-                                color: '#1c1c1c',
-                              }}>
-                                {p}
-                              </Typography>
+                              <Box>
+                                <Typography style={{
+                                  fontWeight: on ? 600 : 500,
+                                  fontSize: '0.85rem',
+                                  color: '#1c1c1c',
+                                  lineHeight: 1.3,
+                                }}>
+                                  {p}
+                                </Typography>
+                                <Typography style={{
+                                  fontSize: '0.7rem',
+                                  color: '#4F5B60',
+                                  lineHeight: 1.3,
+                                  marginTop: 2,
+                                }}>
+                                  {PRODUCT_DESCRIPTIONS[p]}
+                                </Typography>
+                              </Box>
                             }
                           />
                         )
@@ -2708,10 +2703,12 @@ function DigitalSalesRoomApp() {
                 </DialogActions>
               </Dialog>
             </Box>
+            </div>
           )}
 
           {activeSection === 'proposal' && accountSaved && (
-            <Box style={{padding:24}}>
+            <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
+            <Box style={{padding:24,paddingBottom:24}}>
               <Box style={{display:'flex',alignItems:'center',gap:12,marginBottom:4,flexWrap:'wrap'}}>
                 <Typography variant="h5" style={{fontWeight:700}}>Sales Proposal</Typography>
                 <Box style={{padding:'4px 12px',borderRadius:12,background:'#FFF8E1',color:'#774700',fontWeight:700,fontSize:'0.75rem'}}>
@@ -2734,17 +2731,6 @@ function DigitalSalesRoomApp() {
               {/* AG-Grid Table */}
               <SalesProposalTable proposal={MOCK_PROPOSAL} productColors={PRODUCT_COLORS} />
 
-              {/* Actions */}
-              <Box style={{display:'flex',gap:12,marginTop:20,paddingTop:20,borderTop:'1px solid #DDE1E2'}}>
-                <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600,paddingLeft:28,paddingRight:28}}
-                  onClick={()=>setProposalAccepted(true)}>
-                  ✓ Accept Proposal
-                </Button>
-                <Button variant="outlined" style={{textTransform:'none',fontWeight:500}}>
-                  ✎ Request Changes
-                </Button>
-              </Box>
-
               {proposalAccepted && (
                 <Box style={{display:'flex',alignItems:'center',gap:10,background:'#E8F5E9',borderRadius:6,padding:'14px 18px',marginTop:20}}>
                   <span style={{color:'#388C3F'}}><CheckCircleIcon/></span>
@@ -2752,10 +2738,42 @@ function DigitalSalesRoomApp() {
                 </Box>
               )}
             </Box>
+            </div>
           )}
         </Box>
-      </div>
-      )}
+
+      <Box style={{position:'sticky',bottom:0,background:'#ffffff',borderTop:'1px solid #DDE1E2',padding:'16px 24px',display:'flex',justifyContent:'flex-end',gap:12,boxShadow:'0 -2px 8px rgba(0,0,0,0.08)',zIndex:100}}>
+        {activeSection === 'account' && (
+          <>
+            <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
+            <Button onClick={()=>{setAccountSaved(true);setActiveSection('hotels')}} variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}}>
+              Save and Next
+            </Button>
+          </>
+        )}
+        {activeSection === 'hotels' && (
+          <>
+            <Button variant="outlined" style={{textTransform:'none'}} onClick={()=>setActiveSection('account')}>Back</Button>
+            <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}} onClick={()=>setActiveSection('docs')}>Next</Button>
+          </>
+        )}
+        {activeSection === 'docs' && (
+          <>
+            <Button variant="outlined" style={{textTransform:'none'}} onClick={()=>setActiveSection('hotels')}>Back</Button>
+            <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}} onClick={()=>setActiveSection('proposal')}>Next</Button>
+          </>
+        )}
+        {activeSection === 'proposal' && (
+          <>
+            <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600,paddingLeft:28,paddingRight:28}} onClick={()=>setProposalAccepted(true)}>
+              ✓ Accept Proposal
+            </Button>
+            <Button variant="outlined" style={{textTransform:'none',fontWeight:500}}>
+              ✎ Request Changes
+            </Button>
+          </>
+        )}
+      </Box>
 
     </Box>
   )

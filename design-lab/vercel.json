@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
   "buildCommand": "next build",
-  "installCommand": "npm install --legacy-peer-deps"
+  "installCommand": "sh scripts/setup-npmrc.sh && npm install"
 }
