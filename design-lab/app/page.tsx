@@ -5,6 +5,9 @@ import Tile from '@/components/Tile'
 import { Typography, Box, Chip } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
 import { PROJECTS, ALL_TEAMS, TEAM_LABELS, TeamSlug } from '@/lib/folders'
+import { STANDALONE_PROJECTS } from '@/lib/standalone-generated'
+
+const ALL_PROJECTS = [...PROJECTS, ...STANDALONE_PROJECTS]
 
 const useStyles = makeStyles((theme) => ({
   page: {
@@ -66,6 +69,19 @@ const useStyles = makeStyles((theme) => ({
     gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
     gap: theme.spacing(3),
   },
+  standaloneBadge: {
+    display: 'inline-block',
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    background: 'rgba(0,0,0,0.08)',
+    color: 'rgba(0,0,0,0.45)',
+    borderRadius: 4,
+    padding: '2px 6px',
+    marginLeft: theme.spacing(1),
+    verticalAlign: 'middle',
+  },
 }))
 
 type Filter = 'all' | TeamSlug
@@ -74,13 +90,13 @@ export default function Home() {
   const classes = useStyles()
   const [filter, setFilter] = useState<Filter>('all')
 
-  const sorted = [...PROJECTS].sort((a, b) => b.committedAt - a.committedAt)
+  const sorted = [...ALL_PROJECTS].sort((a, b) => b.committedAt - a.committedAt)
 
   const visible = filter === 'all'
     ? sorted
     : sorted.filter((p) => p.team === filter)
 
-  const countFor = (team: TeamSlug) => PROJECTS.filter((p) => p.team === team).length
+  const countFor = (team: TeamSlug) => ALL_PROJECTS.filter((p) => p.team === team).length
 
   return (
     <Box className={classes.page}>
@@ -94,7 +110,7 @@ export default function Home() {
 
       <Box className={classes.chips}>
         <Chip
-          label={`All (${PROJECTS.length})`}
+          label={`All (${ALL_PROJECTS.length})`}
           color={filter === 'all' ? 'primary' : 'default'}
           variant={filter === 'all' ? 'default' : 'outlined'}
           onClick={() => setFilter('all')}
@@ -117,7 +133,14 @@ export default function Home() {
           <Tile
             key={project.slug}
             href={project.href}
-            caption={TEAM_LABELS[project.team]}
+            caption={
+              <>
+                {TEAM_LABELS[project.team]}
+                {project.type === 'standalone' && (
+                  <span className={classes.standaloneBadge}>Standalone</span>
+                )}
+              </>
+            }
             heroTitle={project.name}
             footerTitle={project.name}
             footerSub={project.committed}

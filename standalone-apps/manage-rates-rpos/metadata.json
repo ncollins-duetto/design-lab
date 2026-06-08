@@ -1,0 +1,7 @@
+{
+  "name": "Manage Rates RPOs",
+  "team": "strategy-team",
+  "description": "Exploration of RPO interactions in the manage rates table.",
+  "decoration": "rates",
+  "author": "paulo"
+}

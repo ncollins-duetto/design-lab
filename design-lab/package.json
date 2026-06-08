@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "preinstall": "sh scripts/setup-npmrc.sh",
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/sync-standalone.js && next dev",
+    "build": "node scripts/sync-standalone.js && next build",
     "start": "next start"
   },
   "dependencies": {

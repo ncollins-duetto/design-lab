@@ -37,6 +37,7 @@ export type Project = {
   committedAt: number   // Unix ms — used for sort order
   committed: string     // Human-readable label
   decoration: 'rates' | 'sales-room' | 'min-max' | 'tour-operator'
+  type?: 'mock-app' | 'standalone'
 }
 
 const NOW = Date.now()
