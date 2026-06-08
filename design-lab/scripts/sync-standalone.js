@@ -131,7 +131,14 @@ for (const entry of entries) {
     )
     if (needsInstall) {
       console.log(`[sync-standalone] Installing dependencies for ${entry.name}...`)
-      execSync('npm install', { cwd: src, stdio: 'inherit' })
+      // Strip npm auth env vars inherited from the parent install (setup-npmrc.sh sets these
+      // for the private Duetto registry). Standalone apps use only public npm packages.
+      const childEnv = { ...process.env }
+      delete childEnv.npm_config_always_auth
+      delete childEnv.npm_config__authtoken
+      delete childEnv.npm_config__auth
+      delete childEnv.NPM_TOKEN
+      execSync('npm install', { cwd: src, stdio: 'inherit', env: childEnv })
     }
 
     console.log(`[sync-standalone] Building ${entry.name}...`)
