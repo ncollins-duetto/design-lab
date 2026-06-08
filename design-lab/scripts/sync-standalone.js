@@ -142,6 +142,8 @@ for (const entry of entries) {
       childEnv.npm_config_registry = 'https://registry.npmjs.org/'
       childEnv.npm_config_always_auth = 'false'
       childEnv.npm_config_userconfig = '/dev/null'
+      // Prevent npm from skipping devDependencies — Vite and TypeScript are devDeps
+      childEnv.NODE_ENV = 'development'
       execSync('npm install', { cwd: src, stdio: 'inherit', env: childEnv })
     }
 
