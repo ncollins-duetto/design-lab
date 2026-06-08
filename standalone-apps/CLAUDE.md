@@ -78,7 +78,15 @@ standalone-apps/
 
 1. Scaffold a new Vite app: `npm create vite@latest your-prototype-name -- --template react-ts`
 2. Add `metadata.json` at the root of the new folder (see spec below)
-3. **Set `base: './'` in `vite.config.ts`** — this is required. Without it, the built asset paths
+3. **Add `registry=https://registry.npmjs.org/` to `.npmrc`** — the repo root `.npmrc` is configured
+   for the private Duetto npm registry, which requires auth credentials that aren't available in
+   the context where the sync script runs. Standalone apps only use public npm packages, so pinning
+   the registry here bypasses that auth entirely.
+   ```
+   registry=https://registry.npmjs.org/
+   legacy-peer-deps=true
+   ```
+4. **Set `base: './'` in `vite.config.ts`** — this is required. Without it, the built asset paths
    are absolute and will 404 when served from `/standalone-apps/your-prototype-name/`. The sync
    script will refuse to build and exit with an error if this is missing.
    ```ts
