@@ -170,13 +170,11 @@ export function DayDetailModal({ open, dateLabel, metrics, onClose }: Props) {
       anchor="right"
       open={open}
       onClose={onClose}
-      slotProps={{
-        paper: {
-          sx: {
-            width: 375,
-            bgcolor: '#fff',
-            fontFamily: 'Lato, sans-serif',
-          },
+      PaperProps={{
+        sx: {
+          width: 375,
+          bgcolor: '#fff',
+          fontFamily: 'Lato, sans-serif',
         },
       }}
     >

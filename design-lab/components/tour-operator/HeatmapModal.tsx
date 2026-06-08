@@ -177,13 +177,11 @@ export function HeatmapModal({ open, draft, onChange, onClose, onReset: _onReset
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            bgcolor: '#fafafa',
-            borderRadius: '4px',
-            boxShadow: '0 4px 4px rgba(0,0,0,0.25)',
-          },
+      PaperProps={{
+        sx: {
+          bgcolor: '#fafafa',
+          borderRadius: '4px',
+          boxShadow: '0 4px 4px rgba(0,0,0,0.25)',
         },
       }}
     >

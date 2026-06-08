@@ -5,6 +5,9 @@ import Tile from '@/components/Tile'
 import { Typography, Box, Chip } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
 import { PROJECTS, ALL_TEAMS, TEAM_LABELS, TeamSlug } from '@/lib/folders'
+import { STANDALONE_PROJECTS } from '@/lib/standalone-generated'
+
+const ALL_PROJECTS = [...PROJECTS, ...STANDALONE_PROJECTS]
 
 const useStyles = makeStyles((theme) => ({
   page: {
@@ -66,6 +69,24 @@ const useStyles = makeStyles((theme) => ({
     gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
     gap: theme.spacing(3),
   },
+  tileWrapper: {
+    position: 'relative',
+  },
+  standaloneBadge: {
+    position: 'absolute',
+    top: theme.spacing(1.5),
+    right: theme.spacing(1.5),
+    zIndex: 1,
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase' as const,
+    background: 'rgba(0,0,0,0.45)',
+    color: '#fff',
+    borderRadius: 4,
+    padding: '2px 6px',
+    pointerEvents: 'none',
+  },
 }))
 
 type Filter = 'all' | TeamSlug
@@ -74,13 +95,13 @@ export default function Home() {
   const classes = useStyles()
   const [filter, setFilter] = useState<Filter>('all')
 
-  const sorted = [...PROJECTS].sort((a, b) => b.committedAt - a.committedAt)
+  const sorted = [...ALL_PROJECTS].sort((a, b) => b.committedAt - a.committedAt)
 
   const visible = filter === 'all'
     ? sorted
     : sorted.filter((p) => p.team === filter)
 
-  const countFor = (team: TeamSlug) => PROJECTS.filter((p) => p.team === team).length
+  const countFor = (team: TeamSlug) => ALL_PROJECTS.filter((p) => p.team === team).length
 
   return (
     <Box className={classes.page}>
@@ -94,7 +115,7 @@ export default function Home() {
 
       <Box className={classes.chips}>
         <Chip
-          label={`All (${PROJECTS.length})`}
+          label={`All (${ALL_PROJECTS.length})`}
           color={filter === 'all' ? 'primary' : 'default'}
           variant={filter === 'all' ? 'default' : 'outlined'}
           onClick={() => setFilter('all')}
@@ -114,16 +135,20 @@ export default function Home() {
 
       <Box className={classes.grid}>
         {visible.length > 0 ? visible.map((project) => (
-          <Tile
-            key={project.slug}
-            href={project.href}
-            caption={TEAM_LABELS[project.team]}
-            heroTitle={project.name}
-            footerTitle={project.name}
-            footerSub={project.committed}
-            description={project.description}
-            decoration={project.decoration}
-          />
+          <Box key={project.slug} className={classes.tileWrapper}>
+            {project.type === 'standalone' && (
+              <span className={classes.standaloneBadge}>Standalone</span>
+            )}
+            <Tile
+              href={project.href}
+              caption={TEAM_LABELS[project.team]}
+              heroTitle={project.name}
+              footerTitle={project.name}
+              footerSub={project.committed}
+              description={project.description}
+              decoration={project.decoration}
+            />
+          </Box>
         )) : (
           <Box className={classes.emptyState}>
             <Typography variant="body1" className={classes.emptyTitle}>

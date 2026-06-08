@@ -28,17 +28,15 @@ export function ComparePanel({ open, anchorEl, value, onToggle, onClose }: Props
       onClose={onClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-      slotProps={{
-        paper: {
-          sx: {
-            minWidth: 180,
-            border: '1px solid #DDE1E2',
-            borderRadius: '4px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-            overflow: 'hidden',
-            bgcolor: '#fff',
-            py: 0.5,
-          },
+      PaperProps={{
+        sx: {
+          minWidth: 180,
+          border: '1px solid #DDE1E2',
+          borderRadius: '4px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+          overflow: 'hidden',
+          bgcolor: '#fff',
+          py: 0.5,
         },
       }}
     >
