@@ -81,8 +81,87 @@ const entries = fs.readdirSync(STANDALONE_SRC, { withFileTypes: true })
 for (const entry of entries) {
   const src = path.join(STANDALONE_SRC, entry.name)
   const dest = path.join(PUBLIC_DEST, entry.name)
-  copyDirSync(src, dest)
-  console.log(`[sync-standalone] Copied ${entry.name}`)
+
+  const pkgPath = path.join(src, 'package.json')
+  if (fs.existsSync(pkgPath)) {
+    // Vite-based prototype — build first, then copy dist/
+    let pkg
+    try {
+      pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
+    } catch {
+      console.warn(`[sync-standalone] Skipping ${entry.name} — invalid package.json`)
+      continue
+    }
+    if (!pkg.scripts?.build) {
+      console.warn(`[sync-standalone] Skipping ${entry.name} — package.json has no build script`)
+      continue
+    }
+
+    // Require base: './' in vite.config so assets resolve correctly from the subpath
+    const viteConfigPath = path.join(src, 'vite.config.ts')
+    const viteConfigJsPath = path.join(src, 'vite.config.js')
+    const viteConfig = fs.existsSync(viteConfigPath)
+      ? fs.readFileSync(viteConfigPath, 'utf8')
+      : fs.existsSync(viteConfigJsPath)
+        ? fs.readFileSync(viteConfigJsPath, 'utf8')
+        : null
+    if (!viteConfig || !viteConfig.includes("base: './'")) {
+      console.error(
+        `[sync-standalone] ERROR: ${entry.name}/vite.config.ts is missing base: './' — ` +
+        `assets will 404 when served from /standalone-apps/${entry.name}/. ` +
+        `Add base: './' to your defineConfig and rebuild.`
+      )
+      process.exit(1)
+    }
+
+    // Remove vercel.json if present — it's a leftover from standalone Vercel deployments
+    // and has no effect here, but would confuse future maintainers
+    const vercelConfigPath = path.join(src, 'vercel.json')
+    if (fs.existsSync(vercelConfigPath)) {
+      fs.rmSync(vercelConfigPath)
+      console.log(`[sync-standalone] Removed stale vercel.json from ${entry.name}`)
+    }
+
+    // Skip npm install if node_modules is up to date
+    const lockPath = path.join(src, 'package-lock.json')
+    const nodeModulesPath = path.join(src, 'node_modules')
+    const needsInstall = !fs.existsSync(nodeModulesPath) || (
+      fs.existsSync(lockPath) &&
+      fs.statSync(lockPath).mtimeMs > fs.statSync(nodeModulesPath).mtimeMs
+    )
+    if (needsInstall) {
+      console.log(`[sync-standalone] Installing dependencies for ${entry.name}...`)
+      // Isolate npm from the private Duetto registry config. setup-npmrc.sh writes
+      // always-auth=true and the Artifactory registry as the default into design-lab/.npmrc,
+      // and Vercel may propagate these via env vars or user-level ~/.npmrc. Standalone apps
+      // use only public npm packages, so we force the public registry and disable auth entirely.
+      const childEnv = { ...process.env }
+      delete childEnv.npm_config__authtoken
+      delete childEnv.npm_config__auth
+      delete childEnv.NPM_TOKEN
+      childEnv.npm_config_registry = 'https://registry.npmjs.org/'
+      childEnv.npm_config_always_auth = 'false'
+      childEnv.npm_config_userconfig = '/dev/null'
+      // Prevent npm from skipping devDependencies — Vite and TypeScript are devDeps
+      childEnv.NODE_ENV = 'development'
+      execSync('npm install', { cwd: src, stdio: 'inherit', env: childEnv })
+    }
+
+    console.log(`[sync-standalone] Building ${entry.name}...`)
+    execSync('npm run build', { cwd: src, stdio: 'inherit' })
+
+    const distPath = path.join(src, 'dist')
+    if (!fs.existsSync(distPath)) {
+      console.warn(`[sync-standalone] Skipping ${entry.name} — build produced no dist/ folder`)
+      continue
+    }
+    copyDirSync(distPath, dest)
+    console.log(`[sync-standalone] Built and copied ${entry.name}`)
+  } else {
+    // Static prototype — copy source directly
+    copyDirSync(src, dest)
+    console.log(`[sync-standalone] Copied ${entry.name}`)
+  }
 }
 
 // ---------------------------------------------------------------------------
