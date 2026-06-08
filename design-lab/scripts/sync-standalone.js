@@ -131,13 +131,17 @@ for (const entry of entries) {
     )
     if (needsInstall) {
       console.log(`[sync-standalone] Installing dependencies for ${entry.name}...`)
-      // Strip npm auth env vars inherited from the parent install (setup-npmrc.sh sets these
-      // for the private Duetto registry). Standalone apps use only public npm packages.
+      // Isolate npm from the private Duetto registry config. setup-npmrc.sh writes
+      // always-auth=true and the Artifactory registry as the default into design-lab/.npmrc,
+      // and Vercel may propagate these via env vars or user-level ~/.npmrc. Standalone apps
+      // use only public npm packages, so we force the public registry and disable auth entirely.
       const childEnv = { ...process.env }
-      delete childEnv.npm_config_always_auth
       delete childEnv.npm_config__authtoken
       delete childEnv.npm_config__auth
       delete childEnv.NPM_TOKEN
+      childEnv.npm_config_registry = 'https://registry.npmjs.org/'
+      childEnv.npm_config_always_auth = 'false'
+      childEnv.npm_config_userconfig = '/dev/null'
       execSync('npm install', { cwd: src, stdio: 'inherit', env: childEnv })
     }
 
