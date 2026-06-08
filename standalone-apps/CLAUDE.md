@@ -92,10 +92,8 @@ standalone-apps/
    ```tsx
    <BrowserRouter basename="/standalone-apps/your-prototype-name">
    ```
-5. **If the project has a `vercel.json`, delete it.** It was needed when the app was deployed as
-   its own Vercel project but has no effect here and will confuse future maintainers.
-6. Preview locally: `cd your-prototype-name && npm install && npm run dev`
-7. Push your branch — the sync script detects `package.json`, builds the app automatically,
+5. Preview locally: `cd your-prototype-name && npm install && npm run dev`
+6. Push your branch — the sync script detects `package.json`, builds the app automatically,
    and your prototype appears in the design-lab directory at `/standalone-apps/your-prototype-name/`
 
 ---

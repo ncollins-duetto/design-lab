@@ -114,6 +114,14 @@ for (const entry of entries) {
       process.exit(1)
     }
 
+    // Remove vercel.json if present — it's a leftover from standalone Vercel deployments
+    // and has no effect here, but would confuse future maintainers
+    const vercelConfigPath = path.join(src, 'vercel.json')
+    if (fs.existsSync(vercelConfigPath)) {
+      fs.rmSync(vercelConfigPath)
+      console.log(`[sync-standalone] Removed stale vercel.json from ${entry.name}`)
+    }
+
     // Skip npm install if node_modules is up to date
     const lockPath = path.join(src, 'package-lock.json')
     const nodeModulesPath = path.join(src, 'node_modules')
