@@ -69,18 +69,23 @@ const useStyles = makeStyles((theme) => ({
     gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
     gap: theme.spacing(3),
   },
+  tileWrapper: {
+    position: 'relative',
+  },
   standaloneBadge: {
-    display: 'inline-block',
+    position: 'absolute',
+    top: theme.spacing(1.5),
+    right: theme.spacing(1.5),
+    zIndex: 1,
     fontSize: 10,
     fontWeight: 700,
     letterSpacing: '0.05em',
-    textTransform: 'uppercase',
-    background: 'rgba(0,0,0,0.08)',
-    color: 'rgba(0,0,0,0.45)',
+    textTransform: 'uppercase' as const,
+    background: 'rgba(0,0,0,0.45)',
+    color: '#fff',
     borderRadius: 4,
     padding: '2px 6px',
-    marginLeft: theme.spacing(1),
-    verticalAlign: 'middle',
+    pointerEvents: 'none',
   },
 }))
 
@@ -130,23 +135,20 @@ export default function Home() {
 
       <Box className={classes.grid}>
         {visible.length > 0 ? visible.map((project) => (
-          <Tile
-            key={project.slug}
-            href={project.href}
-            caption={
-              <>
-                {TEAM_LABELS[project.team]}
-                {project.type === 'standalone' && (
-                  <span className={classes.standaloneBadge}>Standalone</span>
-                )}
-              </>
-            }
-            heroTitle={project.name}
-            footerTitle={project.name}
-            footerSub={project.committed}
-            description={project.description}
-            decoration={project.decoration}
-          />
+          <Box key={project.slug} className={classes.tileWrapper}>
+            {project.type === 'standalone' && (
+              <span className={classes.standaloneBadge}>Standalone</span>
+            )}
+            <Tile
+              href={project.href}
+              caption={TEAM_LABELS[project.team]}
+              heroTitle={project.name}
+              footerTitle={project.name}
+              footerSub={project.committed}
+              description={project.description}
+              decoration={project.decoration}
+            />
+          </Box>
         )) : (
           <Box className={classes.emptyState}>
             <Typography variant="body1" className={classes.emptyTitle}>
