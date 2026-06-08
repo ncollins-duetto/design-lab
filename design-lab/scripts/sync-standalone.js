@@ -81,8 +81,66 @@ const entries = fs.readdirSync(STANDALONE_SRC, { withFileTypes: true })
 for (const entry of entries) {
   const src = path.join(STANDALONE_SRC, entry.name)
   const dest = path.join(PUBLIC_DEST, entry.name)
-  copyDirSync(src, dest)
-  console.log(`[sync-standalone] Copied ${entry.name}`)
+
+  const pkgPath = path.join(src, 'package.json')
+  if (fs.existsSync(pkgPath)) {
+    // Vite-based prototype — build first, then copy dist/
+    let pkg
+    try {
+      pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
+    } catch {
+      console.warn(`[sync-standalone] Skipping ${entry.name} — invalid package.json`)
+      continue
+    }
+    if (!pkg.scripts?.build) {
+      console.warn(`[sync-standalone] Skipping ${entry.name} — package.json has no build script`)
+      continue
+    }
+
+    // Require base: './' in vite.config so assets resolve correctly from the subpath
+    const viteConfigPath = path.join(src, 'vite.config.ts')
+    const viteConfigJsPath = path.join(src, 'vite.config.js')
+    const viteConfig = fs.existsSync(viteConfigPath)
+      ? fs.readFileSync(viteConfigPath, 'utf8')
+      : fs.existsSync(viteConfigJsPath)
+        ? fs.readFileSync(viteConfigJsPath, 'utf8')
+        : null
+    if (!viteConfig || !viteConfig.includes("base: './'")) {
+      console.error(
+        `[sync-standalone] ERROR: ${entry.name}/vite.config.ts is missing base: './' — ` +
+        `assets will 404 when served from /standalone-apps/${entry.name}/. ` +
+        `Add base: './' to your defineConfig and rebuild.`
+      )
+      process.exit(1)
+    }
+
+    // Skip npm install if node_modules is up to date
+    const lockPath = path.join(src, 'package-lock.json')
+    const nodeModulesPath = path.join(src, 'node_modules')
+    const needsInstall = !fs.existsSync(nodeModulesPath) || (
+      fs.existsSync(lockPath) &&
+      fs.statSync(lockPath).mtimeMs > fs.statSync(nodeModulesPath).mtimeMs
+    )
+    if (needsInstall) {
+      console.log(`[sync-standalone] Installing dependencies for ${entry.name}...`)
+      execSync('npm install', { cwd: src, stdio: 'inherit' })
+    }
+
+    console.log(`[sync-standalone] Building ${entry.name}...`)
+    execSync('npm run build', { cwd: src, stdio: 'inherit' })
+
+    const distPath = path.join(src, 'dist')
+    if (!fs.existsSync(distPath)) {
+      console.warn(`[sync-standalone] Skipping ${entry.name} — build produced no dist/ folder`)
+      continue
+    }
+    copyDirSync(distPath, dest)
+    console.log(`[sync-standalone] Built and copied ${entry.name}`)
+  } else {
+    // Static prototype — copy source directly
+    copyDirSync(src, dest)
+    console.log(`[sync-standalone] Copied ${entry.name}`)
+  }
 }
 
 // ---------------------------------------------------------------------------

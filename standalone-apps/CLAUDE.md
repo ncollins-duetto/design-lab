@@ -19,13 +19,21 @@ Run `git branch --show-current` and check the result.
 
 ## What this is
 
-A collection of self-contained HTML prototypes. Each lives in its own folder and is served as a
-static file by Next.js via the `public/standalone-apps/` path (populated automatically at build/dev time).
+A collection of self-contained prototypes. Each lives in its own folder and is served by Next.js
+via the `public/standalone-apps/` path (populated automatically at build/dev time).
+
+Two formats are supported:
+
+- **Static** — a single `index.html` with plain HTML/CSS/JS. No build step. Open directly in a browser.
+- **Vite** — a React + TypeScript app with a `package.json`. Built automatically by the sync script before serving.
 
 Use this workflow when:
-- Your prototype is interaction-rich and easier to build in plain HTML/CSS/JS
+- Your prototype is interaction-rich and easier to build outside the Next.js stack
 - You need to experiment with UI patterns that don't map to existing components
-- You want to iterate fast without the Next.js stack overhead
+- You want to iterate fast without the design-lab overhead
+
+Use the Vite format when your prototype needs React, npm packages (e.g. dnd-kit, react-hook-form),
+or a multi-file component structure that would be unwieldy in a single HTML file.
 
 Standalone prototypes should still align visually with the Duetto design system — start from a
 clean Figma file using the correct tokens and components before writing code.
@@ -36,26 +44,59 @@ clean Figma file using the correct tokens and components before writing code.
 
 ```
 standalone-apps/
-├── CLAUDE.md               ← this file
-├── _template/              ← copy this to start a new prototype
+├── CLAUDE.md                  ← this file
+├── _template/                 ← copy this to start a static prototype
 │   ├── index.html
 │   └── metadata.json
-└── your-prototype/
-    ├── index.html          ← entry point (required)
-    ├── metadata.json       ← required for directory listing
-    └── (any other assets)
+├── your-static-prototype/
+│   ├── index.html             ← entry point (required)
+│   ├── metadata.json          ← required for directory listing
+│   └── (any other assets)
+└── your-vite-prototype/
+    ├── package.json           ← presence of this file triggers the Vite build path
+    ├── metadata.json          ← required for directory listing (same format as static)
+    ├── index.html             ← Vite entry point
+    ├── vite.config.ts
+    ├── src/
+    └── (dist/ and node_modules/ are git-ignored — never commit them)
 ```
 
 ---
 
-## How to add a new standalone prototype
+## How to add a new static prototype
 
 1. Copy `_template/` to a new folder: `cp -r _template/ your-prototype-name/`
 2. Edit `metadata.json` with your prototype's details (see below)
 3. Build your prototype in `index.html`
 4. Preview locally by opening `index.html` directly in your browser
-5. Push your branch — the sync script runs automatically at build time and your prototype
-   appears in the design-lab directory at `/standalone-apps/your-prototype-name/`
+5. Push your branch — the sync script runs automatically and your prototype appears in the
+   design-lab directory at `/standalone-apps/your-prototype-name/`
+
+## How to add a new Vite-based prototype
+
+> **Prefer the static format.** Every Vite prototype adds an `npm install` + `npm run build` step to every Vercel deployment. One is fine, but each one added makes the build slower for the entire team. Vercel has a 45-minute build limit. Only use this format when the prototype genuinely needs React, npm packages, or a multi-file component structure that would be impractical in a single HTML file.
+
+1. Scaffold a new Vite app: `npm create vite@latest your-prototype-name -- --template react-ts`
+2. Add `metadata.json` at the root of the new folder (see spec below)
+3. **Set `base: './'` in `vite.config.ts`** — this is required. Without it, the built asset paths
+   are absolute and will 404 when served from `/standalone-apps/your-prototype-name/`. The sync
+   script will refuse to build and exit with an error if this is missing.
+   ```ts
+   export default defineConfig({
+     plugins: [react()],
+     base: './',
+   })
+   ```
+4. **If using React Router, set `basename` on `BrowserRouter`** to match the subpath the app is
+   served from. Without this, navigating between pages resets the URL to the domain root and breaks routing.
+   ```tsx
+   <BrowserRouter basename="/standalone-apps/your-prototype-name">
+   ```
+5. **If the project has a `vercel.json`, delete it.** It was needed when the app was deployed as
+   its own Vercel project but has no effect here and will confuse future maintainers.
+6. Preview locally: `cd your-prototype-name && npm install && npm run dev`
+7. Push your branch — the sync script detects `package.json`, builds the app automatically,
+   and your prototype appears in the design-lab directory at `/standalone-apps/your-prototype-name/`
 
 ---
 
@@ -77,8 +118,11 @@ standalone-apps/
 
 ## Local preview
 
-Open your `index.html` directly in a browser — no server needed. If your prototype references
-other local files (CSS, JS, images), keep them in the same folder and use relative paths.
+**Static:** Open `index.html` directly in a browser — no server needed. Keep any referenced CSS, JS,
+or images in the same folder and use relative paths.
+
+**Vite:** Run `npm install && npm run dev` inside your prototype folder. Vite serves the app at
+`http://localhost:5173` (or the next available port) with hot reload.
 
 ---
 
@@ -99,4 +143,5 @@ other local files (CSS, JS, images), keep them in the same folder and use relati
 - Do not edit `_template/` — it's the reference template for new prototypes
 - Do not commit anything to `design-lab/public/standalone-apps/` — it's auto-generated and git-ignored
 - Do not commit `design-lab/lib/standalone-generated.ts` — also auto-generated
-- Do not make real API calls — use hardcoded mock data in your HTML file
+- Do not commit `dist/` or `node_modules/` inside Vite prototype folders — both are git-ignored
+- Do not make real API calls — use hardcoded mock data
