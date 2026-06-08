@@ -238,14 +238,12 @@ export function WeekRangePicker({ open, anchorEl, startDate, endDate, onClose, o
       onClose={onClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-      slotProps={{
-        paper: {
-          sx: {
-            mt: 0.5,
-            bgcolor: '#fff',
-            borderRadius: '8px',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
-          },
+      PaperProps={{
+        sx: {
+          mt: 0.5,
+          bgcolor: '#fff',
+          borderRadius: '8px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
         },
       }}
     >

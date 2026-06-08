@@ -334,16 +334,14 @@ export function MonthRangePicker({
       onClose={onClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      slotProps={{
-        paper: {
-          sx: {
-            mt: 0.5,
-            maxWidth: '95vw',
-            bgcolor: '#fff',
-            borderRadius: '8px',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
-            overflow: 'hidden',
-          },
+      PaperProps={{
+        sx: {
+          mt: 0.5,
+          maxWidth: '95vw',
+          bgcolor: '#fff',
+          borderRadius: '8px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
+          overflow: 'hidden',
         },
       }}
     >

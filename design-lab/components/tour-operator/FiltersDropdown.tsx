@@ -58,19 +58,17 @@ export function FiltersDropdown({
       onClose={onClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-      slotProps={{
-        paper: {
-          sx: {
-            width: 318,
-            maxHeight: 460,
-            border: '1px solid #DDE1E2',
-            borderRadius: '5px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            bgcolor: '#fff',
-          },
+      PaperProps={{
+        sx: {
+          width: 318,
+          maxHeight: 460,
+          border: '1px solid #DDE1E2',
+          borderRadius: '5px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          bgcolor: '#fff',
         },
       }}
     >

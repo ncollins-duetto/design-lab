@@ -166,20 +166,18 @@ export function CellMetricsPanel({
       onClose={onClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
       transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-      slotProps={{
-        paper: {
-          className: 'cal-metrics-dropdown',
-          sx: {
-            width: 298,
-            maxHeight: 'min(560px, 85vh)',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            p: 0,
-            boxShadow: 'none',
-            border: '1px solid #DDE1E2',
-            borderRadius: '8px',
-          },
+      PaperProps={{
+        className: 'cal-metrics-dropdown',
+        sx: {
+          width: 298,
+          maxHeight: 'min(560px, 85vh)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          p: 0,
+          boxShadow: 'none',
+          border: '1px solid #DDE1E2',
+          borderRadius: '8px',
         },
       }}
     >
