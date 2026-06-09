@@ -85,16 +85,17 @@ export const PROJECTS: Project[] = [
     committed: 'Committed 3 days ago',
     decoration: 'sales-room',
   },
-  {
-    slug: 'tour-operator',
-    name: 'Tour Operator',
-    href: '/tour-operator',
-    team: 'special-projects',
-    description: 'Tour operator demand calendar — monthly and weekly views with metrics, segments, heatmap, and close-out flows.',
-    committedAt: NOW - 1 * HOURS,
-    committed: 'Committed 1 hour ago',
-    decoration: 'tour-operator',
-  },
+  // TODO: fix tour-operator MUI import errors on Vercel
+  // {
+  //   slug: 'tour-operator',
+  //   name: 'Tour Operator',
+  //   href: '/tour-operator',
+  //   team: 'special-projects',
+  //   description: 'Tour operator demand calendar — monthly and weekly views with metrics, segments, heatmap, and close-out flows.',
+  //   committedAt: NOW - 1 * HOURS,
+  //   committed: 'Committed 1 hour ago',
+  //   decoration: 'tour-operator',
+  // },
   {
     slug: 'manage-rates-multi',
     name: 'Multi-Property Manage Rates',
