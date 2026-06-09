@@ -1,32 +1,63 @@
 export interface Channel {
-  type: 'email' | 'phone' | 'chat' | 'calendar'
+  icon: string
   label: string
-  value: string
+  description: string
   href?: string
+  action?: string
 }
 
 const CHANNELS: Channel[] = [
-  { type: 'email', label: 'Email', value: 'onboarding@hotstats.com', href: 'mailto:onboarding@hotstats.com' },
+  {
+    icon: '✉',
+    label: 'Email support',
+    description: 'onboarding@hotstats.com',
+    href: 'mailto:onboarding@hotstats.com',
+  },
+  {
+    icon: '📅',
+    label: 'Schedule a call',
+    description: 'Get a 20-minute walkthrough',
+    href: '#',
+  },
+  {
+    icon: '📖',
+    label: 'Documentation',
+    description: 'Read the guide',
+    href: '#',
+  },
+  {
+    icon: '💬',
+    label: 'Get help',
+    description: 'Contact our team',
+    href: '#',
+  },
 ]
 
 export default function Communications() {
   return (
-    <div className="wf-comms">
-      <p className="wf-card-title">Need help?</p>
-      <div className="wf-comms-list">
-        {CHANNELS.map((ch) => {
-          const content = ch.href ? (
-            <a href={ch.href} className="wf-comms-link">{ch.value}</a>
-          ) : (
-            <span className="wf-comms-value">{ch.value}</span>
-          )
-          return (
-            <div key={ch.type} className="wf-comms-item">
-              <span className="wf-comms-label">{ch.label}:</span>
-              {content}
+    <div className="wf-communications-section">
+      <div className="wf-comm-header">
+        <p className="wf-card-title">Get support</p>
+        <p className="wf-comm-subtitle">We're here to help</p>
+      </div>
+      <div className="wf-comm-grid">
+        {CHANNELS.map((ch) => (
+          <a
+            key={ch.label}
+            href={ch.href || '#'}
+            className="wf-comm-card"
+            onClick={(e) => {
+              if (!ch.href || ch.href === '#') e.preventDefault()
+            }}
+          >
+            <div className="wf-comm-icon">{ch.icon}</div>
+            <div className="wf-comm-body">
+              <div className="wf-comm-label">{ch.label}</div>
+              <div className="wf-comm-desc">{ch.description}</div>
             </div>
-          )
-        })}
+            <div className="wf-comm-arrow">→</div>
+          </a>
+        ))}
       </div>
     </div>
   )
