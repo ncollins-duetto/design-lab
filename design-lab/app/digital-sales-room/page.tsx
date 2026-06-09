@@ -1895,7 +1895,7 @@ function DigitalSalesRoomApp() {
     if (platinumToken && now < platinumTokenExpiry) return platinumToken
 
     try {
-      const creds = 'MnJic2dwdjhxaDhoM2doYTRpaThjcnNtNWk6MnJic2dwdjhxaDhoM2doYTRpaThjcnNtNWk='
+      const creds = 'MnJic2dwdjhxaDhoM2doYTRpaThjcnNtNWk6MXJsM2JnZDBkZTZocm9namM5c2p0Z2VuZTN0Z3Y3dWRkdDNtMDZidm9qN21jaXVrNXZkdA=='
       const res = await fetch(
         'https://hotstats-platinum-348556999231.auth.us-west-2.amazoncognito.com/oauth2/token',
         {
