@@ -182,8 +182,7 @@ const useStyles = makeStyles((theme) => ({
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
   seasonSelect: {
-    width: 215,
-    maxWidth: 215,
+    minWidth: 215,
     fontFamily: 'Lato, sans-serif',
     fontSize: 14,
     fontWeight: 400,
@@ -196,9 +195,6 @@ const useStyles = makeStyles((theme) => ({
       lineHeight: '20px',
       backgroundColor: '#ffffff',
       borderRadius: 4,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
     },
     '& .MuiOutlinedInput-notchedOutline': {
       border: '1px solid #dde1e2',

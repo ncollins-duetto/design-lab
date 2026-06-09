@@ -405,6 +405,13 @@ interface AddedHotel extends HotelRecord {
   isNew: boolean              // true if not found in HOTEL_DATABASE (manually typed)
   useCustomProducts: boolean  // if true, this hotel overrides global products
   products: string[]
+  // Per-hotel billing override — when overrideBilling true, hotel uses its own billing values
+  overrideBilling?: boolean
+  billingContactName?: string
+  billingEmail?: string
+  billingEntityName?: string
+  billingAddress?: string
+  legalEntityName?: string
 }
 
 const MOCK_DOCS = [
@@ -1842,19 +1849,29 @@ function DigitalSalesRoomApp() {
   const theme = useTheme()
   const { user } = useContext(AuthCtx)
   const [view, setView] = useState('landing')
-  const [activePhase, setActivePhase] = useState('digital-sales-room')
   const [activeSection, setActiveSection] = useState('account')
+  const [lastOnboardingSection, setLastOnboardingSection] = useState('account')
   // (Auth hydration removed — sign-in screen always shows on a fresh page visit.)
   const [accountSaved, setAccountSaved] = useState(false)
+  const [defaultsSaved, setDefaultsSaved] = useState(false)
+  const [fillHotelsIndividually, setFillHotelsIndividually] = useState(false)
   const [proposalAccepted, setProposalAccepted] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  // Hotels: prefilled from Duetto + customer-added ones
-  const [hotels, setHotels] = useState<AddedHotel[]>(() =>
-    MOCK_HOTELS.map(h => ({ ...h, isNew: false, useCustomProducts: false, products: [...DEFAULT_PRODUCTS] }))
-  )
+  // Hotels: start empty — users add them via Add Hotel or Excel
+  const [hotels, setHotels] = useState<AddedHotel[]>([])
   const [hotelSearch, setHotelSearch] = useState('')
   const [allHotelsSameProducts, setAllHotelsSameProducts] = useState(true)
-  const [globalProducts, setGlobalProducts] = useState<string[]>([...DEFAULT_PRODUCTS])
+  const [globalProducts, setGlobalProducts] = useState<string[]>([])
+  // Default settings collected in Set Defaults step — inherited by new hotels
+  const [defaultPmsIntegrations, setDefaultPmsIntegrations] = useState('')
+  const [defaultImplContactName, setDefaultImplContactName] = useState('')
+  const [defaultImplContactEmail, setDefaultImplContactEmail] = useState('')
+  const [defaultImplContactPhone, setDefaultImplContactPhone] = useState('')
+  const [defaultBillingContactName, setDefaultBillingContactName] = useState('')
+  const [defaultBillingEmail, setDefaultBillingEmail] = useState('')
+  const [defaultBillingEntityName, setDefaultBillingEntityName] = useState('')
+  const [defaultBillingAddress, setDefaultBillingAddress] = useState('')
+  const [defaultLegalEntityName, setDefaultLegalEntityName] = useState('')
   const [excelError, setExcelError] = useState('')
   const [excelToast, setExcelToast] = useState('')
   const excelInputRef = useRef<HTMLInputElement>(null)
@@ -1869,6 +1886,12 @@ function DigitalSalesRoomApp() {
     contactName: string
     contactEmail: string
     contactPhone: string
+    overrideBilling: boolean
+    billingContactName: string
+    billingEmail: string
+    billingEntityName: string
+    billingAddress: string
+    legalEntityName: string
   }
   const emptyNewHotelForm = (prefilledName = ''): NewHotelForm => ({
     name: prefilledName,
@@ -1880,11 +1903,143 @@ function DigitalSalesRoomApp() {
     contactName: '',
     contactEmail: '',
     contactPhone: '',
+    overrideBilling: false,
+    billingContactName: '',
+    billingEmail: '',
+    billingEntityName: '',
+    billingAddress: '',
+    legalEntityName: '',
   })
   const [newHotelOpen, setNewHotelOpen] = useState(false)
   const [newHotelForm, setNewHotelForm] = useState<NewHotelForm>(emptyNewHotelForm())
   // When editing, holds the id of the hotel being edited; null = add mode
   const [editingHotelId, setEditingHotelId] = useState<string | null>(null)
+  // Progressive disclosure: true once user picks a hotel or clicks "I can't find my hotel"
+  const [modalHotelPicked, setModalHotelPicked] = useState(false)
+  // Whether the user has expanded the advanced override section in the modal
+  const [modalShowAdvanced, setModalShowAdvanced] = useState(false)
+  // Bulk-edit selection + dialog state
+  const [selectedHotelIds, setSelectedHotelIds] = useState<Set<string>>(new Set())
+  const [bulkEditOpen, setBulkEditOpen] = useState(false)
+  const [bulkReplaceProducts, setBulkReplaceProducts] = useState(false)
+  const [bulkProducts, setBulkProducts] = useState<string[]>([])
+  const [bulkReplaceBilling, setBulkReplaceBilling] = useState(false)
+  const [bulkBillingContactName, setBulkBillingContactName] = useState('')
+  const [bulkBillingEmail, setBulkBillingEmail] = useState('')
+  const [bulkBillingEntityName, setBulkBillingEntityName] = useState('')
+  const [bulkBillingAddress, setBulkBillingAddress] = useState('')
+  const [bulkLegalEntityName, setBulkLegalEntityName] = useState('')
+  // Platinum API state
+  const [platinumToken, setPlatinumToken] = useState<string | null>(null)
+  const [platinumTokenExpiry, setPlatinumTokenExpiry] = useState<number>(0)
+  const [platinumHotels, setPlatinumHotels] = useState<any[]>([])
+  const [platinumLoading, setPlatinumLoading] = useState(false)
+
+  // Fetch Platinum API token
+  const fetchPlatinumToken = async (): Promise<string | null> => {
+    const now = Date.now()
+    if (platinumToken && now < platinumTokenExpiry) return platinumToken
+
+    try {
+      const creds = 'MnJic2dwdjhxaDhoM2doYTRpaThjcnNtNWk6MXJsM2JnZDBkZTZocm9namM5c2p0Z2VuZTN0Z3Y3dWRkdDNtMDZidm9qN21jaXVrNXZkdA=='
+      const res = await fetch(
+        'https://hotstats-platinum-348556999231.auth.us-west-2.amazoncognito.com/oauth2/token',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${creds}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'grant_type=client_credentials&scope=platinum-api/read',
+        }
+      )
+      const data = await res.json()
+      console.log('Token response:', { status: res.status, data })
+      const token = data.access_token
+      if (!token) {
+        console.error('No access_token in response:', data)
+        return null
+      }
+      setPlatinumToken(token)
+      setPlatinumTokenExpiry(now + (data.expires_in - 60) * 1000)
+      console.log('Token fetched successfully')
+      return token
+    } catch (err) {
+      console.error('Token fetch failed:', err)
+      return null
+    }
+  }
+
+  // Search Platinum API hotels
+  const searchPlatinumHotels = async (query: string): Promise<any[]> => {
+    if (query.length < 2) return []
+    setPlatinumLoading(true)
+    const token = await fetchPlatinumToken()
+    if (!token) {
+      setPlatinumLoading(false)
+      return []
+    }
+    try {
+      const res = await fetch(
+        `https://qj5exoke85.execute-api.us-west-2.amazonaws.com/prod/api/platinum/search?q=${encodeURIComponent(query)}&limit=20`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      )
+      const data = await res.json()
+      console.log('Platinum API response:', { status: res.status, data })
+      setPlatinumHotels(Array.isArray(data) ? data : data.results || [])
+      return Array.isArray(data) ? data : data.results || []
+    } catch (err) {
+      console.error('Hotel search failed:', err)
+      return []
+    } finally {
+      setPlatinumLoading(false)
+    }
+  }
+
+  const toggleHotelSelected = (id: string) =>
+    setSelectedHotelIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  const toggleSelectAllHotels = () =>
+    setSelectedHotelIds(prev => prev.size === hotels.length ? new Set() : new Set(hotels.map(h => h.id)))
+  const openBulkEdit = () => {
+    setBulkReplaceProducts(false)
+    setBulkProducts([])
+    setBulkReplaceBilling(false)
+    setBulkBillingContactName('')
+    setBulkBillingEmail('')
+    setBulkBillingEntityName('')
+    setBulkBillingAddress('')
+    setBulkLegalEntityName('')
+    setBulkEditOpen(true)
+  }
+  const applyBulkEdit = () => {
+    if (!bulkReplaceProducts && !bulkReplaceBilling) {
+      setBulkEditOpen(false)
+      return
+    }
+    setHotels(prev => prev.map(h => {
+      if (!selectedHotelIds.has(h.id)) return h
+      const next: AddedHotel = { ...h }
+      if (bulkReplaceProducts) {
+        next.products = [...bulkProducts]
+        next.useCustomProducts = true
+      }
+      if (bulkReplaceBilling) {
+        next.overrideBilling = true
+        next.billingContactName = bulkBillingContactName.trim()
+        next.billingEmail = bulkBillingEmail.trim()
+        next.billingEntityName = bulkBillingEntityName.trim()
+        next.billingAddress = bulkBillingAddress.trim()
+        next.legalEntityName = bulkLegalEntityName.trim()
+      }
+      return next
+    }))
+    setBulkEditOpen(false)
+    setSelectedHotelIds(new Set())
+  }
   // Hotel card expansion state
   const [expandedHotels, setExpandedHotels] = useState<Set<string>>(new Set())
   const toggleHotelExpanded = (id: string) =>
@@ -1897,6 +2052,8 @@ function DigitalSalesRoomApp() {
   const openNewHotelModal = (prefilledName = '') => {
     setEditingHotelId(null)
     setNewHotelForm(emptyNewHotelForm(prefilledName))
+    setModalHotelPicked(false)
+    setModalShowAdvanced(false)
     setNewHotelOpen(true)
   }
 
@@ -1912,7 +2069,15 @@ function DigitalSalesRoomApp() {
       contactName: '',
       contactEmail: '',
       contactPhone: '',
+      overrideBilling: !!hotel.overrideBilling,
+      billingContactName: hotel.billingContactName || '',
+      billingEmail: hotel.billingEmail || '',
+      billingEntityName: hotel.billingEntityName || '',
+      billingAddress: hotel.billingAddress || '',
+      legalEntityName: hotel.legalEntityName || '',
     })
+    setModalHotelPicked(true)
+    setModalShowAdvanced(hotel.useCustomProducts || !!hotel.overrideBilling)
     setNewHotelOpen(true)
   }
 
@@ -1927,6 +2092,22 @@ function DigitalSalesRoomApp() {
     // If not overriding, sync products to current global so future global changes propagate
     const finalProducts = override ? [...newHotelForm.products] : [...globalProducts]
 
+    const billingFields = newHotelForm.overrideBilling ? {
+      overrideBilling: true,
+      billingContactName: newHotelForm.billingContactName.trim(),
+      billingEmail: newHotelForm.billingEmail.trim(),
+      billingEntityName: newHotelForm.billingEntityName.trim(),
+      billingAddress: newHotelForm.billingAddress.trim(),
+      legalEntityName: newHotelForm.legalEntityName.trim(),
+    } : {
+      overrideBilling: false,
+      billingContactName: '',
+      billingEmail: '',
+      billingEntityName: '',
+      billingAddress: '',
+      legalEntityName: '',
+    }
+
     if (editingHotelId) {
       // Edit existing hotel
       setHotels(prev => prev.map(h => h.id === editingHotelId ? {
@@ -1936,6 +2117,7 @@ function DigitalSalesRoomApp() {
         rooms: Number(newHotelForm.rooms) || 0,
         products: finalProducts,
         useCustomProducts: override,
+        ...billingFields,
       } : h))
       return true
     }
@@ -1951,6 +2133,7 @@ function DigitalSalesRoomApp() {
       isNew: !matchInDb,
       useCustomProducts: override,
       products: finalProducts,
+      ...billingFields,
     }
     setHotels(prev => [...prev, next])
     return true
@@ -2006,6 +2189,14 @@ function DigitalSalesRoomApp() {
           : h,
       ),
     )
+
+  const downloadHotelTemplate = () => {
+    const ws = XLSX.utils.aoa_to_sheet([['Hotel Name']])
+    ws['!cols'] = [{ wch: 32 }]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Hotels')
+    XLSX.writeFile(wb, 'duetto-hotel-template.xlsx')
+  }
 
   const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setExcelError('')
@@ -2071,12 +2262,18 @@ function DigitalSalesRoomApp() {
     ? { section:'account',  label:'Complete Enter Details' }
     : { section:'proposal', label:'Review Proposal' }
 
+  const onboardingSections = ['account', 'defaults', 'hotels', 'proposal']
   const phaseSteps: ArrowStepConfig[] = [
     { id: 'account', label: 'Enter Details' },
     { id: 'hotels', label: 'Hotel Details' },
     { id: 'docs', label: 'Documents' },
     { id: 'proposal', label: 'Sales Proposal' },
   ]
+  const showStepper = onboardingSections.includes(activeSection)
+  const goToSection = (id: string) => {
+    setActiveSection(id)
+    if (onboardingSections.includes(id)) setLastOnboardingSection(id)
+  }
 
   const handleStepClick = (stepId: string) => {
     if (stepId === 'hotels' && !accountSaved) return
@@ -2127,11 +2324,136 @@ function DigitalSalesRoomApp() {
               </div>
           )}
 
+          {activeSection === 'defaults' && (
+            <Box style={{padding:24,maxWidth:860}}>
+              <Typography variant="h5" style={{fontWeight:700,marginBottom:4}}>Set Defaults</Typography>
+              <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>
+                Pick defaults that apply to every hotel you add next. You can override per hotel later.
+              </Typography>
+              <Divider style={{marginBottom:24}}/>
+
+              {/* Bypass option */}
+              <Box style={{marginBottom:24,padding:'14px 16px',background:'#F4F8F7',border:'1px solid #DDE7E5',borderRadius:6}}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      color="primary"
+                      checked={fillHotelsIndividually}
+                      onChange={(_, checked) => setFillHotelsIndividually(checked)}
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography style={{fontSize:'0.9rem',fontWeight:600,color:'#1c1c1c'}}>I will fill out each hotel individually</Typography>
+                      <Typography style={{fontSize:'0.78rem',color:'#4F5B60'}}>Skip defaults and configure every property by hand.</Typography>
+                    </Box>
+                  }
+                />
+              </Box>
+
+              {!fillHotelsIndividually && (
+                <>
+                  {/* Products */}
+                  <Box style={{marginBottom:24,padding:'16px 18px',background:'#ffffff',border:'1px solid #EBEDEF',borderRadius:6}}>
+                    <Typography style={{fontSize:'0.85rem',fontWeight:700,color:'#1c1c1c',marginBottom:4}}>Default Products</Typography>
+                    <Typography style={{fontSize:'0.78rem',color:'#4F5B60',marginBottom:12}}>
+                      Select the products you want applied to every hotel by default. If none are selected, no defaults are applied.
+                    </Typography>
+                    <Box style={{display:'flex',flexDirection:'column',gap:8}}>
+                      {PRODUCTS.map(p => {
+                        const on = globalProducts.includes(p)
+                        return (
+                          <Box key={p} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:4,background: on ? '#F4F8F7' : 'transparent'}}>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  size="small"
+                                  color="primary"
+                                  checked={on}
+                                  onChange={() => {
+                                    setGlobalProducts(prev => on ? prev.filter(x => x !== p) : [...prev, p])
+                                  }}
+                                />
+                              }
+                              label={
+                                <Typography style={{fontWeight: on ? 700 : 500, fontSize:'0.9rem', color:'#1c1c1c'}}>{p}</Typography>
+                              }
+                            />
+                            <Button
+                              variant="text"
+                              color="primary"
+                              size="small"
+                              href="#"
+                              onClick={(e: React.MouseEvent) => e.preventDefault()}
+                              style={{textTransform:'none',fontWeight:600}}
+                            >
+                              Learn more
+                            </Button>
+                          </Box>
+                        )
+                      })}
+                    </Box>
+                  </Box>
+
+                  {/* PMS & Integrating systems */}
+                  <Box style={{marginBottom:24,padding:'16px 18px',background:'#ffffff',border:'1px solid #EBEDEF',borderRadius:6}}>
+                    <Typography style={{fontSize:'0.85rem',fontWeight:700,color:'#1c1c1c',marginBottom:4}}>Default PMS &amp; Integrating Systems</Typography>
+                    <Typography style={{fontSize:'0.78rem',color:'#4F5B60',marginBottom:12}}>List the systems most of your hotels use. Skip if unsure.</Typography>
+                    <TextField
+                      placeholder="e.g. Opera, SiteMinder, IDeaS…"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      value={defaultPmsIntegrations}
+                      onChange={(e) => setDefaultPmsIntegrations(e.target.value)}
+                    />
+                  </Box>
+
+                  {/* Implementation contact */}
+                  <Box style={{marginBottom:24,padding:'16px 18px',background:'#ffffff',border:'1px solid #EBEDEF',borderRadius:6}}>
+                    <Typography style={{fontSize:'0.85rem',fontWeight:700,color:'#1c1c1c',marginBottom:4}}>Default Property Implementation Contact</Typography>
+                    <Typography style={{fontSize:'0.78rem',color:'#4F5B60',marginBottom:12}}>The person your hotels' implementation team should reach.</Typography>
+                    <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+                      <TextField label="Name" variant="outlined" size="small" fullWidth value={defaultImplContactName} onChange={(e) => setDefaultImplContactName(e.target.value)} />
+                      <TextField label="Email" type="email" variant="outlined" size="small" fullWidth value={defaultImplContactEmail} onChange={(e) => setDefaultImplContactEmail(e.target.value)} />
+                      <TextField label="Phone" variant="outlined" size="small" fullWidth value={defaultImplContactPhone} onChange={(e) => setDefaultImplContactPhone(e.target.value)} />
+                    </Box>
+                  </Box>
+
+                  {/* Billing info */}
+                  <Box style={{marginBottom:24,padding:'16px 18px',background:'#ffffff',border:'1px solid #EBEDEF',borderRadius:6}}>
+                    <Typography style={{fontSize:'0.85rem',fontWeight:700,color:'#1c1c1c',marginBottom:4}}>Default Billing Information</Typography>
+                    <Typography style={{fontSize:'0.78rem',color:'#4F5B60',marginBottom:12}}>Used for every hotel unless overridden later.</Typography>
+                    <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+                      <TextField label="Contact Name" variant="outlined" size="small" fullWidth value={defaultBillingContactName} onChange={(e) => setDefaultBillingContactName(e.target.value)} />
+                      <TextField label="Email" type="email" variant="outlined" size="small" fullWidth value={defaultBillingEmail} onChange={(e) => setDefaultBillingEmail(e.target.value)} />
+                      <TextField label="Entity Name" variant="outlined" size="small" fullWidth value={defaultBillingEntityName} onChange={(e) => setDefaultBillingEntityName(e.target.value)} />
+                    </Box>
+                    <TextField label="Address" variant="outlined" size="small" fullWidth multiline rows={2} value={defaultBillingAddress} onChange={(e) => setDefaultBillingAddress(e.target.value)} />
+                  </Box>
+
+                  {/* Legal entity */}
+                  <Box style={{marginBottom:24,padding:'16px 18px',background:'#ffffff',border:'1px solid #EBEDEF',borderRadius:6}}>
+                    <Typography style={{fontSize:'0.85rem',fontWeight:700,color:'#1c1c1c',marginBottom:12}}>Default Legal Entity Name</Typography>
+                    <TextField
+                      placeholder="e.g. Example Hospitality Holdings Ltd."
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      value={defaultLegalEntityName}
+                      onChange={(e) => setDefaultLegalEntityName(e.target.value)}
+                    />
+                  </Box>
+                </>
+              )}
+
+            </Box>
+          )}
+
           {activeSection === 'hotels' && accountSaved && (
             <div style={{display:'flex',flexDirection:'column',height:'100%'}}>
             <Box style={{padding:24,maxWidth:1000,paddingBottom:24}}>
               <Typography variant="h5" style={{fontWeight:700,marginBottom:4}}>Hotel Details</Typography>
-              <Typography variant="body2" style={{color:'#4F5B60',marginBottom:16}}>Search Duetto's hotel database or type a new property name. Assign products globally or per hotel.</Typography>
               <Divider style={{marginBottom:24}}/>
 
               {/* Global products toggle + checkbox editor — ABOVE search */}
@@ -2211,6 +2533,14 @@ function DigitalSalesRoomApp() {
                   style={{display:'none'}}
                 />
                 <Button
+                  variant="text"
+                  color="primary"
+                  style={{textTransform:'none',fontWeight:600}}
+                  onClick={downloadHotelTemplate}
+                >
+                  ⬇ Download template
+                </Button>
+                <Button
                   variant="outlined"
                   color="primary"
                   style={{textTransform:'none'}}
@@ -2222,7 +2552,7 @@ function DigitalSalesRoomApp() {
                   variant="contained"
                   color="primary"
                   startIcon={<AddIcon/>}
-                  style={{textTransform:'none',fontWeight:600}}
+                  style={{textTransform:'none',fontWeight:600,minWidth:160}}
                   onClick={() => openNewHotelModal('')}
                 >
                   Add Hotel
@@ -2246,24 +2576,62 @@ function DigitalSalesRoomApp() {
 
               {/* Hotels List — accordion cards */}
               {hotels.length === 0 ? (
-                <Box style={{border:'1px solid #DDE1E2',borderRadius:6,padding:'20px',textAlign:'center',color:'#AEB4BA',background:'#ffffff'}}>
-                  No hotels added yet. Click "Add Hotel" above or upload from Excel.
+                <Box style={{border:'2px dashed #C8D0D4',borderRadius:8,padding:'56px 24px',textAlign:'center',background:'#ffffff'}}>
+                  <HotelIcon style={{fontSize:48,color:'#AEB4BA',marginBottom:12}}/>
+                  <Typography style={{fontSize:'1.05rem',fontWeight:700,color:'#1c1c1c',marginBottom:6}}>No hotels added yet</Typography>
+                  <Typography style={{fontSize:'0.9rem',color:'#4F5B60',marginBottom:20}}>Add your first hotel to get started. You can also upload a list from Excel.</Typography>
+                  <Box style={{display:'flex',gap:12,justifyContent:'center'}}>
+                    <Button variant="outlined" color="primary" style={{textTransform:'none'}} onClick={() => excelInputRef.current?.click()}>
+                      Upload from Excel
+                    </Button>
+                    <Button variant="contained" color="primary" startIcon={<AddIcon/>} style={{textTransform:'none',fontWeight:600,minWidth:160}} onClick={() => openNewHotelModal('')}>
+                      Add Hotel
+                    </Button>
+                  </Box>
                 </Box>
               ) : (
+                <>
+                <Box style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,padding:'10px 12px',background:'#ffffff',border:'1px solid #DDE1E2',borderRadius:6}}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        size="small"
+                        color="primary"
+                        checked={hotels.length > 0 && selectedHotelIds.size === hotels.length}
+                        indeterminate={selectedHotelIds.size > 0 && selectedHotelIds.size < hotels.length}
+                        onChange={toggleSelectAllHotels}
+                      />
+                    }
+                    label={
+                      <Typography style={{fontSize:'0.85rem',fontWeight:600,color:'#1c1c1c'}}>
+                        {selectedHotelIds.size > 0 ? `${selectedHotelIds.size} selected` : 'Select hotels for bulk edit'}
+                      </Typography>
+                    }
+                  />
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    disabled={selectedHotelIds.size === 0}
+                    style={{textTransform:'none',fontWeight:600}}
+                    onClick={openBulkEdit}
+                  >
+                    Bulk edit ({selectedHotelIds.size})
+                  </Button>
+                </Box>
                 <Box style={{display:'flex',flexDirection:'column',gap:10}}>
                   {hotels.map((h) => {
                     const isOpen = expandedHotels.has(h.id)
-                    const dbMatch = HOTEL_DATABASE.find(d => d.name.toLowerCase() === h.name.toLowerCase())
-                    const coords = dbMatch && dbMatch.lat && dbMatch.lng ? `${dbMatch.lat}, ${dbMatch.lng}` : '—'
-                    const tz = dbMatch?.tz || '—'
+                    const isSelected = selectedHotelIds.has(h.id)
                     return (
                       <Box
                         key={h.id}
                         style={{
                           background:'#ffffff',
-                          border:'1px solid #DDE1E2',
+                          border: isSelected ? '1px solid #006461' : '1px solid #DDE1E2',
                           borderRadius:6,
                           overflow:'hidden',
+                          boxShadow: isSelected ? '0 0 0 1px #006461' : 'none',
                         }}
                       >
                         {/* Header row */}
@@ -2277,6 +2645,14 @@ function DigitalSalesRoomApp() {
                             cursor:'pointer',
                           }}
                         >
+                          <Checkbox
+                            size="small"
+                            color="primary"
+                            checked={isSelected}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={() => toggleHotelSelected(h.id)}
+                            style={{padding:4}}
+                          />
                           <HotelIcon style={{color:'#006461',fontSize:22,flexShrink:0}}/>
                           <Box style={{flex:1,minWidth:0,display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                             <Typography style={{fontWeight:700,fontSize:'0.95rem',color:'#1c1c1c'}}>{h.name}</Typography>
@@ -2330,23 +2706,31 @@ function DigitalSalesRoomApp() {
                         {/* Expanded body */}
                         {isOpen && (
                           <Box style={{borderTop:'1px solid #EBEDEF',padding:'16px 20px'}}>
-                            {/* Metadata grid */}
-                            <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:24,marginBottom:20}}>
-                              <Box>
-                                <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Address</Typography>
-                                <Typography style={{fontSize:'0.875rem',color:'#1c1c1c'}}>
-                                  {h.address || (h.isNew ? 'Pending Duetto follow-up' : '—')}
+                            {/* Address only */}
+                            <Box style={{marginBottom:20}}>
+                              <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Address</Typography>
+                              <Typography style={{fontSize:'0.875rem',color:'#1c1c1c'}}>
+                                {h.address || (h.isNew ? 'Pending Duetto follow-up' : '—')}
+                              </Typography>
+                            </Box>
+
+                            {/* Inheritance notice — hidden advanced fields */}
+                            {!h.useCustomProducts && (
+                              <Box style={{marginBottom:16,padding:'12px 14px',background:'#F4F8F7',border:'1px solid #DDE7E5',borderRadius:6}}>
+                                <Typography style={{fontSize:'0.85rem',color:'#1c1c1c'}}>
+                                  This hotel is currently inheriting your default settings.{' '}
+                                  <Button
+                                    variant="text"
+                                    color="primary"
+                                    size="small"
+                                    style={{textTransform:'none',fontWeight:600,padding:'0 4px',minWidth:0,verticalAlign:'baseline'}}
+                                    onClick={() => openEditHotelModal(h)}
+                                  >
+                                    Click here to customise this hotel
+                                  </Button>
                                 </Typography>
                               </Box>
-                              <Box>
-                                <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Coordinates</Typography>
-                                <Typography style={{fontSize:'0.875rem',color:'#1c1c1c'}}>{coords}</Typography>
-                              </Box>
-                              <Box>
-                                <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Timezone</Typography>
-                                <Typography style={{fontSize:'0.875rem',color:'#1c1c1c'}}>{tz}</Typography>
-                              </Box>
-                            </Box>
+                            )}
 
                             {/* Products */}
                             <Box style={{marginBottom:16}}>
@@ -2377,14 +2761,52 @@ function DigitalSalesRoomApp() {
                             {/* Integrations */}
                             <Box style={{marginBottom:16}}>
                               <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Integrations</Typography>
-                              <Typography style={{fontSize:'0.875rem',color:'#8a9096'}}>—</Typography>
+                              <Typography style={{fontSize:'0.875rem',color: defaultPmsIntegrations ? '#1c1c1c' : '#8a9096'}}>{defaultPmsIntegrations || '—'}</Typography>
                             </Box>
 
                             {/* Implementation Contact */}
-                            <Box style={{marginBottom:8}}>
+                            <Box style={{marginBottom:16}}>
                               <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Implementation Contact</Typography>
-                              <Typography style={{fontSize:'0.875rem',color:'#8a9096'}}>—</Typography>
+                              <Typography style={{fontSize:'0.875rem',color: defaultImplContactName ? '#1c1c1c' : '#8a9096'}}>
+                                {defaultImplContactName || '—'}
+                                {defaultImplContactEmail && ` · ${defaultImplContactEmail}`}
+                                {defaultImplContactPhone && ` · ${defaultImplContactPhone}`}
+                              </Typography>
                             </Box>
+
+                            {/* Billing Information */}
+                            {(() => {
+                              const useOwn = !!h.overrideBilling
+                              const entity = useOwn ? h.billingEntityName : defaultBillingEntityName
+                              const contact = useOwn ? h.billingContactName : defaultBillingContactName
+                              const email = useOwn ? h.billingEmail : defaultBillingEmail
+                              const addr = useOwn ? h.billingAddress : defaultBillingAddress
+                              const legal = useOwn ? h.legalEntityName : defaultLegalEntityName
+                              return (
+                                <>
+                                  <Box style={{marginBottom:16}}>
+                                    <Box style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                                      <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60'}}>Billing Information</Typography>
+                                      {useOwn && (
+                                        <Box style={{padding:'1px 8px',borderRadius:10,background:'#FFF4D6',color:'#7A5400',fontSize:'0.62rem',fontWeight:700,letterSpacing:0.3,textTransform:'uppercase'}}>Override</Box>
+                                      )}
+                                    </Box>
+                                    <Typography style={{fontSize:'0.875rem',color: entity ? '#1c1c1c' : '#8a9096'}}>
+                                      {entity || '—'}
+                                      {contact && ` · ${contact}`}
+                                      {email && ` · ${email}`}
+                                    </Typography>
+                                    {addr && (
+                                      <Typography style={{fontSize:'0.8rem',color:'#4F5B60',marginTop:2}}>{addr}</Typography>
+                                    )}
+                                  </Box>
+                                  <Box style={{marginBottom:8}}>
+                                    <Typography style={{fontSize:'0.7rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:6}}>Legal Entity Name</Typography>
+                                    <Typography style={{fontSize:'0.875rem',color: legal ? '#1c1c1c' : '#8a9096'}}>{legal || '—'}</Typography>
+                                  </Box>
+                                </>
+                              )
+                            })()}
 
                             {/* Actions — Figma text buttons (11533:1107): Lato 16px, color #006461, 44px tall, 16px h-padding */}
                             <Box style={{display:'flex',justifyContent:'flex-end',gap:4,marginTop:12,paddingTop:12,borderTop:'1px dashed #EBEDEF'}}>
@@ -2441,7 +2863,111 @@ function DigitalSalesRoomApp() {
                     )
                   })}
                 </Box>
+                </>
               )}
+
+              {/* Bulk Edit Dialog */}
+              <Dialog
+                open={bulkEditOpen}
+                onClose={() => setBulkEditOpen(false)}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{ style: { borderRadius: 10 } }}
+              >
+                <DialogTitle disableTypography style={{padding:'20px 24px',borderBottom:'1px solid #EBEDEF'}}>
+                  <Typography style={{fontSize:'1.05rem',fontWeight:700}}>
+                    Bulk edit {selectedHotelIds.size} hotel{selectedHotelIds.size === 1 ? '' : 's'}
+                  </Typography>
+                  <Typography style={{fontSize:'0.82rem',color:'#4F5B60',marginTop:2}}>
+                    Choose which fields to replace. Unchecked sections leave existing values untouched.
+                  </Typography>
+                </DialogTitle>
+                <DialogContent style={{padding:'24px',display:'flex',flexDirection:'column',gap:20}}>
+                  {/* Products */}
+                  <Box style={{padding:'14px 16px',border:'1px solid #EBEDEF',borderRadius:6}}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          color="primary"
+                          checked={bulkReplaceProducts}
+                          onChange={(_, checked) => setBulkReplaceProducts(checked)}
+                        />
+                      }
+                      label={
+                        <Typography style={{fontSize:'0.9rem',fontWeight:700,color:'#1c1c1c'}}>Replace products</Typography>
+                      }
+                    />
+                    {bulkReplaceProducts && (
+                      <Box style={{display:'flex',flexWrap:'wrap',columnGap:16,marginTop:8,paddingLeft:8}}>
+                        {PRODUCTS.map(p => {
+                          const on = bulkProducts.includes(p)
+                          return (
+                            <FormControlLabel
+                              key={p}
+                              control={
+                                <Checkbox
+                                  size="small"
+                                  color="primary"
+                                  checked={on}
+                                  onChange={() => setBulkProducts(prev => on ? prev.filter(x => x !== p) : [...prev, p])}
+                                />
+                              }
+                              label={
+                                <Typography style={{fontWeight: on ? 600 : 500, fontSize:'0.85rem', color:'#1c1c1c'}}>{p}</Typography>
+                              }
+                            />
+                          )
+                        })}
+                      </Box>
+                    )}
+                  </Box>
+
+                  {/* Billing */}
+                  <Box style={{padding:'14px 16px',border:'1px solid #EBEDEF',borderRadius:6}}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          color="primary"
+                          checked={bulkReplaceBilling}
+                          onChange={(_, checked) => setBulkReplaceBilling(checked)}
+                        />
+                      }
+                      label={
+                        <Typography style={{fontSize:'0.9rem',fontWeight:700,color:'#1c1c1c'}}>Replace billing information</Typography>
+                      }
+                    />
+                    {bulkReplaceBilling && (
+                      <Box style={{display:'flex',flexDirection:'column',gap:12,marginTop:12,paddingLeft:8}}>
+                        <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                          <TextField label="Billing Contact Name" variant="outlined" size="small" fullWidth value={bulkBillingContactName} onChange={(e) => setBulkBillingContactName(e.target.value)} />
+                          <TextField label="Billing Email" type="email" variant="outlined" size="small" fullWidth value={bulkBillingEmail} onChange={(e) => setBulkBillingEmail(e.target.value)} />
+                          <TextField label="Billing Entity Name" variant="outlined" size="small" fullWidth value={bulkBillingEntityName} onChange={(e) => setBulkBillingEntityName(e.target.value)} />
+                          <TextField label="Legal Entity Name" variant="outlined" size="small" fullWidth value={bulkLegalEntityName} onChange={(e) => setBulkLegalEntityName(e.target.value)} />
+                        </Box>
+                        <TextField label="Billing Address" variant="outlined" size="small" fullWidth multiline rows={2} value={bulkBillingAddress} onChange={(e) => setBulkBillingAddress(e.target.value)} />
+                      </Box>
+                    )}
+                  </Box>
+                </DialogContent>
+                <DialogActions style={{padding:'16px 24px',borderTop:'1px solid #EBEDEF',gap:8}}>
+                  <Button
+                    variant="text"
+                    onClick={() => setBulkEditOpen(false)}
+                    style={{textTransform:'none',color:'#1c1c1c',fontWeight:600}}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={applyBulkEdit}
+                    disabled={!bulkReplaceProducts && !bulkReplaceBilling}
+                    style={{textTransform:'none',fontWeight:600,paddingLeft:20,paddingRight:20}}
+                  >
+                    Apply to {selectedHotelIds.size} hotel{selectedHotelIds.size === 1 ? '' : 's'}
+                  </Button>
+                </DialogActions>
+              </Dialog>
 
               <Snackbar
                 open={!!excelToast}
@@ -2465,41 +2991,56 @@ function DigitalSalesRoomApp() {
                   </Typography>
                 </DialogTitle>
                 <DialogContent style={{padding:'24px',display:'flex',flexDirection:'column',gap:24}}>
-                  {/* Search Duetto database — auto-populates Property Details when picked */}
+                  {/* Step 1: Search Duetto database (always visible) */}
                   <Box style={{padding:'14px 16px',background:'#F4F8F7',borderRadius:6,border:'1px solid #DDE7E5'}}>
                     <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:8}}>
-                      Search Duetto's Hotel Database
+                      Search for Hotel
                     </Typography>
-                    <Autocomplete<HotelRecord, false, false, true>
+                    <Autocomplete
                       freeSolo
-                      options={HOTEL_DATABASE.filter(d => !hotels.some(h => h.name.toLowerCase() === d.name.toLowerCase()))}
-                      getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.name)}
-                      filterOptions={(opts, state) => {
-                        const q = state.inputValue.trim().toLowerCase()
-                        if (!q) return opts.slice(0, 10)
-                        return opts.filter(o => o.name.toLowerCase().includes(q) || o.address.toLowerCase().includes(q)).slice(0, 20)
+                      loading={platinumLoading}
+                      options={
+                        platinumHotels.length > 0
+                          ? platinumHotels.filter(d => !hotels.some(h => h.name.toLowerCase() === d.name.toLowerCase()))
+                          : HOTEL_DATABASE.filter(d => !hotels.some(h => h.name.toLowerCase() === d.name.toLowerCase()))
+                      }
+                      getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.name || '')}
+                      onInputChange={(_, value) => {
+                        if (value && value.length >= 2) {
+                          searchPlatinumHotels(value)
+                        } else if (!value) {
+                          setPlatinumHotels([])
+                        }
+                      }}
+                      filterOptions={(opts) => {
+                        // Only filter mock data; API results already filtered
+                        if (platinumHotels.length > 0) return opts
+                        return opts.slice(0, 20)
                       }}
                       onChange={(_, value) => {
                         if (!value) return
                         if (typeof value === 'string') {
                           setNewHotelForm(f => ({ ...f, name: value }))
                         } else {
-                          // Populate full property details from DB record
                           setNewHotelForm(f => ({
                             ...f,
-                            name: value.name,
-                            address: value.address,
-                            rooms: String(value.rooms || ''),
+                            name: value.name || '',
+                            address: value.city && value.country ? `${value.city}, ${value.country}` : '',
+                            rooms: String(value.rooms || 0),
                           }))
                         }
+                        setModalHotelPicked(true)
                       }}
                       renderOption={(opt) => (
-                        <Box style={{display:'flex',flexDirection:'column'}}>
+                        <Box style={{display:'flex',flexDirection:'column',width:'100%'}}>
                           <Typography style={{fontSize:'0.875rem',fontWeight:600}}>{opt.name}</Typography>
-                          <Typography style={{fontSize:'0.72rem',color:'#8a9096'}}>{opt.address} · {opt.rooms.toLocaleString()} rooms</Typography>
+                          <Typography style={{fontSize:'0.72rem',color:'#8a9096'}}>
+                            {opt.city && opt.country ? `${opt.city}, ${opt.country}` : 'Unknown location'} · {opt.rooms ? opt.rooms.toLocaleString() : '?'} rooms
+                            {opt.brand ? ` · ${opt.brand}` : ''}
+                          </Typography>
                         </Box>
                       )}
-                      noOptionsText="No match — fill the form below to add a new hotel"
+                      noOptionsText={platinumLoading ? 'Searching…' : "No match — click 'I can't find my hotel' below"}
                       renderInput={(params) => (
                         <TextField
                           {...params}
@@ -2510,88 +3051,179 @@ function DigitalSalesRoomApp() {
                         />
                       )}
                     />
-                    <Typography style={{fontSize:'0.72rem',color:'#4F5B60',marginTop:6}}>
-                      Pick a known hotel to auto-fill name, address &amp; rooms. Or type a new one and fill in the details below.
-                    </Typography>
-                  </Box>
-
-                  {/* Property Details */}
-                  <Box>
-                    <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:12}}>
-                      Property Details
-                    </Typography>
-                    <Box style={{display:'flex',flexDirection:'column',gap:12}}>
-                      <TextField
-                        label="Property Name"
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        value={newHotelForm.name}
-                        onChange={(e) => setNewHotelForm(f => ({ ...f, name: e.target.value }))}
-                      />
-                      <TextField
-                        label="Property Address"
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        value={newHotelForm.address}
-                        onChange={(e) => setNewHotelForm(f => ({ ...f, address: e.target.value }))}
-                      />
-                      <TextField
-                        label="Number of Rooms"
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        type="number"
-                        value={newHotelForm.rooms}
-                        onChange={(e) => setNewHotelForm(f => ({ ...f, rooms: e.target.value }))}
-                      />
-                    </Box>
-                  </Box>
-
-                  {/* Products */}
-                  <Box>
-                    <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:8,borderBottom:'1px solid #EBEDEF',paddingBottom:8}}>
-                      Products
-                    </Typography>
-                    {allHotelsSameProducts && (
-                      <Box style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8,padding:'8px 12px',background:'#FAFAFA',borderRadius:6}}>
-                        <Box>
-                          <Typography style={{fontSize:'0.82rem',fontWeight:600,color:'#1c1c1c'}}>Override this hotel</Typography>
-                          <Typography style={{fontSize:'0.72rem',color:'#4F5B60'}}>
-                            Off: this hotel inherits the global product list.
-                          </Typography>
-                        </Box>
-                        <DuettoSwitch
+                    {!modalHotelPicked && (
+                      <Box style={{marginTop:10,display:'flex',justifyContent:'flex-end'}}>
+                        <Button
+                          variant="text"
                           color="primary"
-                          checked={newHotelForm.overrideProducts}
-                          onChange={(_, checked) => setNewHotelForm(f => ({
-                            ...f,
-                            overrideProducts: checked,
-                            // When turning override OFF, snap products back to current global
-                            products: checked ? f.products : [...globalProducts],
-                          }))}
-                        />
+                          size="small"
+                          style={{textTransform:'none',fontWeight:600}}
+                          onClick={() => setModalHotelPicked(true)}
+                        >
+                          I can't find my hotel
+                        </Button>
                       </Box>
                     )}
-                    <Typography style={{fontSize:'0.82rem',color:'#4F5B60',marginBottom:8}}>Select the Duetto products for this property</Typography>
-                    <Box style={{display:'flex',flexWrap:'wrap',columnGap:16,opacity: (allHotelsSameProducts && !newHotelForm.overrideProducts) ? 0.55 : 1}}>
-                      {PRODUCTS.map(p => {
-                        const on = newHotelForm.products.includes(p)
-                        const disabled = allHotelsSameProducts && !newHotelForm.overrideProducts
-                        return (
+                  </Box>
+
+                  {/* Step 2: Reveal property details only after hotel picked */}
+                  {modalHotelPicked && (
+                    <Box>
+                      <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:12}}>
+                        Property Details
+                      </Typography>
+                      <Box style={{display:'flex',flexDirection:'column',gap:12}}>
+                        <TextField
+                          label="Property Name"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          value={newHotelForm.name}
+                          onChange={(e) => setNewHotelForm(f => ({ ...f, name: e.target.value }))}
+                        />
+                        <TextField
+                          label="Property Address"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          value={newHotelForm.address}
+                          onChange={(e) => setNewHotelForm(f => ({ ...f, address: e.target.value }))}
+                        />
+                        <TextField
+                          label="Number of Rooms"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          type="number"
+                          value={newHotelForm.rooms}
+                          onChange={(e) => setNewHotelForm(f => ({ ...f, rooms: e.target.value }))}
+                        />
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Step 3: Inheritance notice — advanced fields hidden by default */}
+                  {modalHotelPicked && !modalShowAdvanced && (
+                    <Box style={{padding:'14px 16px',background:'#F4F8F7',border:'1px solid #DDE7E5',borderRadius:6}}>
+                      <Typography style={{fontSize:'0.875rem',color:'#1c1c1c'}}>
+                        This hotel is currently inheriting your default settings.{' '}
+                        <Button
+                          variant="text"
+                          color="primary"
+                          size="small"
+                          style={{textTransform:'none',fontWeight:600,padding:'0 4px',minWidth:0,verticalAlign:'baseline'}}
+                          onClick={() => {
+                            setModalShowAdvanced(true)
+                            setNewHotelForm(f => ({ ...f, overrideProducts: true }))
+                          }}
+                        >
+                          Click here to customise this hotel
+                        </Button>
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {/* Step 4: Advanced override fields */}
+                  {modalHotelPicked && modalShowAdvanced && (
+                    <>
+                      <Box>
+                        <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:8,borderBottom:'1px solid #EBEDEF',paddingBottom:8}}>
+                          Products
+                        </Typography>
+                        <Typography style={{fontSize:'0.82rem',color:'#4F5B60',marginBottom:8}}>Override the default product list for this hotel.</Typography>
+                        <Box style={{display:'flex',flexWrap:'wrap',columnGap:16}}>
+                          {PRODUCTS.map(p => {
+                            const on = newHotelForm.products.includes(p)
+                            return (
+                              <FormControlLabel
+                                key={p}
+                                control={
+                                  <Checkbox
+                                    size="small"
+                                    color="primary"
+                                    checked={on}
+                                    onChange={() => setNewHotelForm(f => ({
+                                      ...f,
+                                      products: on ? f.products.filter(x => x !== p) : [...f.products, p],
+                                    }))}
+                                  />
+                                }
+                                label={
+                                  <Typography style={{
+                                    fontWeight: on ? 600 : 500,
+                                    fontSize: '0.85rem',
+                                    color: '#1c1c1c',
+                                  }}>
+                                    {p}
+                                  </Typography>
+                                }
+                              />
+                            )
+                          })}
+                        </Box>
+                      </Box>
+
+                      <Box>
+                        <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:8,borderBottom:'1px solid #EBEDEF',paddingBottom:8}}>
+                          Integrations
+                        </Typography>
+                        <Typography style={{fontSize:'0.82rem',color:'#4F5B60',marginBottom:8}}>PMS &amp; other integrating systems</Typography>
+                        <TextField
+                          placeholder="Search integrations…"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          value={newHotelForm.integrations}
+                          onChange={(e) => setNewHotelForm(f => ({ ...f, integrations: e.target.value }))}
+                        />
+                      </Box>
+
+                      <Box>
+                        <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:12,borderBottom:'1px solid #EBEDEF',paddingBottom:8}}>
+                          Property Implementation Contact Details
+                        </Typography>
+                        <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+                          <TextField
+                            label="Contact Name"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            value={newHotelForm.contactName}
+                            onChange={(e) => setNewHotelForm(f => ({ ...f, contactName: e.target.value }))}
+                          />
+                          <TextField
+                            label="Contact Email"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            type="email"
+                            value={newHotelForm.contactEmail}
+                            onChange={(e) => setNewHotelForm(f => ({ ...f, contactEmail: e.target.value }))}
+                          />
+                          <TextField
+                            label="Contact Phone"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            value={newHotelForm.contactPhone}
+                            onChange={(e) => setNewHotelForm(f => ({ ...f, contactPhone: e.target.value }))}
+                          />
+                        </Box>
+                      </Box>
+
+                      {/* Per-hotel Billing override */}
+                      <Box>
+                        <Box style={{display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid #EBEDEF',paddingBottom:8,marginBottom:12}}>
+                          <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60'}}>
+                            Billing Information
+                          </Typography>
                           <FormControlLabel
-                            key={p}
-                            disabled={disabled}
                             control={
                               <Checkbox
                                 size="small"
                                 color="primary"
-                                checked={on}
-                                onChange={() => setNewHotelForm(f => ({
-                                  ...f,
-                                  products: on ? f.products.filter(x => x !== p) : [...f.products, p],
-                                }))}
+                                checked={newHotelForm.overrideBilling}
+                                onChange={(_, checked) => setNewHotelForm(f => ({ ...f, overrideBilling: checked }))}
                               />
                             }
                             label={
@@ -2615,60 +3247,63 @@ function DigitalSalesRoomApp() {
                               </Box>
                             }
                           />
-                        )
-                      })}
-                    </Box>
-                  </Box>
-
-                  {/* Integrations */}
-                  <Box>
-                    <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:8,borderBottom:'1px solid #EBEDEF',paddingBottom:8}}>
-                      Integrations
-                    </Typography>
-                    <Typography style={{fontSize:'0.82rem',color:'#4F5B60',marginBottom:8}}>PMS &amp; other integrating systems</Typography>
-                    <TextField
-                      placeholder="Search integrations…"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={newHotelForm.integrations}
-                      onChange={(e) => setNewHotelForm(f => ({ ...f, integrations: e.target.value }))}
-                    />
-                  </Box>
-
-                  {/* Contact Details */}
-                  <Box>
-                    <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:12,borderBottom:'1px solid #EBEDEF',paddingBottom:8}}>
-                      Property Implementation Contact Details
-                    </Typography>
-                    <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
-                      <TextField
-                        label="Contact Name"
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        value={newHotelForm.contactName}
-                        onChange={(e) => setNewHotelForm(f => ({ ...f, contactName: e.target.value }))}
-                      />
-                      <TextField
-                        label="Contact Email"
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        type="email"
-                        value={newHotelForm.contactEmail}
-                        onChange={(e) => setNewHotelForm(f => ({ ...f, contactEmail: e.target.value }))}
-                      />
-                      <TextField
-                        label="Contact Phone"
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        value={newHotelForm.contactPhone}
-                        onChange={(e) => setNewHotelForm(f => ({ ...f, contactPhone: e.target.value }))}
-                      />
-                    </Box>
-                  </Box>
+                        </Box>
+                        {!newHotelForm.overrideBilling ? (
+                          <Typography style={{fontSize:'0.82rem',color:'#4F5B60'}}>
+                            Inheriting default billing information set in Set Defaults.
+                          </Typography>
+                        ) : (
+                          <>
+                            <Box style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+                              <TextField
+                                label="Billing Contact Name"
+                                variant="outlined"
+                                size="small"
+                                fullWidth
+                                value={newHotelForm.billingContactName}
+                                onChange={(e) => setNewHotelForm(f => ({ ...f, billingContactName: e.target.value }))}
+                              />
+                              <TextField
+                                label="Billing Email"
+                                type="email"
+                                variant="outlined"
+                                size="small"
+                                fullWidth
+                                value={newHotelForm.billingEmail}
+                                onChange={(e) => setNewHotelForm(f => ({ ...f, billingEmail: e.target.value }))}
+                              />
+                              <TextField
+                                label="Billing Entity Name"
+                                variant="outlined"
+                                size="small"
+                                fullWidth
+                                value={newHotelForm.billingEntityName}
+                                onChange={(e) => setNewHotelForm(f => ({ ...f, billingEntityName: e.target.value }))}
+                              />
+                              <TextField
+                                label="Legal Entity Name"
+                                variant="outlined"
+                                size="small"
+                                fullWidth
+                                value={newHotelForm.legalEntityName}
+                                onChange={(e) => setNewHotelForm(f => ({ ...f, legalEntityName: e.target.value }))}
+                              />
+                            </Box>
+                            <TextField
+                              label="Billing Address"
+                              variant="outlined"
+                              size="small"
+                              fullWidth
+                              multiline
+                              rows={2}
+                              value={newHotelForm.billingAddress}
+                              onChange={(e) => setNewHotelForm(f => ({ ...f, billingAddress: e.target.value }))}
+                            />
+                          </>
+                        )}
+                      </Box>
+                    </>
+                  )}
                 </DialogContent>
                 <DialogActions style={{padding:'16px 24px',borderTop:'1px solid #EBEDEF',gap:8,justifyContent:'space-between'}}>
                   <Button
@@ -2742,39 +3377,80 @@ function DigitalSalesRoomApp() {
           )}
         </Box>
 
-      <Box style={{position:'sticky',bottom:0,background:'#ffffff',borderTop:'1px solid #DDE1E2',padding:'16px 24px',display:'flex',justifyContent:'flex-end',gap:12,boxShadow:'0 -2px 8px rgba(0,0,0,0.08)',zIndex:100}}>
-        {activeSection === 'account' && (
-          <>
-            <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
-            <Button onClick={()=>{setAccountSaved(true);setActiveSection('hotels')}} variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}}>
-              Save and Next
-            </Button>
-          </>
-        )}
-        {activeSection === 'hotels' && (
-          <>
-            <Button variant="outlined" style={{textTransform:'none'}} onClick={()=>setActiveSection('account')}>Back</Button>
-            <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}} onClick={()=>setActiveSection('docs')}>Next</Button>
-          </>
-        )}
-        {activeSection === 'docs' && (
-          <>
-            <Button variant="outlined" style={{textTransform:'none'}} onClick={()=>setActiveSection('hotels')}>Back</Button>
-            <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}} onClick={()=>setActiveSection('proposal')}>Next</Button>
-          </>
-        )}
-        {activeSection === 'proposal' && (
-          <>
-            <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600,paddingLeft:28,paddingRight:28}} onClick={()=>setProposalAccepted(true)}>
-              ✓ Accept Proposal
-            </Button>
-            <Button variant="outlined" style={{textTransform:'none',fontWeight:500}}>
-              ✎ Request Changes
-            </Button>
-          </>
-        )}
-      </Box>
-
+      {/* Sticky form footer — contextual CTAs per onboarding step */}
+      {onboardingSections.includes(activeSection) && (
+        <Box style={{position:'sticky',bottom:0,background:'#ffffff',borderTop:'1px solid #DDE1E2',padding:'14px 24px',display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,boxShadow:'0 -2px 8px rgba(0,0,0,0.08)',zIndex:100}}>
+          <Box style={{display:'flex',alignItems:'center',gap:16}}>
+            <img src="/duetto-logo-green.svg" alt="Duetto" style={{height:18,width:'auto',display:'block',opacity:0.85}}/>
+            <Typography style={{fontSize:'0.72rem',color:'#8A9096'}}>© {new Date().getFullYear()} Duetto Research</Typography>
+          </Box>
+          <Box style={{display:'flex',gap:12,alignItems:'center'}}>
+            {activeSection === 'account' && (
+              <>
+                <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  style={{textTransform:'none',fontWeight:600,minWidth:180}}
+                  onClick={() => { setAccountSaved(true); goToSection('defaults') }}
+                >
+                  Save &amp; Next
+                </Button>
+              </>
+            )}
+            {activeSection === 'defaults' && (
+              <>
+                <Button
+                  variant="text"
+                  color="primary"
+                  style={{textTransform:'none',fontWeight:600}}
+                  onClick={() => { setDefaultsSaved(false); goToSection('hotels') }}
+                >
+                  I'll do this later
+                </Button>
+                <Button variant="outlined" style={{textTransform:'none'}} onClick={() => goToSection('account')}>Back</Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  style={{textTransform:'none',fontWeight:600,minWidth:200}}
+                  onClick={() => { setDefaultsSaved(true); goToSection('hotels') }}
+                >
+                  Save Defaults &amp; Next
+                </Button>
+              </>
+            )}
+            {activeSection === 'hotels' && (
+              <>
+                <Button variant="outlined" style={{textTransform:'none'}} onClick={() => goToSection('defaults')}>Back</Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={hotels.length === 0}
+                  style={{textTransform:'none',fontWeight:700,minWidth:220}}
+                  onClick={() => goToSection('proposal')}
+                >
+                  ✓ All Hotels Added
+                </Button>
+              </>
+            )}
+            {activeSection === 'proposal' && (
+              <>
+                <Button variant="outlined" style={{textTransform:'none',fontWeight:500}}>
+                  ✎ Request Changes
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  style={{textTransform:'none',fontWeight:600,paddingLeft:28,paddingRight:28}}
+                  onClick={() => setProposalAccepted(true)}
+                >
+                  ✓ Accept Proposal
+                </Button>
+              </>
+            )}
+          </Box>
+        </Box>
+      )}
     </Box>
   )
 }
