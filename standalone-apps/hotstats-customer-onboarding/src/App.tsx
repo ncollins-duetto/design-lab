@@ -1,6 +1,7 @@
 import './App.css'
 import { OnboardingProvider, useOnboarding } from './onboarding/OnboardingContext'
 import Stepper from './onboarding/Stepper'
+import Communications from './Communications'
 import { STEPS } from './onboarding/steps'
 import WelcomeStep from './onboarding/steps/WelcomeStep'
 import CompanyStep from './onboarding/steps/CompanyStep'
@@ -29,10 +30,7 @@ function Shell() {
           <div className="wf-progress-bar"><div className="wf-progress-fill" style={{ width: `${pct}%` }} /></div>
         </div>
         <Stepper />
-        <div className="wf-help-box">
-          <p className="wf-card-title">Need a hand?</p>
-          <p className="wf-help-body">Email <strong>onboarding@hotstats.com</strong> or schedule a 20-minute walkthrough.</p>
-        </div>
+        <Communications />
       </aside>
 
       <div className="wf-main">
