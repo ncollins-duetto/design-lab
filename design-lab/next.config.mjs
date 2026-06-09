@@ -1,5 +1,3 @@
-
-
 const nextConfig = {
   transpilePackages: ['@duetto/duetto-components'],
 }
