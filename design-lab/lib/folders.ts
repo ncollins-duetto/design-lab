@@ -86,6 +86,16 @@ export const PROJECTS: Project[] = [
     decoration: 'sales-room',
   },
   {
+    slug: 'hotstats-onboarding',
+    name: 'HotStats Onboarding',
+    href: '/hotstats-onboarding',
+    team: 'onboarding-team',
+    description: 'Onboarding flow for HotStats benchmarking integration — connect property, map comp set, validate KPI feed.',
+    committedAt: NOW - 1 * HOURS,
+    committed: 'Committed 1 hour ago',
+    decoration: 'sales-room',
+  },
+  {
     slug: 'tour-operator',
     name: 'Tour Operator',
     href: '/tour-operator',
