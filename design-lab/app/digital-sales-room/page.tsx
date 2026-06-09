@@ -1883,6 +1883,65 @@ function DigitalSalesRoomApp() {
   const [bulkBillingEntityName, setBulkBillingEntityName] = useState('')
   const [bulkBillingAddress, setBulkBillingAddress] = useState('')
   const [bulkLegalEntityName, setBulkLegalEntityName] = useState('')
+  // Platinum API state
+  const [platinumToken, setPlatinumToken] = useState<string | null>(null)
+  const [platinumTokenExpiry, setPlatinumTokenExpiry] = useState<number>(0)
+  const [platinumHotels, setPlatinumHotels] = useState<any[]>([])
+  const [platinumLoading, setPlatinumLoading] = useState(false)
+
+  // Fetch Platinum API token
+  const fetchPlatinumToken = async (): Promise<string | null> => {
+    const now = Date.now()
+    if (platinumToken && now < platinumTokenExpiry) return platinumToken
+
+    try {
+      const creds = 'MnJic2dwdjhxaDhoM2doYTRpaThjcnNtNWk6MnJic2dwdjhxaDhoM2doYTRpaThjcnNtNWk='
+      const res = await fetch(
+        'https://hotstats-platinum-348556999231.auth.us-west-2.amazoncognito.com/oauth2/token',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${creds}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'grant_type=client_credentials&scope=platinum-api/read',
+        }
+      )
+      const data = await res.json()
+      const token = data.access_token
+      setPlatinumToken(token)
+      setPlatinumTokenExpiry(now + (data.expires_in - 60) * 1000)
+      return token
+    } catch (err) {
+      console.error('Token fetch failed:', err)
+      return null
+    }
+  }
+
+  // Search Platinum API hotels
+  const searchPlatinumHotels = async (query: string): Promise<any[]> => {
+    if (query.length < 2) return []
+    setPlatinumLoading(true)
+    const token = await fetchPlatinumToken()
+    if (!token) {
+      setPlatinumLoading(false)
+      return []
+    }
+    try {
+      const res = await fetch(
+        `https://qj5exoke85.execute-api.us-west-2.amazonaws.com/prod/api/platinum/search?q=${encodeURIComponent(query)}&limit=20`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      )
+      const data = await res.json()
+      setPlatinumHotels(Array.isArray(data) ? data : [])
+      return Array.isArray(data) ? data : []
+    } catch (err) {
+      console.error('Hotel search failed:', err)
+      return []
+    } finally {
+      setPlatinumLoading(false)
+    }
+  }
 
   const toggleHotelSelected = (id: string) =>
     setSelectedHotelIds(prev => {
@@ -2841,14 +2900,15 @@ function DigitalSalesRoomApp() {
                     <Typography style={{fontSize:'0.72rem',fontWeight:700,letterSpacing:0.5,textTransform:'uppercase',color:'#4F5B60',marginBottom:8}}>
                       Search for Hotel
                     </Typography>
-                    <Autocomplete<HotelRecord, false, false, true>
+                    <Autocomplete
                       freeSolo
-                      options={HOTEL_DATABASE.filter(d => !hotels.some(h => h.name.toLowerCase() === d.name.toLowerCase()))}
-                      getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.name)}
-                      filterOptions={(opts, state) => {
-                        const q = state.inputValue.trim().toLowerCase()
-                        if (!q) return opts.slice(0, 10)
-                        return opts.filter(o => o.name.toLowerCase().includes(q) || o.address.toLowerCase().includes(q)).slice(0, 20)
+                      loading={platinumLoading}
+                      options={platinumHotels.filter(d => !hotels.some(h => h.name.toLowerCase() === d.name.toLowerCase()))}
+                      getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.name || '')}
+                      onInputChange={(_, value) => {
+                        if (value && value.length >= 2) {
+                          searchPlatinumHotels(value)
+                        }
                       }}
                       onChange={(_, value) => {
                         if (!value) return
@@ -2857,20 +2917,23 @@ function DigitalSalesRoomApp() {
                         } else {
                           setNewHotelForm(f => ({
                             ...f,
-                            name: value.name,
-                            address: value.address,
-                            rooms: String(value.rooms || ''),
+                            name: value.name || '',
+                            address: value.city && value.country ? `${value.city}, ${value.country}` : '',
+                            rooms: String(value.rooms || 0),
                           }))
                         }
                         setModalHotelPicked(true)
                       }}
                       renderOption={(opt) => (
-                        <Box style={{display:'flex',flexDirection:'column'}}>
+                        <Box style={{display:'flex',flexDirection:'column',width:'100%'}}>
                           <Typography style={{fontSize:'0.875rem',fontWeight:600}}>{opt.name}</Typography>
-                          <Typography style={{fontSize:'0.72rem',color:'#8a9096'}}>{opt.address} · {opt.rooms.toLocaleString()} rooms</Typography>
+                          <Typography style={{fontSize:'0.72rem',color:'#8a9096'}}>
+                            {opt.city && opt.country ? `${opt.city}, ${opt.country}` : 'Unknown location'} · {opt.rooms ? opt.rooms.toLocaleString() : '?'} rooms
+                            {opt.brand ? ` · ${opt.brand}` : ''}
+                          </Typography>
                         </Box>
                       )}
-                      noOptionsText="No match — click 'I can't find my hotel' below"
+                      noOptionsText={platinumLoading ? 'Searching…' : "No match — click 'I can't find my hotel' below"}
                       renderInput={(params) => (
                         <TextField
                           {...params}
