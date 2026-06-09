@@ -1908,9 +1908,15 @@ function DigitalSalesRoomApp() {
         }
       )
       const data = await res.json()
+      console.log('Token response:', { status: res.status, data })
       const token = data.access_token
+      if (!token) {
+        console.error('No access_token in response:', data)
+        return null
+      }
       setPlatinumToken(token)
       setPlatinumTokenExpiry(now + (data.expires_in - 60) * 1000)
+      console.log('Token fetched successfully')
       return token
     } catch (err) {
       console.error('Token fetch failed:', err)
@@ -1933,8 +1939,9 @@ function DigitalSalesRoomApp() {
         { headers: { 'Authorization': `Bearer ${token}` } }
       )
       const data = await res.json()
-      setPlatinumHotels(Array.isArray(data) ? data : [])
-      return Array.isArray(data) ? data : []
+      console.log('Platinum API response:', { status: res.status, data })
+      setPlatinumHotels(Array.isArray(data) ? data : data.results || [])
+      return Array.isArray(data) ? data : data.results || []
     } catch (err) {
       console.error('Hotel search failed:', err)
       return []
@@ -2236,7 +2243,6 @@ function DigitalSalesRoomApp() {
         )}
       </Box>
 
-      {(
       <div className={classes.mainContent}>
         {/* Sidebar */}
         <Box className={`${classes.sidebar} ${sidebarCollapsed ? 'collapsed' : ''}`} style={{width: sidebarCollapsed ? 64 : 220}}>
@@ -2903,12 +2909,23 @@ function DigitalSalesRoomApp() {
                     <Autocomplete
                       freeSolo
                       loading={platinumLoading}
-                      options={platinumHotels.filter(d => !hotels.some(h => h.name.toLowerCase() === d.name.toLowerCase()))}
+                      options={
+                        platinumHotels.length > 0
+                          ? platinumHotels.filter(d => !hotels.some(h => h.name.toLowerCase() === d.name.toLowerCase()))
+                          : HOTEL_DATABASE.filter(d => !hotels.some(h => h.name.toLowerCase() === d.name.toLowerCase()))
+                      }
                       getOptionLabel={(opt) => (typeof opt === 'string' ? opt : opt.name || '')}
                       onInputChange={(_, value) => {
                         if (value && value.length >= 2) {
                           searchPlatinumHotels(value)
+                        } else if (!value) {
+                          setPlatinumHotels([])
                         }
+                      }}
+                      filterOptions={(opts) => {
+                        // Only filter mock data; API results already filtered
+                        if (platinumHotels.length > 0) return opts
+                        return opts.slice(0, 20)
                       }}
                       onChange={(_, value) => {
                         if (!value) return
