@@ -3377,39 +3377,6 @@ function DigitalSalesRoomApp() {
           )}
         </Box>
 
-      <Box style={{position:'sticky',bottom:0,background:'#ffffff',borderTop:'1px solid #DDE1E2',padding:'16px 24px',display:'flex',justifyContent:'flex-end',gap:12,boxShadow:'0 -2px 8px rgba(0,0,0,0.08)',zIndex:100}}>
-        {activeSection === 'account' && (
-          <>
-            <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
-            <Button onClick={()=>{setAccountSaved(true);setActiveSection('hotels')}} variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}}>
-              Save and Next
-            </Button>
-          </>
-        )}
-        {activeSection === 'hotels' && (
-          <>
-            <Button variant="outlined" style={{textTransform:'none'}} onClick={()=>setActiveSection('account')}>Back</Button>
-            <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}} onClick={()=>setActiveSection('docs')}>Next</Button>
-          </>
-        )}
-        {activeSection === 'docs' && (
-          <>
-            <Button variant="outlined" style={{textTransform:'none'}} onClick={()=>setActiveSection('hotels')}>Back</Button>
-            <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600}} onClick={()=>setActiveSection('proposal')}>Next</Button>
-          </>
-        )}
-        {activeSection === 'proposal' && (
-          <>
-            <Button variant="contained" color="primary" style={{textTransform:'none',fontWeight:600,paddingLeft:28,paddingRight:28}} onClick={()=>setProposalAccepted(true)}>
-              ✓ Accept Proposal
-            </Button>
-            <Button variant="outlined" style={{textTransform:'none',fontWeight:500}}>
-              ✎ Request Changes
-            </Button>
-          </>
-        )}
-      </Box>
-
       {/* Sticky form footer — contextual CTAs per onboarding step */}
       {onboardingSections.includes(activeSection) && (
         <Box style={{position:'sticky',bottom:0,background:'#ffffff',borderTop:'1px solid #DDE1E2',padding:'14px 24px',display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,boxShadow:'0 -2px 8px rgba(0,0,0,0.08)',zIndex:100}}>
@@ -3422,11 +3389,10 @@ function DigitalSalesRoomApp() {
               <>
                 <Button variant="outlined" style={{textTransform:'none'}}>Discard</Button>
                 <Button
-                  type="submit"
-                  form="company-details-form"
                   variant="contained"
                   color="primary"
                   style={{textTransform:'none',fontWeight:600,minWidth:180}}
+                  onClick={() => { setAccountSaved(true); goToSection('defaults') }}
                 >
                   Save &amp; Next
                 </Button>
