@@ -8,8 +8,11 @@ import {
   makeStyles,
   MenuItem,
   Select,
+  TextField,
+  Tooltip,
   Typography,
 } from '@material-ui/core'
+import Autocomplete from '@material-ui/lab/Autocomplete'
 import EditIcon from '@material-ui/icons/Edit'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import { AgGridReact } from 'ag-grid-react'
@@ -216,25 +219,37 @@ const useStyles = makeStyles((theme) => ({
   },
   selectMenuPaper: {
     marginTop: 4,
+    width: '215px !important' as any,
+    maxWidth: '215px !important' as any,
+    minWidth: '0 !important' as any,
     background: '#ffffff',
     border: '1px solid #dde1e2',
-    borderRadius: 4,
+    borderRadius: 5,
     boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
     '& .MuiList-root': {
-      padding: '4px 0',
+      padding: 0,
+      width: '100%',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
     },
     '& .MuiMenuItem-root': {
-      fontFamily: 'Lato, sans-serif',
-      fontSize: 14,
+      fontFamily: 'Lato, sans-serif !important' as any,
+      fontSize: '16px !important' as any,
+      lineHeight: '24px !important' as any,
       color: '#1c1c1c',
-      padding: '8px 12px',
-      minHeight: 'unset',
-      display: 'block',
+      padding: '6px 8px 6px 16px !important' as any,
+      minHeight: 'unset !important' as any,
+      display: 'block !important' as any,
+      width: '100%',
+      maxWidth: '100%',
+      boxSizing: 'border-box',
+      borderBottom: '1px solid #dde1e2 !important' as any,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-      width: '100%',
-      boxSizing: 'border-box' as const,
+      '&:last-child': {
+        borderBottom: 'none !important' as any,
+      },
       '&:hover': {
         backgroundColor: '#f5f5f5',
       },
@@ -246,14 +261,44 @@ const useStyles = makeStyles((theme) => ({
       },
       '&.Mui-disabled': {
         opacity: 1,
-        fontSize: 11,
-        fontWeight: 600,
-        color: '#4f5b60',
-        textTransform: 'uppercase' as const,
-        letterSpacing: '0.5px',
-        padding: '8px 12px 4px',
+        fontSize: '16px !important' as any,
+        lineHeight: '24px !important' as any,
+        fontWeight: 400,
+        color: '#8a9096 !important' as any,
+        textTransform: 'none !important' as any,
+        letterSpacing: '0 !important' as any,
+        padding: '6px 8px !important' as any,
       },
     },
+  },
+  overlapTooltip: {
+    fontFamily: 'Lato, sans-serif',
+    fontSize: 11,
+    fontWeight: 400,
+    lineHeight: '14px',
+    color: '#1c1c1c',
+    backgroundColor: '#ffffff',
+    border: '1px solid #dde1e2',
+    borderRadius: 4,
+    padding: '10px',
+    boxShadow:
+      '0px 1px 3px rgba(0,0,0,0.2), 0px 2px 1px -1px rgba(0,0,0,0.12), 0px 1px 1px rgba(0,0,0,0.14)',
+    maxWidth: 'none',
+  },
+  overlapTooltipArrow: {
+    color: '#ffffff',
+    '&::before': {
+      border: '1px solid #dde1e2',
+      backgroundColor: '#ffffff',
+      boxSizing: 'border-box',
+    },
+  },
+  overlapTriggerWrap: {
+    display: 'block',
+    width: '100%',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   gridContainer: {
     flex: 1,
@@ -417,6 +462,123 @@ const ROOM_TYPE_OVERRIDES: Record<string, RoomTypeOverride[]> = {
     },
   ],
 }
+
+const EXTERNAL_GROUP_QUOTATIONS = [
+  {
+    id: 'egq-001',
+    name: '17th Annual Duetto Family Reunion',
+    externalId: 'a054545000003msvoq23q523450000000445345',
+    hotel: 'Demo Hotel De Vincent',
+    lastModified: 'W, 6/18/25 at 12:12 PM',
+  },
+  {
+    id: 'egq-002',
+    name: 'Spring Corporate Retreat 2025',
+    externalId: 'b1234567890abcdef1234567890123456789012',
+    hotel: 'Luxury Beach Resort',
+    lastModified: 'T, 5/20/25 at 9:30 AM',
+  },
+  {
+    id: 'egq-003',
+    name: 'International Medical Conference',
+    externalId: 'c9876543210yxyxyxyxyxyxyxyxyxyxyxyxy',
+    hotel: 'Downtown Convention Center Hotel',
+    lastModified: 'T, 7/15/25 at 2:45 PM',
+  },
+  {
+    id: 'egq-004',
+    name: 'Wedding Reception - Smith & Johnson',
+    externalId: 'd5555555555555555555555555555555555555',
+    hotel: 'Grand Ballroom Hotel',
+    lastModified: 'F, 8/22/25 at 10:00 AM',
+  },
+  {
+    id: 'egq-005',
+    name: 'Executive Summit 2026',
+    externalId: 'e1234567890abcdef1234567890123456789abc',
+    hotel: 'Premium Business Resort',
+    lastModified: 'M, 9/10/25 at 3:15 PM',
+  },
+]
+
+type SeasonOptionLine = { type: 'Segment Override' | 'Room Type Overrides'; name: string; value: string }
+type SeasonOption = {
+  id: string
+  group: 'Season' | 'Override'
+  name: string
+  value: string
+  primary: string
+  lines: SeasonOptionLine[]
+}
+
+const buildSeasonOptions = (): SeasonOption[] => {
+  const options: SeasonOption[] = []
+
+  // Add base seasons
+  const seasons = [
+    'January 1 - December 31',
+    'January 1 - April 30',
+    'May 1 - September 30',
+    'October 1 - December 31',
+  ]
+
+  seasons.forEach((season) => {
+    options.push({
+      id: `season::${season}`,
+      group: 'Season',
+      name: season,
+      value: season,
+      primary: season,
+      lines: [],
+    })
+  })
+
+  // Group overrides by dateRange
+  const overrideByDate: Record<string, { season?: string; so?: { label: string; season: string }; rto?: { label: string; season: string } }> = {}
+
+  Object.entries(SEASON_OVERRIDES).forEach(([season, overrides]) => {
+    overrides.forEach((so) => {
+      if (!overrideByDate[so.dateRange]) overrideByDate[so.dateRange] = {}
+      overrideByDate[so.dateRange].so = { label: so.label, season }
+    })
+  })
+
+  Object.entries(ROOM_TYPE_OVERRIDES).forEach(([season, overrides]) => {
+    overrides.forEach((rto) => {
+      if (!overrideByDate[rto.dateRange]) overrideByDate[rto.dateRange] = {}
+      overrideByDate[rto.dateRange].rto = { label: rto.label, season }
+    })
+  })
+
+  Object.entries(overrideByDate).forEach(([dateRange, entry]) => {
+    const lines: SeasonOptionLine[] = []
+    let primaryValue = ''
+
+    if (entry.so) {
+      const v = `season-override::${entry.so.label}::${dateRange}::${entry.so.season}`
+      lines.push({ type: 'Segment Override', name: entry.so.label, value: v })
+      primaryValue = v
+    }
+    if (entry.rto) {
+      const v = `room-override::${entry.rto.label}::${dateRange}::${entry.rto.season}`
+      lines.push({ type: 'Room Type Overrides', name: entry.rto.label, value: v })
+      if (!primaryValue) primaryValue = v
+    }
+
+    options.push({
+      id: `override::${dateRange}`,
+      group: 'Override',
+      name: dateRange,
+      value: primaryValue,
+      primary: dateRange,
+      lines,
+    })
+  })
+
+  return options
+}
+
+const SEASON_OPTIONS = buildSeasonOptions()
 
 export default function MinMaxBoundsPage() {
   const classes = useStyles()
@@ -643,52 +805,50 @@ export default function MinMaxBoundsPage() {
             {activeLabel || ' '}
           </Typography>
         </div>
-        <Box display="flex" alignItems="center" gridGap={12}>
-          <Typography variant="subtitle2" style={{ color: '#4f5b60', whiteSpace: 'nowrap' }}>Seasons & Overrides</Typography>
-          <Select
-            value={selectedSeason}
-            onChange={(e) => setSelectedSeason(e.target.value as string)}
-            className={classes.seasonSelect}
-            variant="outlined"
-            IconComponent={ExpandMoreIcon}
-            MenuProps={{
-              classes: { paper: classes.selectMenuPaper },
-              getContentAnchorEl: null,
-              anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
-              transformOrigin: { vertical: 'top', horizontal: 'left' },
-              PaperProps: {
-                ref: (el: HTMLElement | null) => {
-                  if (el) {
-                    el.style.setProperty('width', '215px', 'important')
-                    el.style.setProperty('min-width', '215px', 'important')
-                    el.style.setProperty('max-width', '215px', 'important')
-                  }
-                },
-              },
-            }}
-          >
-            <MenuItem disabled>Season</MenuItem>
-            <MenuItem value="January 1 - December 31">January 1 - December 31</MenuItem>
-            <MenuItem value="January 1 - April 30">January 1 - April 30</MenuItem>
-            <MenuItem value="May 1 - September 30">May 1 - September 30</MenuItem>
-            <MenuItem value="October 1 - December 31">October 1 - December 31</MenuItem>
-            <MenuItem disabled>Season Override</MenuItem>
-            {Object.entries(SEASON_OVERRIDES).flatMap(([season, overrides]) =>
-              overrides.map((so) => (
-                <MenuItem key={`so-${so.dateRange}`} value={`season-override::${so.label}::${so.dateRange}::${season}`}>
-                  {so.label} ({so.dateRange})
-                </MenuItem>
-              ))
-            )}
-            <MenuItem disabled>Room Types Override</MenuItem>
-            {Object.entries(ROOM_TYPE_OVERRIDES).flatMap(([season, overrides]) =>
-              overrides.map((rto) => (
-                <MenuItem key={`rto-${rto.dateRange}`} value={`room-override::${rto.label}::${rto.dateRange}::${season}`}>
-                  {rto.label} ({rto.dateRange})
-                </MenuItem>
-              ))
-            )}
-          </Select>
+        <Box display="flex" alignItems="center" gridGap={24} flexWrap="wrap">
+          <Box display="flex" alignItems="center" gridGap={12} style={{ minWidth: 500 }}>
+            <Typography style={{ fontWeight: 700, fontSize: 13, color: '#1c1c1c', whiteSpace: 'nowrap' }}>
+              Select Seasons & Overrides
+            </Typography>
+            <Autocomplete
+              style={{ flex: 1 }}
+              options={SEASON_OPTIONS}
+              getOptionLabel={(option) => option.name}
+              value={SEASON_OPTIONS.find((opt) => opt.value === selectedSeason) || null}
+              onChange={(_, newValue) => {
+                if (newValue) setSelectedSeason(newValue.value)
+              }}
+              groupBy={(option) => option.group}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Search by season, override, or date range..."
+                  variant="outlined"
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    style: { padding: '0 8px', height: 32, fontSize: 13, display: 'flex', alignItems: 'center' },
+                  }}
+                  inputProps={{
+                    ...params.inputProps,
+                    style: { padding: 0, height: '100%', lineHeight: '32px', boxSizing: 'border-box' },
+                  }}
+                />
+              )}
+              renderOption={(option) => (
+                <Box style={{ padding: '8px 4px', width: '100%' }}>
+                  <Typography style={{ fontWeight: 700, fontSize: 14, color: '#1c1c1c', marginBottom: option.lines.length > 0 ? 4 : 0 }}>
+                    {option.primary}
+                  </Typography>
+                  {option.lines.map((line: SeasonOptionLine, idx: number) => (
+                    <Typography key={idx} style={{ fontSize: 13, color: '#4f5b60', lineHeight: 1.5 }}>
+                      {line.type} – {line.name}
+                    </Typography>
+                  ))}
+                </Box>
+              )}
+            />
+          </Box>
         </Box>
       </div>
 

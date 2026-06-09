@@ -3,16 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "preinstall": "sed \"s/NPM_TOKEN_PLACEHOLDER/$NPM_TOKEN/g\" .npmrc.template > .npmrc",
-    "dev": "next dev",
-    "build": "next build",
+    "preinstall": "sh scripts/setup-npmrc.sh",
+    "dev": "node scripts/sync-standalone.js && next dev",
+    "build": "node scripts/sync-standalone.js && next build",
     "start": "next start"
   },
   "dependencies": {
     "@duetto/duetto-components": "1.2.1",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@material-ui/core": "^4.11.3",
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.61",
+    "@mui/icons-material": "^5.16.7",
+    "@mui/material": "^5.16.7",
     "ag-grid-community": "^33.3.2",
     "ag-grid-react": "^33.3.2",
     "next": "^14.2.0",

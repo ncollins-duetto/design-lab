@@ -1,17 +1,18 @@
 'use client'
 
 import { Box } from '@material-ui/core'
-import MenuBookIcon from '@material-ui/icons/MenuBook'
 import { makeStyles } from '@material-ui/core/styles'
 
 export type TileDecoration =
   | 'rates'
   | 'sales-room'
+  | 'min-max'
   | 'design-system'
   | 'group'
   | 'resorts'
   | 'pricing'
   | 'exploration'
+  | 'tour-operator'
 
 export interface TileProps {
   href: string
@@ -20,6 +21,7 @@ export interface TileProps {
   heroSubtitle?: string
   footerTitle: string
   footerSub: string
+  description?: string
   decoration: TileDecoration
 }
 
@@ -45,34 +47,18 @@ const useStyles = makeStyles((theme) => ({
     position: 'relative',
     background: '#0e2a2c',
     color: '#c4ff45',
-    height: 230,
-    padding: theme.spacing(3),
+    height: 216,
     overflow: 'hidden',
-  },
-  logo: {
-    height: 22,
-    display: 'block',
-  },
-  caption: {
-    position: 'absolute',
-    left: theme.spacing(3),
-    bottom: 92,
-    fontSize: 11,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase',
-    color: '#c4ff45',
-    opacity: 0.9,
-    fontWeight: 600,
   },
   title: {
     position: 'absolute',
+    top: theme.spacing(3),
     left: theme.spacing(3),
-    bottom: theme.spacing(3),
-    fontWeight: 600,
-    fontSize: 28,
-    lineHeight: 1.05,
+    right: theme.spacing(3),
+    fontWeight: 700,
+    fontSize: 22,
+    lineHeight: 1.2,
     color: '#c4ff45',
-    maxWidth: '70%',
   },
   subtitle: {
     display: 'block',
@@ -80,49 +66,48 @@ const useStyles = makeStyles((theme) => ({
   },
   decorationWrap: {
     position: 'absolute',
-    top: theme.spacing(2),
+    bottom: theme.spacing(2) - 4,
     right: theme.spacing(2),
     width: 160,
     height: 160,
     filter: 'drop-shadow(0 6px 24px rgba(196,255,69,0.25))',
   },
+  caption: {
+    position: 'absolute',
+    left: theme.spacing(3) + 4,
+    bottom: 50,
+    fontSize: 12,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    color: '#c4ff45',
+    opacity: 0.7,
+    fontWeight: 600,
+  },
+  logo: {
+    position: 'absolute',
+    bottom: theme.spacing(2) + 4,
+    left: theme.spacing(3),
+    height: 22,
+    display: 'block',
+  },
   footer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1.5),
     padding: theme.spacing(2, 2.5),
     borderTop: `1px solid ${theme.palette.divider}`,
     background: '#fff',
   },
-  footerIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
-    background: '#e8f0ff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  footerIcon: {
-    color: '#4a90e2',
-    fontSize: 20,
-  },
-  footerText: {
-    display: 'flex',
-    flexDirection: 'column',
-    minWidth: 0,
-  },
-  footerTitle: {
+  footerDescription: {
     fontSize: 15,
-    fontWeight: 600,
     color: theme.palette.text.primary,
-    lineHeight: 1.2,
+    lineHeight: 1.5,
+    display: '-webkit-box',
+    '-webkit-line-clamp': 2,
+    '-webkit-box-orient': 'vertical',
+    overflow: 'hidden',
+    marginBottom: theme.spacing(0.75),
   },
   footerSub: {
-    fontSize: 13,
-    color: theme.palette.text.secondary,
-    marginTop: 2,
+    fontSize: 12,
+    color: theme.palette.text.hint,
   },
 }))
 
@@ -221,6 +206,68 @@ function Decoration({ kind }: { kind: TileDecoration }) {
       </svg>
     )
   }
+  if (kind === 'min-max') {
+    return (
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="rg-mm" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#c4ff45" stopOpacity="0.85" />
+            <stop offset="60%" stopColor="#7fbf2e" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#0e2a2c" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="100" r="78" fill="url(#rg-mm)" />
+        <g stroke="#c4ff45" strokeWidth="3" strokeLinecap="round" fill="none">
+          <line x1="48" y1="140" x2="152" y2="140" />
+          <line x1="48" y1="60" x2="152" y2="60" />
+          <line x1="48" y1="56" x2="48" y2="144" strokeWidth="2" />
+          <line x1="152" y1="56" x2="152" y2="144" strokeWidth="2" />
+          <circle cx="80" cy="100" r="8" fill="#c4ff45" />
+          <circle cx="120" cy="100" r="8" fill="#c4ff45" />
+          <line x1="88" y1="100" x2="112" y2="100" />
+        </g>
+      </svg>
+    )
+  }
+  if (kind === 'tour-operator') {
+    return (
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="rg-to" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#c4ff45" stopOpacity="0.85" />
+            <stop offset="60%" stopColor="#7fbf2e" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#0e2a2c" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="100" r="78" fill="url(#rg-to)" />
+        <g fill="none" stroke="#c4ff45" strokeWidth="2.5">
+          {/* Hotel building */}
+          <rect x="50" y="70" width="70" height="70" rx="4" />
+          {/* Door */}
+          <rect x="78" y="128" width="12" height="12" rx="1" />
+          {/* Windows - row 1 */}
+          <rect x="58" y="80" width="10" height="10" rx="1" />
+          <rect x="75" y="80" width="10" height="10" rx="1" />
+          <rect x="92" y="80" width="10" height="10" rx="1" />
+          {/* Windows - row 2 */}
+          <rect x="58" y="98" width="10" height="10" rx="1" />
+          <rect x="75" y="98" width="10" height="10" rx="1" />
+          <rect x="92" y="98" width="10" height="10" rx="1" />
+          {/* Windows - row 3 */}
+          <rect x="58" y="116" width="10" height="10" rx="1" />
+          <rect x="92" y="116" width="10" height="10" rx="1" />
+          {/* Roof peak */}
+          <polyline points="50,70 85,50 120,70" />
+          {/* Palm tree */}
+          <line x1="125" y1="130" x2="125" y2="100" strokeLinecap="round" />
+          <path d="M 125 100 Q 115 92 110 95" />
+          <path d="M 125 100 Q 135 92 140 95" />
+          <path d="M 125 105 Q 115 100 110 105" />
+          <path d="M 125 105 Q 135 100 140 105" />
+        </g>
+      </svg>
+    )
+  }
   if (kind === 'exploration') {
     return (
       <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
@@ -261,24 +308,21 @@ export default function Tile(props: TileProps) {
     <a href={props.href} className={classes.link}>
       <Box className={classes.card}>
         <Box className={classes.hero}>
-          <img src="/duetto-logo-green.svg" alt="Duetto" className={classes.logo} />
+          <span className={classes.title}>
+            {props.heroTitle}
+            {props.heroSubtitle ? <span className={classes.subtitle}>{props.heroSubtitle}</span> : null}
+          </span>
           <Box className={classes.decorationWrap}>
             <Decoration kind={props.decoration} />
           </Box>
-          {props.caption && <span className={classes.caption}>{props.caption}</span>}
-          <span className={classes.title}>
-            {props.heroTitle}
-            {props.heroSubtitle && <span className={classes.subtitle}>{props.heroSubtitle}</span>}
-          </span>
+          {props.caption ? <span className={classes.caption}>{props.caption} Team</span> : null}
+          <img src="/duetto-logo-green.svg" alt="Duetto" className={classes.logo} />
         </Box>
         <Box className={classes.footer}>
-          <Box className={classes.footerIconWrap}>
-            <MenuBookIcon className={classes.footerIcon} />
-          </Box>
-          <Box className={classes.footerText}>
-            <span className={classes.footerTitle}>{props.footerTitle}</span>
-            <span className={classes.footerSub}>{props.footerSub}</span>
-          </Box>
+          {props.description ? (
+            <span className={classes.footerDescription}>{props.description}</span>
+          ) : null}
+          <span className={classes.footerSub}>{props.footerSub}</span>
         </Box>
       </Box>
     </a>

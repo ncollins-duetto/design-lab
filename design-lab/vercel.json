@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "buildCommand": "next build",
-  "installCommand": "npm install"
+  "buildCommand": "npm run build",
+  "installCommand": "sh scripts/setup-npmrc.sh && npm install"
 }
