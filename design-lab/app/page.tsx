@@ -140,7 +140,7 @@ export default function Home() {
               <span className={classes.standaloneBadge}>Standalone</span>
             )}
             <Tile
-              href={project.href}
+              href={project.type === 'standalone' ? project.href.replace(/\/$/, '') : project.href}
               caption={TEAM_LABELS[project.team]}
               heroTitle={project.name}
               footerTitle={project.name}
