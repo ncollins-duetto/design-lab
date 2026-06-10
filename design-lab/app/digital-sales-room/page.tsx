@@ -2498,12 +2498,12 @@ function DigitalSalesRoomApp() {
                             label={
                               <Box>
                                 <Typography style={{
-                                  fontWeight: on ? 600 : 500,
+                                  fontWeight: newHotelForm.overrideBilling ? 600 : 500,
                                   fontSize: '0.85rem',
                                   color: '#1c1c1c',
                                   lineHeight: 1.3,
                                 }}>
-                                  {p}
+                                  Override Billing Settings
                                 </Typography>
                                 <Typography style={{
                                   fontSize: '0.7rem',
@@ -2511,7 +2511,7 @@ function DigitalSalesRoomApp() {
                                   lineHeight: 1.3,
                                   marginTop: 2,
                                 }}>
-                                  {PRODUCT_DESCRIPTIONS[p]}
+                                  Use custom billing for this property
                                 </Typography>
                               </Box>
                             }
@@ -3150,7 +3150,7 @@ function DigitalSalesRoomApp() {
                                 }
                                 label={
                                   <Typography style={{
-                                    fontWeight: on ? 600 : 500,
+                                    fontWeight: newHotelForm.overrideBilling ? 600 : 500,
                                     fontSize: '0.85rem',
                                     color: '#1c1c1c',
                                   }}>
@@ -3229,12 +3229,12 @@ function DigitalSalesRoomApp() {
                             label={
                               <Box>
                                 <Typography style={{
-                                  fontWeight: on ? 600 : 500,
+                                  fontWeight: newHotelForm.overrideBilling ? 600 : 500,
                                   fontSize: '0.85rem',
                                   color: '#1c1c1c',
                                   lineHeight: 1.3,
                                 }}>
-                                  {p}
+                                  Override Billing Settings
                                 </Typography>
                                 <Typography style={{
                                   fontSize: '0.7rem',
@@ -3242,7 +3242,7 @@ function DigitalSalesRoomApp() {
                                   lineHeight: 1.3,
                                   marginTop: 2,
                                 }}>
-                                  {PRODUCT_DESCRIPTIONS[p]}
+                                  Use custom billing for this property
                                 </Typography>
                               </Box>
                             }
