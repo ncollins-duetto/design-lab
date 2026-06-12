@@ -90,11 +90,13 @@ Replace `your-name` and `your-feature-name` with your actual name and something 
 
 Claude will create the branch and switch to it automatically. It'll confirm the name back to you — double-check it matches the pattern above.
 
+**If you have a design board ticket for this work,** you can name the branch after the ticket ID instead — for example `UIARCH-1234`. This automatically links the branch to the ticket on the design board, which makes it easier for reviewers to find and check out your branch during UX Review.
+
 > **If you're using Cursor instead of Claude Code Desktop:** Click the branch name in the bottom-left corner of the window (it probably says "main"). Select "Create new branch" and type the branch name.
 >
-> **If you're using Terminal instead of Claude Code Desktop:** Run `git checkout -b designer/your-name/your-feature-name`
+> **If you're using Terminal instead of Claude Code Desktop:** Run `git checkout -b designer/your-name/your-feature-name` (or `git checkout -b UIARCH-1234` for a ticket-based name)
 
-**Why does the branch name format matter?** The repo is set up to recognize branches that start with `designer/` — and the CLAUDE.md instructions tell Claude to refuse to write code if you're on `main`. Stick to the pattern.
+**Why does the branch name format matter?** The repo is set up to recognize branches that start with `designer/` — and the CLAUDE.md instructions tell Claude to refuse to write code if you're on `main`. Ticket-based names (e.g. `UIARCH-1234`) are also fine — just avoid working directly on `main`.
 
 ### 3. Create your prototype files
 
@@ -152,15 +154,19 @@ Claude will stage your files and create the commit.
 
 ### 6. Push to GitHub and get your preview URL
 
+Pushing sends your commits to GitHub and triggers Vercel to build a shareable preview URL. You don't need a Pull Request for this — pushing is enough to get a link you can share with your team for internal feedback.
+
 In the chat, type:
 
 > "Push my branch to GitHub"
 
-Claude will run `git push origin your-branch-name`. Within a minute or two, Vercel will build a preview and post a URL to your branch's GitHub page. To find it:
+Within a minute or two, Vercel will build the preview. To find the URL:
 
 1. Go to [github.com/duettoresearch/UX](https://github.com/duettoresearch/UX)
-2. Click on **Pull requests** → your branch, or click the **branches** dropdown and find your branch
+2. Click the **branches** dropdown and find your branch
 3. Look for the Vercel check — click **Details** next to it to open the preview URL
+
+Share this link with whoever you're working with. Every subsequent push updates the same URL automatically.
 
 > **If you're using Cursor instead of Claude Code Desktop:** Click the cloud/sync icon in the bottom-left status bar or use Source Control → "Push".
 >
@@ -168,13 +174,13 @@ Claude will run `git push origin your-branch-name`. Within a minute or two, Verc
 
 ### 7. Keep working and pushing
 
-Continue building, committing (step 5), and pushing (step 6) as you work. Every push updates the preview URL — stakeholders can refresh it and see your latest changes.
+Continue building, committing (step 5), and pushing (step 6) as you work. Every push updates the preview URL — teammates and stakeholders can refresh it to see your latest changes without you needing to do anything else.
 
-### 8. Open a Pull Request when you're done
+### 8. Open a Pull Request after UX Review
 
-When your prototype is ready to be merged into the shared main version:
+A Pull Request (PR) is the step you take once your work has gone through UX Review and is ready to become part of the shared design lab — visible to the broader and external team. Don't open one just to share a preview link; use the URL from step 6 for that.
 
-In the chat, type:
+When you're ready to merge, in the chat type:
 
 > "Open a pull request for my branch"
 
@@ -400,6 +406,30 @@ This is always safe to run. It doesn't change anything.
 
 ---
 
+**How do I check out a teammate's branch to review their prototype locally?**
+
+During UX Review you may want to run a teammate's prototype on your own machine rather than just viewing the preview URL — useful for testing interactions that don't come across well in a browser screenshot.
+
+In Claude Code Desktop, open a new chat pointing to your `UX` folder, then type:
+
+> "Check out the branch designer/their-name/their-feature-name"
+
+Replace the branch name with the actual branch your teammate is working on (ask them, or find it on the [branches page on GitHub](https://github.com/duettoresearch/UX/branches)).
+
+Claude will fetch the branch and switch to it. From there, follow the local preview steps for whichever type of prototype it is:
+
+- **Standalone static:** Open `standalone-apps/their-prototype/index.html` in your browser
+- **Vite standalone:** Ask Claude to "Start the dev server for `standalone-apps/their-prototype-name`"
+- **Mock app:** Ask Claude to "Start the dev server" and open `http://localhost:3000`
+
+When you're done reviewing, switch back to your own branch:
+
+> "Switch back to my branch designer/your-name/your-feature-name"
+
+> **If you're using Terminal instead of Claude Code Desktop:** Run `git fetch origin` then `git checkout designer/their-name/their-feature-name`. To switch back, run `git checkout designer/your-name/your-feature-name`.
+
+---
+
 ## Quick reference
 
 | What you want to do | Say to Claude |
@@ -411,6 +441,8 @@ This is always safe to run. It doesn't change anything.
 | Send your work to GitHub | "Push my branch to GitHub" |
 | Check what's uncommitted or unpushed | "What's my current Git status?" |
 | Undo uncommitted changes to a file | "Discard my changes to filename.tsx" |
+| Check out a teammate's branch | "Check out the branch designer/their-name/their-feature" |
+| Switch back to your own branch | "Switch back to my branch designer/your-name/your-feature" |
 | Open a pull request | "Open a pull request for my branch" |
 
 ---
