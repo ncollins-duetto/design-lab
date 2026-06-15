@@ -74,11 +74,6 @@ export const COL = {
   GROUP_BUSINESS_ROOMS:   'groupBusinessRooms',
   GROUP_BUSINESS_REVENUE: 'groupBusinessRevenue',
 
-  // Number of Events
-  EVENTS_COUNT: 'eventsCount',
-
-  // Number of Restrictions
-  RESTRICTIONS_COUNT: 'restrictionsCount',
 } as const
 
 export type ColKey = (typeof COL)[keyof typeof COL]
@@ -99,8 +94,6 @@ export type ColCategory =
   | 'competitors'
   | 'cancellations'
   | 'group_business'
-  | 'events_restrictions'
-
 export const CATEGORY_LABELS: Record<ColCategory, string> = {
   rate:                'Rate',
   demand_occupancy:    'Demand Occupancy',
@@ -113,7 +106,6 @@ export const CATEGORY_LABELS: Record<ColCategory, string> = {
   competitors:         'Competitors',
   cancellations:       'Cancellations',
   group_business:      'Group Business',
-  events_restrictions: 'Events & Restrictions',
 }
 
 // ─── Column metadata ──────────────────────────────────────────────────────────
@@ -192,9 +184,6 @@ export const COL_DEFS: ColMeta[] = [
   { key: COL.GROUP_BUSINESS_ROOMS,   label: 'Group Business', subLabel: 'Rooms',   category: 'group_business', defaultVisible: false, format: 'integer',  width: 130 },
   { key: COL.GROUP_BUSINESS_REVENUE, label: 'Group Business', subLabel: 'Revenue', category: 'group_business', defaultVisible: false, format: 'currency', width: 130 },
 
-  // ── Events & Restrictions (merged group) ──────────────────────────────────
-  { key: COL.EVENTS_COUNT,       label: 'Events & Restrictions', subLabel: 'Events',       category: 'events_restrictions', defaultVisible: false, format: 'integer', width: 110 },
-  { key: COL.RESTRICTIONS_COUNT, label: 'Events & Restrictions', subLabel: 'Restrictions', category: 'events_restrictions', defaultVisible: false, format: 'integer', width: 120 },
 ]
 
 // Category order for the modal tree (matches nyle version tab order, rate first)
@@ -210,7 +199,6 @@ export const ALL_CATEGORIES: ColCategory[] = [
   'competitors',
   'cancellations',
   'group_business',
-  'events_restrictions',
 ]
 
 export const DEFAULT_VISIBLE_COLS = new Set<ColKey>(
@@ -371,11 +359,7 @@ export function generateRowData(dates: string[]) {
       row[id(COL.GROUP_BUSINESS_ROOMS)]   = fmt(Math.round(commitRooms * (0.2 + s(43) * 0.15)), 'integer')
       row[id(COL.GROUP_BUSINESS_REVENUE)] = fmt(Math.round(commitRooms * (0.2 + s(43) * 0.15)) * adr * (0.85 + s(44) * 0.1), 'currency', cur)
 
-      // Events
-      row[id(COL.EVENTS_COUNT)] = fmt(Math.round(s(45) * 3), 'integer')
 
-      // Restrictions
-      row[id(COL.RESTRICTIONS_COUNT)] = fmt(Math.round(s(46) * 5), 'integer')
     })
 
     return row
